@@ -13,6 +13,7 @@ import plotly.express as px
 # NFTfi Analytics AGI
 """
 
+ENV = st.secrets["ENV"]
 BQ_PROJECT_ID = st.secrets["BQ_PROJECT_ID"]
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
@@ -28,7 +29,7 @@ class StreamlitWriter:
         pass
 
 # Reroute stdout to StreamlitWriter
-if st.secrects["ENV"] == "production":
+if ENV == "production":
     original_stdout = sys.stdout
     sys.stdout = StreamlitWriter()
 
