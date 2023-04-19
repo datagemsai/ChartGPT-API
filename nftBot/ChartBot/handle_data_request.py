@@ -2,9 +2,6 @@
 
 from dataclasses import dataclass, asdict, replace
 from .base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline
-from .agent_wrapper import get_agent
-
-agent = get_agent()
 
 
 def sql_completion(eng, question, n, tables_summary):

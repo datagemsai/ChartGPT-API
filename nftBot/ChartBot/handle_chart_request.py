@@ -5,14 +5,12 @@ from typing import Dict, List
 
 from dotenv import load_dotenv
 from .base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline, plot_completion_pipeline, pyplot_preamble
-from .agent_wrapper import get_agent
 from langchain.sql_database import SQLDatabase
 
 from nftBot.ChartBot.make_plot import plot_charts
 
 # Load environment variables from the .env file
 load_dotenv()
-agent = get_agent()
 
 
 def sql_chart_completion(eng, question, n, tables_summary) -> List:

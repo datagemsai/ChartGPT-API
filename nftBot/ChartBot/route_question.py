@@ -2,9 +2,6 @@
 
 from typing import List
 from .base import completion
-from .agent_wrapper import get_agent
-
-agent = get_agent()
 
 
 question = {

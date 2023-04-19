@@ -10,12 +10,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from dotenv import load_dotenv
 
-from .agent_wrapper import get_agent
+
 # from nftBot.ChartBot.single_stream import get_eng_project_dataset_id
 
 # Load environment variables from the .env file
 load_dotenv()
-agent = get_agent()
 
 
 def table_info(table):
