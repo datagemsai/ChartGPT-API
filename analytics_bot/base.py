@@ -1,5 +1,3 @@
-
-
 import os
 from dataclasses import dataclass, asdict, replace
 from typing import Dict, List, Union, Any
@@ -8,13 +6,7 @@ from sqlalchemy import text
 import io
 import matplotlib.pyplot as plt
 import pandas as pd
-from dotenv import load_dotenv
-
-
-# from nftBot.ChartBot.single_stream import get_eng_project_dataset_id
-
-# Load environment variables from the .env file
-load_dotenv()
+from langchain.sql_database import SQLDatabase
 
 
 def table_info(table):
@@ -33,6 +25,10 @@ Data for table: {table.port_name}:
 {df}
     """
     return s
+
+
+def tables_summary(eng):
+    return SQLDatabase(engine=eng).get_table_info(table_names=None).replace("CREATE", "")
 
 
 def completion_local_agent(prompt, n=0):
