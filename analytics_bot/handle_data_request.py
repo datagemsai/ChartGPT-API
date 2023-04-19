@@ -1,7 +1,5 @@
-
-
 from dataclasses import dataclass, asdict, replace
-from .base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline
+from analytics_bot.base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline
 
 
 def sql_completion(eng, question, n, tables_summary):
@@ -60,7 +58,3 @@ def process_data_requests(eng, data_requests, query_fixes=None, tables_summary=s
 
     # Return the list of processed data requests
     return results
-
-
-
-

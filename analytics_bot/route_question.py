@@ -1,7 +1,5 @@
-
-
 from typing import List
-from .base import completion
+from analytics_bot.base import completion
 
 
 question = {
@@ -48,4 +46,3 @@ def process_questions(questions: List, sql_requests=List, chart_requests=List, d
         else:
             print(f"Unknown route!")
             data_requests.append(q)
-

@@ -1,16 +1,10 @@
-
-
 from dataclasses import dataclass, asdict, replace
 from typing import Dict, List
 
-from dotenv import load_dotenv
-from .base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline, plot_completion_pipeline, pyplot_preamble
+from analytics_bot.base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline, plot_completion_pipeline, pyplot_preamble
 from langchain.sql_database import SQLDatabase
 
-from nftBot.ChartBot.make_plot import plot_charts
-
-# Load environment variables from the .env file
-load_dotenv()
+from analytics_bot.make_plot import plot_charts
 
 
 def sql_chart_completion(eng, question, n, tables_summary) -> List:
@@ -51,5 +45,3 @@ def process_chart_requests(eng, chart_requests: List[Dict], tables_summary: str,
 
 
     return results
-
-

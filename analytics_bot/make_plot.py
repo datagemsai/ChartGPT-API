@@ -1,7 +1,5 @@
-
-
 from typing import List
-from .base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline, plot_completion_pipeline, pyplot_preamble, plotly_preamble
+from analytics_bot.base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline, plot_completion_pipeline, pyplot_preamble, plotly_preamble
 import pandas as pd
 
 
@@ -77,5 +75,3 @@ def plot_charts(sql_results: List, tables_summary):
         result = handle_plot_request(request, tables_summary)
         chart_results.append(result)
     return chart_results
-
-

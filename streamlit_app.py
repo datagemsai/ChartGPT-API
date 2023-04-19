@@ -6,7 +6,7 @@ import streamlit as st
 
 # Custom imports
 import sys
-from nftBot.ChartBot.single_stream import run
+from analytics_bot import run
 import plotly.express as px
 
 """
