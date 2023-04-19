@@ -28,8 +28,9 @@ class StreamlitWriter:
         pass
 
 # Reroute stdout to StreamlitWriter
-# original_stdout = sys.stdout
-# sys.stdout = StreamlitWriter()
+if st.secrects["ENV"] == "production":
+    original_stdout = sys.stdout
+    sys.stdout = StreamlitWriter()
 
 
 sample_questions = {
