@@ -59,8 +59,8 @@ def handle_plot_request(request: dict, tables_summary) -> dict:
     plot_lib = 'plotly'
     resp = chart_completion(request["question"], result["result"], plot_lib=plot_lib, tables_summary=tables_summary)
     responses = [resp]
-    print(f"INPUT DATA TO CHART PIPELINE: \n\n{result['result']}")
-    print("END OF DATA INPUT TO CHART PIPELINE")
+    # print(f"INPUT DATA TO CHART PIPELINE: \n\n{result['result']}")
+    # print("END OF DATA INPUT TO CHART PIPELINE")
     # TODO 2023-04-19: pass the result of the SQL query to data instead of sample of result. unless it shouldnt be that result['result'] is just a sample
     pr = plot_completion_pipeline(completions=responses, data=result["result"], plot_lib=plot_lib)
     resp = None

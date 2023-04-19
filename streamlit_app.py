@@ -29,37 +29,26 @@ class StreamlitWriter:
         pass
 
 # Reroute stdout to StreamlitWriter
-if ENV == "production":
-    original_stdout = sys.stdout
-    sys.stdout = StreamlitWriter()
+# if ENV == "production":
+#     original_stdout = sys.stdout
+#     sys.stdout = StreamlitWriter()
 
 
 sample_questions = {
     "nft_lending_aggregated_borrow": [
         "Plot the loan principal amount across nftfi, benddao, arcade, x2y2, jpegd",
     ],
-    "nftfi_loan_data": [
-    ],
+    "nftfi_loan_data": [],
+    "dune_dataset": [],
 }
 
 
 with st.echo(code_location='above'):
-    dataset_id = st.selectbox(
-        'Select dataset:', (
-                'nft_lending_aggregated_borrow',
-                'dune_dataset',
-                'nftfi_loan_data'
-            )
-        )
+    dataset_id = st.selectbox('Select dataset:', sample_questions.keys())
     
-    sample_questions_for_dataset = [""]
+    sample_questions_for_dataset = [""]  # Create unselected option
     sample_questions_for_dataset.extend(sample_questions[dataset_id])
-    
-    sample_question = st.selectbox(
-        'Select sample question (optional):', (
-            sample_questions_for_dataset
-        )
-    )
+    sample_question = st.selectbox('Select sample question (optional):', sample_questions_for_dataset)
 
     if not sample_question:
         question = st.text_input("Enter your question:")

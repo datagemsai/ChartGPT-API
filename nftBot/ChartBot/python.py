@@ -4,7 +4,6 @@ import sqlalchemy
 from sqlalchemy.schema import CreateTable
 
 
-print("hi")
 eng = sqlalchemy.create_engine("postgresql://hmncerbyrjbqdjbitxngwadg%40psql-mock-database-cloud:ptrznvhuauqxboycbnsybukx@psql-mock-database-cloud.postgres.database.azure.com:5432/ecom1675318299004vjaefbbelylvraob")
 metadata_obj = sqlalchemy.MetaData()
 
