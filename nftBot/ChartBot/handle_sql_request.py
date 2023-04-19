@@ -3,9 +3,6 @@ from typing import List
 import sqlalchemy
 from dataclasses import asdict
 from .base import get_sql_result, completion
-from .agent_wrapper import get_agent
-
-agent = get_agent()
 
 extract_prompt = """Reproduce the SQL statement from the following, exactly as written:
 

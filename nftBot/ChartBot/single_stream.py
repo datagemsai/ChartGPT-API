@@ -26,7 +26,7 @@ def tables_summary(eng):
     return SQLDatabase(engine=eng).get_table_info(table_names=None).replace("CREATE", "")
 
 
-def run(dataset_id="nft_lending_aggregated_borrow", project_id="psychic-medley-383515", questions=None, sql_requests=None, data_requests=None, chart_requests=None):
+def run(dataset_id="nft_lending_aggregated_borrow", project_id="psychic-medley-383515", questions=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
     if chart_requests is None:
         chart_requests = []
     if sql_requests is None:
@@ -48,3 +48,4 @@ def run(dataset_id="nft_lending_aggregated_borrow", project_id="psychic-medley-3
         for reply in answer:
             print(f"{reply}\n\n")
 
+    return True

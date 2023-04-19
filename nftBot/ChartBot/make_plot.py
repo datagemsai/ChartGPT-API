@@ -3,8 +3,6 @@
 from typing import List
 from .base import table_info, completion, double_check_query, fix_sql_bug, get_sql_result, sql_completion_pipeline, plot_completion_pipeline, pyplot_preamble, plotly_preamble
 import pandas as pd
-from .agent_wrapper import get_agent
-agent = get_agent()
 
 
 def chart_completion(question, result, tables_summary, plot_lib='matplotlib'):

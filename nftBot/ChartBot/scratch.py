@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 import traceback
 from matplotlib.pyplot import _get_backend_mod
 import io
-from agent_wrapper import get_agent
 
-agent = get_agent()
 
 @contextmanager
 def monkey_patch_matplotlib():
