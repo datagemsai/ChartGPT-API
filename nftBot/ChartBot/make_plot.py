@@ -23,7 +23,7 @@ def chart_completion(question, result, tables_summary, plot_lib='matplotlib'):
                 As a world class expert software engineer and data scientist, given the above dataset, write a
                 detailed and correct plotly code to produce a chart as requested:\n
                 "{question}"
-                \nUse fig.show() to display the plot at the end. Do not forget to filter by dates if requested.
+                \nUse st.plotly_chart(fig, use_container_width=True) to display the plot at the end. Do not forget to filter by dates if requested.
                 Add axes names, units, legend. Update the layout accordingly for color-coded visualizations. 
                 Keep code as succinct as possible and do not add comments.
 ```
