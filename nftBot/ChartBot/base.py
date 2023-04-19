@@ -99,7 +99,7 @@ def get_sql_result(eng, sql: str, limit=50000000000000) -> QueryResult:
             result.append({k: v for k, v in zip(curs.keys(), r)})
             if len(result) >= limit:
                 break
-        print(result)
+        # print(result)
     except Exception as e:
         import traceback
 
@@ -235,7 +235,7 @@ def get_plot_result(py: str, data):
 
     try:
         exec(py, {"get_data": get_data})
-        print(f"[DEBUG]: INPUT DATA TO BOT: \n{get_data()}")
+        # print(f"[DEBUG]: INPUT DATA TO BOT: \n{get_data()}")
 
         plt.savefig(buf, format="png")
         buf.seek(0)
