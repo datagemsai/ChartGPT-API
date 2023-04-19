@@ -1,5 +1,11 @@
-# langchain
-git+https://github.com/hwchase17/langchain.git@master#egg=langchain
+# Streamlit
+altair
+pandas
+streamlit
+watchdog
+# AGI
+langchain
+# git+https://github.com/hwchase17/langchain.git@master#egg=langchain
 openai
 wolframalpha
 python-dotenv

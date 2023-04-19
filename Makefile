@@ -8,3 +8,6 @@ install:
 
 kernel:
 	. venv/bin/activate; python -m ipykernel install --user --name python-***REMOVED***-agi --display-name "Python (***REMOVED*** AGI)"
+
+app:
+	streamlit run streamlit_app.py
