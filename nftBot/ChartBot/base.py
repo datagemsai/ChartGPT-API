@@ -285,6 +285,7 @@ records_df = get_data()
 plotly_preamble = """
 import plotly.express as px
 import pandas as pd
+import streamlit as st
 records_df = get_data()
 """
 

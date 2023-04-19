@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 from google.cloud import bigquery
 import google.auth
@@ -9,24 +9,18 @@ from .handle_sql_request import process_sql_requests
 from .route_question import question, process_questions
 from sqlalchemy.engine import create_engine
 from langchain.sql_database import SQLDatabase
+import streamlit as st
+
 
 # Load environment variables from the .env file
 load_dotenv()
 
 
 def tables_summary(eng):
-    # Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the path of the JSON file that contains your service account key
-    credentials, _ = google.auth.default(
-        scopes=[
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/bigquery",
-        ]
-    )
-
     return SQLDatabase(engine=eng).get_table_info(table_names=None).replace("CREATE", "")
 
 
-def run(dataset_id="nft_lending_aggregated_borrow", project_id="psychic-medley-383515", questions=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
+def run(dataset_id, project_id: Optional[str] = None, questions=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
     if chart_requests is None:
         chart_requests = []
     if sql_requests is None:
@@ -35,7 +29,11 @@ def run(dataset_id="nft_lending_aggregated_borrow", project_id="psychic-medley-3
         data_requests = []
     if questions is None:
         questions = []
-    eng = create_engine(f"bigquery://{project_id}/{dataset_id}")
+
+    gcp_service_account = st.secrets["gcp_service_account"]
+    project_id = project_id if project_id else gcp_service_account["project_id"]
+    eng = create_engine(f"bigquery://{project_id}/{dataset_id}", credentials_info=gcp_service_account)
+    
     process_questions(questions=questions, sql_requests=sql_requests, chart_requests=chart_requests, data_requests=data_requests)
     sql_agent_answers = process_sql_requests(eng=eng, sql_requests=sql_requests)
     data_agent_answers = process_data_requests(eng=eng, data_requests=data_requests, tables_summary=tables_summary(eng))

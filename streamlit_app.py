@@ -28,27 +28,15 @@ class StreamlitWriter:
         pass
 
 # Reroute stdout to StreamlitWriter
-original_stdout = sys.stdout
-sys.stdout = StreamlitWriter()
+# original_stdout = sys.stdout
+# sys.stdout = StreamlitWriter()
 
 
 sample_questions = {
     "nft_lending_aggregated_borrow": [
-        "Plot the loan volume grouped by protocol (nftfi, benddao, arcade) from 2020 to 2023",
-        "Give me a plot to depict distribution of loan volume across protocols (nftfi, benddao, x2y2 [...])",
-
-        "Return visualization of loan data",
-        "Return visualization of NFTfi loan data",
-        "Plot the daily Loan Principal Amount for January 2023",
-        "Plot nftfi borrow daily volume for March 2023",
-        "Plot monthly nftfi borrow volume, x2y2 borrow volume, and arcade borrow volume",
-        "Plot nftfi borrow daily volume for March 2023",
+        "Plot the loan principal amount across nftfi, benddao, arcade, x2y2, jpegd",
     ],
     "nftfi_loan_data": [
-        "Return visualization of NFTfi loan data",
-        "Plot the loan principal amount of the top 5 asset classes in from database",  #  for December 2022
-        "Show the daily Loan Principal Amount for February 2023",
-        "Plot total loan principal amount for each asset classes"
     ],
 }
 
@@ -81,4 +69,7 @@ with st.echo(code_location='above'):
 
     # If the button is clicked or the user presses enter
     if submit_button:
-        run(questions=[{'question': question}], dataset_id=dataset_id, project_id=BQ_PROJECT_ID)
+        with st.spinner('Thinking...'):
+            run(questions=[{'question': question}], dataset_id=dataset_id, project_id=BQ_PROJECT_ID)
+        st.success('Analytics complete!')
+        st.balloons()
