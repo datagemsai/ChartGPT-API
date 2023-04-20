@@ -5,11 +5,11 @@ from analytics_bot.base import table_info, completion, double_check_query, fix_s
 def sql_completion(eng, question, n, tables_summary):
     question = question.strip()
     prompt = f"""
-        {tables_summary}\n\n\n
-        As a senior analyst, given the above schemas and data, write a detailed and correct Postgres sql query to answer the analytical question:\n\n
-        "{question}"\n\n
-        Comment the query with your logic.
-    """
+{tables_summary}\n\n\n
+As a senior analyst, given the above schemas and data, write a detailed and correct Postgres sql query to answer the analytical question:\n\n
+"{question}"\n\n
+Comment the query with your logic.
+"""
 
     resp = completion(prompt, n=n)  # returns top n choices of agent replies
     return resp

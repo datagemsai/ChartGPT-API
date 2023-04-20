@@ -1,13 +1,21 @@
 import os
 from dataclasses import dataclass, asdict, replace
 from typing import Dict, List, Union, Any
+from langchain import PromptTemplate
 import requests
 from sqlalchemy import text
 import io
 import matplotlib.pyplot as plt
 import pandas as pd
 from langchain.sql_database import SQLDatabase
+from langchain.chat_models.openai import ChatOpenAI
+from langchain.chains import LLMChain
+import openai
+from dotenv import load_dotenv
 
+
+# Load environment variables from the .env file
+load_dotenv()
 
 def table_info(table):
     # TODO 2023-04-17:  upgrade with BQ info
@@ -31,15 +39,31 @@ def tables_summary(eng):
     return SQLDatabase(engine=eng).get_table_info(table_names=None).replace("CREATE", "")
 
 
-def completion_local_agent(prompt, n=0):
-    # create a completion
-    resp = agent.run(prompt)
-    return resp
+def query_gpt(prompt, **kwargs) -> str:
+    # llm = ChatOpenAI(
+    #     model_name="gpt-3.5-turbo",
+    #     temperature=0
+    # )
+
+    # prompt_template = PromptTemplate(
+    #     input_variables=["prompt"],
+    #     template=prompt,
+    # )
+    # chain = LLMChain(llm=llm, prompt=prompt_template)
+    # return chain.run("")
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        temperature=0.5,
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
+    )
+    return response["choices"][0]["message"]["content"]
 
 
-def completion(prompt, **kwargs):
+def query_davinci(prompt, **kwargs) -> str:
     api_key = os.environ['OPENAI_API_KEY']
-
     params = {
         "prompt": prompt,
         "model": "text-davinci-003",
@@ -47,18 +71,20 @@ def completion(prompt, **kwargs):
         "temperature": 0.8,
     }
     params.update(kwargs)
-    # create a completion
-    # TODO 2023-04-19: try with other apis?
     resp = requests.post(
         "https://api.openai.com/v1/completions",
         json=params,
         headers={"Authorization": f"Bearer {api_key}"},
     )
-    # resp = handle_rate_limiting(resp)
     if not resp.ok:
         print(resp.json())
         resp.raise_for_status()
     return resp.json()["choices"][0]["text"]
+
+
+def completion(prompt, **kwargs):
+    # return query_gpt(prompt=prompt)
+    return query_davinci(prompt=prompt, **kwargs)
 
 
 @dataclass(frozen=True)
@@ -247,18 +273,18 @@ def get_plot_result(py: str, data):
 
 def fix_python_bug(result: PlotResult, it) -> dict[str, Union[str, Any]]:
     prompt = f"""
-    ```
-    {result.python}
-    ```
-    
-    
-    ```
-    {result.error}
-    ```
-    
-    Above is the code and the error it produced. Here is the corrected code:
-    
-    ```
+```
+{result.python}
+```
+
+
+```
+{result.error}
+```
+
+Above is the code and the error it produced. Here is the corrected code:
+
+```
     """
 
     print(f"OPENAI PYTHON ERROR, RETRYING, ATTEMPT NUMBER [{it}]")
