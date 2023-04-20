@@ -13,14 +13,14 @@ def sql_chart_completion(eng, question, n, tables_summary) -> List:
     question = question.strip()
     # print(f"TABLES SUMMARY INPUT TO SQL CHART COMPLETION: \n{tables_summary}\n\nEND OF TABLE SUMMARY")
     prompt = f"""
-    {tables_summary}\n\n
-    As a senior analyst, given the above schemas and data, write a detailed and correct Postgres sql query to produce data for the following requested chart:\n
-    "{question}"\n
-    Do not perform any JOIN of tables. Be very selective in the columns of interest.
-    """
+{tables_summary}\n\n
+As a senior analyst, given the above schemas and data, write a detailed and correct Postgres sql query to produce data for the following requested chart:\n
+"{question}"\n
+Do not perform any JOIN of tables. Be very selective in the columns of interest.
+"""
     # Comment the query with your logic.
 
-    resp = completion(prompt)
+    resp = completion(prompt, n=n)
     print(f"OPENAI SQL CHAT RESPONSE: [{resp}]")
     return resp
 

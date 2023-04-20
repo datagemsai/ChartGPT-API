@@ -38,13 +38,14 @@ sample_questions = {
     "nft_lending_aggregated_users": [
         "Plot daily users for nftfi, x2y2 and arcade"
     ],
-    # "nft_lending_aggregated_borrow": [
-    # ],
-    # "nftfi_loan_data": [
-    #     # "Plot the loan principal amount across nftfi, benddao, arcade, x2y2, jpegd",
-    # ],
+    "nft_lending_aggregated_borrow": [
+        "Plot the borrow volume over time for nftfi, benddao, arcade, x2y2, jpegd",
+    ],
+    "nftfi_loan_data": [
+        "Plot the loan principal amount of the top 5 asset classes by volume over time",
+    ],
     "dune_dataset": [
-        "Plot the borrow volume across the protocols nftfi, benddao, arcade, jpegd for December 2022 to February 2024",
+        "Plot the borrow volume across the nftfi, benddao, arcade, jpegd for December 2022 to February 2023",
         # "Plot the loan principal amount across the protocols nftfi, benddao, arcade, jpegd for December 2022 to February 2023"
     ],
 }

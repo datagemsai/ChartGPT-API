@@ -3,7 +3,8 @@ import sqlalchemy
 from dataclasses import asdict
 from analytics_bot.base import get_sql_result, completion
 
-extract_prompt = """Reproduce the SQL statement from the following, exactly as written:
+extract_prompt = """
+Reproduce the SQL statement from the following, exactly as written:
 
 {sql}
 

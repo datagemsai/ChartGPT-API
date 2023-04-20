@@ -17,13 +17,14 @@ def chart_completion(question, result, tables_summary, plot_lib='matplotlib'):
         # Remember that you need to add axes names, units, legend. Update the layout accordingly for good visualization
         # including colors.
         # """ + plotly_preamble
-        prompt = f""" {tables_summary}\n
-                As a world class expert software engineer and data scientist, given the above dataset, write a
-                detailed and correct plotly code to produce a chart as requested:\n
-                "{question}"
-                \nUse st.plotly_chart(fig, use_container_width=True) to display the plot at the end. Do not forget to filter by dates if requested.
-                Add axes names, units, legend. Update the layout accordingly for color-coded visualizations. 
-                Keep code as succinct as possible and do not add comments.
+        prompt = f"""
+{tables_summary}\n
+As a world class expert software engineer and data scientist, given the above dataset, write a
+detailed and correct plotly code to produce a chart as requested:\n
+"{question}"
+\nUse st.plotly_chart(fig, use_container_width=True) to display the plot at the end. Do not forget to filter by dates if requested.
+Add axes names, units, legend. Update the layout accordingly for color-coded visualizations. 
+Keep code as succinct as possible and do not add comments.
 ```
 """ + plotly_preamble
                 # including colors
@@ -32,16 +33,17 @@ def chart_completion(question, result, tables_summary, plot_lib='matplotlib'):
                 # When requested for distributions you should group by the object and not plot across time (where time column can be date, day, dt, block_time [...]).
 
     else:
-        prompt = f"""records_df = pd.DataFrame.from_records({result})
-    
-    
-        As a senior analyst, given the above data set, write detailed and correct matplotlib code to produce a chart as requested:
-    
-        "{question}"
-    
-        Comment the code with your logic. Use plt.show() to display the plot at the end.
-    
-        ```
+        prompt = f"""
+records_df = pd.DataFrame.from_records({result})
+
+
+As a senior analyst, given the above data set, write detailed and correct matplotlib code to produce a chart as requested:
+
+"{question}"
+
+Comment the code with your logic. Use plt.show() to display the plot at the end.
+
+```
         """ + pyplot_preamble
     print(prompt)
     resp = completion(prompt)
