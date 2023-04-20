@@ -36,9 +36,10 @@ class StreamlitWriter:
 
 sample_questions = {
     "nft_lending_aggregated_borrow": [
+    ],
+    "nftfi_loan_data": [
         "Plot the loan principal amount across nftfi, benddao, arcade, x2y2, jpegd",
     ],
-    "nftfi_loan_data": [],
     "dune_dataset": [],
 }
 
