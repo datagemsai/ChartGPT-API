@@ -3,13 +3,8 @@
 from dataclasses import asdict
 from typing import Dict, List
 
-from dotenv import load_dotenv
 from analytics_bot.base import sql_completion_pipeline, sql_completion
-
 from analytics_bot.make_plot import plot_charts
-
-# Load environment variables from the .env file
-load_dotenv()
 
 
 def handle_chart_request(eng, request: Dict, tables_summary: str, query_fixes=None) -> Dict:
