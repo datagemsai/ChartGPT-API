@@ -32,5 +32,7 @@ client = bigquery.Client(credentials=credentials)
 
 Edit `/streamlit_app.py` to customize this app to your heart's desire. :heart:
 
+Run Streamlit app locally using `streamlit run streamlit_app.py` - open in a browser and edit the code live.
+
 If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
 forums](https://discuss.streamlit.io).
