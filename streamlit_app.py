@@ -36,7 +36,9 @@ class StreamlitWriter:
 
 sample_questions = {
     "nft_lending_aggregated_users": [
-        "Plot daily users for nftfi, x2y2 and arcade"
+        "Plot daily users for nftfi, x2y2 and arcade",
+        "Plot the weekly distribution of unique users over time",
+        "On what date x2y2 had the highest number of users?",  # data request
     ],
     "nft_lending_aggregated_borrow": [
         "Plot the borrow volume over time for nftfi, benddao, arcade, x2y2, jpegd",
@@ -45,7 +47,7 @@ sample_questions = {
         "Plot the loan principal amount of the top 5 asset classes by volume over time",
     ],
     "dune_dataset": [
-        "Plot the borrow volume across the nftfi, benddao, arcade, jpegd for December 2022 to February 2023",
+        "Plot the borrow volume across the protocols nftfi, benddao, arcade, jpegd from December 2022 to March 2023",
         # "Plot the loan principal amount across the protocols nftfi, benddao, arcade, jpegd for December 2022 to February 2023"
     ],
 }
