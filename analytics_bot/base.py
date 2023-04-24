@@ -1,12 +1,10 @@
 import os
-from dataclasses import dataclass, asdict, replace
+from dataclasses import dataclass, replace
 from typing import Dict, List, Union, Any
-from langchain import PromptTemplate
 import requests
 from sqlalchemy import text
 import io
-import matplotlib.pyplot as plt
-import pandas as pd
+from langchain import PromptTemplate
 from langchain.sql_database import SQLDatabase
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.chains import LLMChain
@@ -33,10 +31,6 @@ Data for table: {table.port_name}:
 {df}
     """
     return s
-
-
-def tables_summary(eng):
-    return SQLDatabase(engine=eng).get_table_info(table_names=None).replace("CREATE", "")
 
 
 def query_gpt(prompt, **kwargs) -> str:
@@ -107,7 +101,9 @@ def get_sql_result(eng, sql: str, limit=50000000000000) -> QueryResult:
     Returns:
         A QueryResult object containing either the query result or an error message.
     """
-    print(sql)
+    sql = sql.replace('\"', '`')
+    # sql = sql.replace("\'", "`")
+    print(f"GET_SQL_RESULT: PERFORM THIS SQL QUERY: \n {sql}")
     error = None
     result = []
     try:
@@ -121,7 +117,7 @@ def get_sql_result(eng, sql: str, limit=50000000000000) -> QueryResult:
             result.append({k: v for k, v in zip(curs.keys(), r)})
             if len(result) >= limit:
                 break
-        # print(result)
+        print(result)
     except Exception as e:
         import traceback
 
@@ -137,26 +133,34 @@ def get_sql_result(eng, sql: str, limit=50000000000000) -> QueryResult:
 
 def double_check_query(sql: str, tables_summary: str) -> Dict[str, str]:
     # TODO 2023-04-17: add further prompt engineering here based on Ben's
+    print(f"\nTHIS IS THE SQL INPUT TO DOUBLE CHECK: \n\n{sql}")
+    # {tables_summary}
     prompt = f"""
-{tables_summary}
-
-
-
 {sql}
-
 
 Double check the Postgres query above for common mistakes, including:
  - Wrap each column name in back ticks (`) to denote them as delimited identifiers.
  - Remembering to add `NULLS LAST` to an ORDER BY DESC clause
- - Handling case sensitivity, e.g. using ILIKE instead of LIKE
- - Ensuring the join columns are correct
- - Casting values to the appropriate type
  - Properly quoting identifiers when required (e.g. table.`Sales Amount`)
- 
- Rewrite the query below if there are any mistakes. If it looks good as it is, just reproduce the original query."""
+ - Do not compute median, averages or any other aggregation at this step, simply select the relevant columns. Do not truncate dates. Do not use WHERE clause.
+Rewrite the query below if there are any mistakes. If it looks good as it is, just return the original query.
+"""
+    # ONLY check the query for the above guidelines, do not change its logic whatsoever.
+    # - Do not JOIN any table.
+    # Rewrite the query below if there are any mistakes. If it looks good as it is, just reproduce the original query.
+    # - Handling case sensitivity, e.g. using ILIKE instead of LIKE
+    # - Casting values to the appropriate type
+    print(f"\n\nINPUT PROMPT FOR DOUBLE CHECKING SQL QUERY RESULT: \n\n```\n{prompt}\n```\n\nEND OF PROMPT\n\n")
 
     resp = completion(prompt)
-    corrected_sql = resp  # resp.json()["choices"][0]["text"]
+    print(f"\n\nDOUBLED CHECKED SQL QUERY RESULT: \n\n```\n{resp}\n```\n\nEND OF DOUBLE CHECKED SQL QUERY RESULT\n\n")
+    # print("CLEANING HACK: REMOVE DOUBLE QUOTES FROM SQL REPLY")
+    resp = resp.replace('\"', '`')
+    # resp = resp.replace("\'", '`')
+    if "SELECT" in resp:
+        corrected_sql = resp  # resp.json()["choices"][0]["text"]
+    else:
+        corrected_sql = sql
     return {"original": sql, "corrected": corrected_sql}
 
 
@@ -226,10 +230,16 @@ def sql_completion_pipeline(eng, completions: List, tables_summary: str, query_f
             break
     else:
         # If none of the queries returned a valid result, construct and return an error message
-        if query_result['error']:
-            query_result['result'] = f"Stumped me. Here's the SQL I came up with but it had the following error: {query_result.error}."
+        if query_result.error:
+            query_result = replace(
+                query_result,
+                result=f"Stumped me. Here's the SQL I came up with but it had the following error: {query_result.error}.",
+            )
         else:
-            query_result['result'] = f"Stumped me. Here's the SQL I came up with but it didn't return a result."
+            query_result = replace(
+                query_result,
+                result=f"Stumped me. Here's the SQL I came up with but it didn't return a result.",
+            )
     return query_result
 
 
@@ -244,31 +254,6 @@ class PlotResult:
     python: str
     result: str = None
     error: str = None
-
-
-def get_plot_result(py: str, data):
-    print(py)
-    error = None
-    buf = io.BytesIO()
-    result = None
-
-    def get_data():
-        return pd.DataFrame.from_records(data)
-
-    try:
-        exec(py, {"get_data": get_data})
-        # print(f"[DEBUG]: INPUT DATA TO BOT: \n{get_data()}")
-
-        plt.savefig(buf, format="png")
-        buf.seek(0)
-    except Exception as e:
-        import traceback
-
-        error = traceback.format_exc()
-        print(error)
-    # if buf:
-    #    result = base64.b64encode(buf.getvalue()).decode("utf-8").replace("\n", "")
-    return PlotResult(python=py, result=buf, error=error)
 
 
 def fix_python_bug(result: PlotResult, it) -> dict[str, Union[str, Any]]:
@@ -288,6 +273,7 @@ Above is the code and the error it produced. Here is the corrected code:
     """
 
     print(f"OPENAI PYTHON ERROR, RETRYING, ATTEMPT NUMBER [{it}]")
+    print(f"THIS IS THE INPUT PROMPT TO OPENAI PYTHON AFTER ERROR \n\n{prompt}\n\nEND OF PROMPT")
     resp = completion(prompt)
     corrected = resp  # resp.json()["choices"][0]["text"]
     corrected = corrected.split("```")[0]
@@ -315,37 +301,25 @@ records_df = get_data()
 pyplot_exec_prefix = "plt.style.use(plt.style.library['ggplot'])\n"
 
 
-def plot_completion_pipeline(completions: List, data: List, query_fixes=None, plot_lib='matplotlib') -> PlotResult:
-    # TODO 2023-04-18: add docstring
-    if query_fixes is None:
-        query_fixes = []
-    for completion in completions:
-        py = completion
-        py = py.split("```")[0]
-        if plot_lib == 'matplotlib':
-            py = pyplot_preamble + pyplot_exec_prefix + py
-        elif plot_lib == 'plotly':
-            py = plotly_preamble + py
-        else:
-            py = pyplot_preamble + pyplot_exec_prefix + py
-        pr = get_plot_result(py, data)
-        it = 0
-        max_retries = 5  # TODO 2023-04-18: parametrise this value
-        while pr.error or not pr.result:
-            if it == max_retries:
-                raise Exception(f"Error: tried recovering {max_retries} times from Python fixing loop, now erroring")
-            # Try to fix error
-            corrected = fix_python_bug(pr, it)
-            print(corrected)
-            corrected["type"] = "python-error"
-            query_fixes.append(corrected)
-            pr = get_plot_result(corrected["corrected"], data)
-            it += 1
-        if pr.result:
-            break
-    else:
-        if pr.error:
-            pr['result'] = f"Stumped me. Here's the SQL I came up with but it had the following error: {pr.error}."
-        else:
-            pr['result'] = f"Stumped me. Here's the SQL I came up with but it didn't return a result."
-    return pr
+def sql_completion(question, n, tables_summary) -> List:
+    # TODO 2023-04-17: add back 'n' functionality support which was passed as params.update(kwargs) to OpenAI api
+    #  so likely the top n replies from API agent.
+    question = question.strip()
+    # print(f"TABLES SUMMARY INPUT TO SQL CHART COMPLETION: \n{tables_summary}\n\nEND OF TABLE SUMMARY")
+    prompt = f"""
+{tables_summary}\n\n
+As a senior analyst, given the above schemas and data, write a detailed and correct Postgres sql query to produce data for the following request. 
+Only SELECT columns from a single table, never join tables. Do not use single or double quotes when renaming columns.:\n
+"{question}"\n
+Do not compute median, averages or any other aggregation at this step, simply select the relevant columns.
+"""
+    # Be very selective in the columns of interest.
+    # Comment the query with your logic.
+
+    resp = completion(prompt)
+    print(f"OPENAI SQL CHAT RESPONSE: \n{resp}\n")
+    # print("CLEANING HACK: REMOVE DOUBLE QUOTES FROM SQL REPLY")
+    resp = resp.replace('\"', '`')
+    # resp = resp.replace("\'", '`')
+    # return a list of responses to account when we add back the top n choices
+    return [resp]

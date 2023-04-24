@@ -16,6 +16,7 @@ load_dotenv()
 
 openai.api_key = os.environ.get("OPENAI_API_KEY", st.secrets["OPENAI_API_KEY"])
 
+
 def run(dataset_id, project_id: Optional[str] = None, questions=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
     if chart_requests is None:
         chart_requests = []

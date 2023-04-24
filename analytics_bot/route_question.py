@@ -1,3 +1,4 @@
+
 from typing import List
 from analytics_bot.base import completion
 
@@ -12,32 +13,32 @@ question = {
 
 
 def process_questions(questions: List, sql_requests=List, chart_requests=List, data_requests=List):
-    prompt = """
-Classify the following message according to whether it is a SQL query, a data request, or a chart request. Examples:
+    prompt = """Classify the following message according to whether it is a SQL query, a data request, or a chart request. Examples:
 
-message: how many new customers were added last year?
-class: data request
+    message: how many new customers were added last year?
+    class: data request
 
-message: show me the trend in house prices over the last 5 years
-class: chart request
+    message: show me the trend in house prices over the last 5 years
+    class: chart request
 
-message: plot a graph of miles vs heartrate, grouped by age group
-class: chart request
+    message: plot a graph of miles vs heartrate, grouped by age group
+    class: chart request
 
-message: SELECT * FROM customers ORDER BY date
-class: sql query
+    message: SELECT * FROM customers ORDER BY date
+    class: sql query
 
-message: {question}
-class:
-"""
+    message: {question}
+    class: 
+    """
     for q in questions:
         prompt = prompt.format(question=q["question"])
         resp = completion(prompt)
+        print(f"\nOPENAI BOT THINKS THAT THIS REQUEST IS: {resp}\n")
         # q["route"] = resp  # resp.json()["choices"][0]["text"]
         # route = resp  # resp.json()["choices"][0]["text"]
         q['route'] = resp
         # print(q)  # TODO improve logging of request
-        print(f"INPUT QUESTION: [{q['question']}]")  # TODO improve logging of request
+        print(f"INPUT QUESTION: \n{q['question']}\n")  # TODO improve logging of request
         if "sql" in q["route"].lower():
             sql_requests.append(q)
         elif "chart" in q["route"].lower():
@@ -47,3 +48,4 @@ class:
         else:
             print(f"Unknown route!")
             data_requests.append(q)
+
