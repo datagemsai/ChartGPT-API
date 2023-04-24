@@ -2,8 +2,9 @@
 import io
 from typing import List
 from matplotlib import pyplot as plt
-
 import pandas as pd
+import inspect
+
 from analytics_bot.base import completion, pyplot_preamble, plotly_preamble, PlotResult, pyplot_exec_prefix, fix_python_bug
 
 
@@ -60,7 +61,8 @@ Comment the code with your logic. Use plt.show() to display the plot at the end.
 
 ```
         """ + pyplot_preamble
-    print(prompt)
+    # print(prompt)
+    prompt = inspect.cleandoc(prompt)
     resp = completion(prompt)
     return resp
 
@@ -169,8 +171,10 @@ def handle_plot_request(request: dict, tables_summary) -> dict:
     plot_lib = 'plotly'
     resp = chart_completion(request["question"], result["result"], plot_lib=plot_lib, tables_summary=tables_summary)
     responses = [resp]
-    print(f"INPUT DATA TO CHART PIPELINE: \n\n{result['result']}")
-    print("END OF DATA INPUT TO CHART PIPELINE")
+    # NOTE: print statements make the streamlit application crash. Comment out for now.
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print(f"INPUT DATA TO CHART PIPELINE: \n\n{result['result']}")
+    # print("END OF DATA INPUT TO CHART PIPELINE")
     # TODO 2023-04-19: pass the result of the SQL query to data instead of sample of result. unless it shouldnt be that result['result'] is just a sample
     plot_result = plot_completion_pipeline(completions=responses, data=result["result"], plot_lib=plot_lib)
     resp = None

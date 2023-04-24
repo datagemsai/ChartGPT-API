@@ -9,11 +9,8 @@ from langchain.sql_database import SQLDatabase
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.chains import LLMChain
 import openai
-from dotenv import load_dotenv
+import inspect
 
-
-# Load environment variables from the .env file
-load_dotenv()
 
 def table_info(table):
     # TODO 2023-04-17:  upgrade with BQ info
@@ -71,7 +68,7 @@ def query_davinci(prompt, **kwargs) -> str:
         headers={"Authorization": f"Bearer {api_key}"},
     )
     if not resp.ok:
-        print(resp.json())
+        # print(resp.json())
         resp.raise_for_status()
     return resp.json()["choices"][0]["text"]
 
@@ -103,7 +100,8 @@ def get_sql_result(eng, sql: str, limit=50000000000000) -> QueryResult:
     """
     sql = sql.replace('\"', '`')
     # sql = sql.replace("\'", "`")
-    print(f"GET_SQL_RESULT: PERFORM THIS SQL QUERY: \n {sql}")
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print(f"GET_SQL_RESULT: PERFORM THIS SQL QUERY: \n {sql}")
     error = None
     result = []
     try:
@@ -117,12 +115,13 @@ def get_sql_result(eng, sql: str, limit=50000000000000) -> QueryResult:
             result.append({k: v for k, v in zip(curs.keys(), r)})
             if len(result) >= limit:
                 break
-        print(result)
+        # TODO 2023-04-24: move from prints to proper logging.
+        # print(result)
     except Exception as e:
         import traceback
 
-        print(traceback.format_exc())
-        print(e)
+        # print(traceback.format_exc())
+        # print(e)
         try:
             error = str(e.__dict__["orig"])
         except KeyError:
@@ -150,10 +149,11 @@ Rewrite the query below if there are any mistakes. If it looks good as it is, ju
     # Rewrite the query below if there are any mistakes. If it looks good as it is, just reproduce the original query.
     # - Handling case sensitivity, e.g. using ILIKE instead of LIKE
     # - Casting values to the appropriate type
-    print(f"\n\nINPUT PROMPT FOR DOUBLE CHECKING SQL QUERY RESULT: \n\n```\n{prompt}\n```\n\nEND OF PROMPT\n\n")
-
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print(f"\n\nINPUT PROMPT FOR DOUBLE CHECKING SQL QUERY RESULT: \n\n```\n{prompt}\n```\n\nEND OF PROMPT\n\n")
+    prompt = inspect.cleandoc(prompt)
     resp = completion(prompt)
-    print(f"\n\nDOUBLED CHECKED SQL QUERY RESULT: \n\n```\n{resp}\n```\n\nEND OF DOUBLE CHECKED SQL QUERY RESULT\n\n")
+    # print(f"\n\nDOUBLED CHECKED SQL QUERY RESULT: \n\n```\n{resp}\n```\n\nEND OF DOUBLE CHECKED SQL QUERY RESULT\n\n")
     # print("CLEANING HACK: REMOVE DOUBLE QUOTES FROM SQL REPLY")
     resp = resp.replace('\"', '`')
     # resp = resp.replace("\'", '`')
@@ -173,17 +173,20 @@ def fix_sql_bug(query: QueryResult, tables_summary: str) -> Dict[str, str]:
         {query.error}\n\n
         Rewrite the query with the error fixed:
     """
+    error_prompt = inspect.cleandoc(error_prompt)
 
     no_result_prompt = f"""{query.sql}\n\n\n
     The query above produced no result. Try rewriting the query so it will return results:
     """
-
-    print("OPENAI BOT ERROR, RETRYING")
+    no_result_prompt = inspect.cleandoc(no_result_prompt)
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print("OPENAI BOT ERROR, RETRYING")
     if query.error:
         prompt = error_prompt
     else:
         prompt = no_result_prompt
-    print(prompt)
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print(prompt)
     resp = completion(prompt)
     corrected_sql: str = resp  # resp.json()["choices"][0]["text"]
     return {"original": query.sql, "corrected": corrected_sql}
@@ -210,7 +213,8 @@ def sql_completion_pipeline(eng, completions: List, tables_summary: str, query_f
         sql: str = completion  # ["text"]
         # Check the query for any potential errors
         corrected = double_check_query(sql, tables_summary)
-        print(corrected)
+        # TODO 2023-04-24: move from prints to proper logging.
+        # print(corrected)
         # Add the corrected query to the list of query fixes
         corrected["type"] = "sql-double-check"
         query_fixes.append(corrected)
@@ -220,7 +224,8 @@ def sql_completion_pipeline(eng, completions: List, tables_summary: str, query_f
         # If the query failed or did not return any results, attempt to fix it once
         if query_result.error or not query_result.result:
             corrected = fix_sql_bug(query=query_result, tables_summary=tables_summary)
-            print(corrected)
+            # TODO 2023-04-24: move from prints to proper logging.
+            # print(corrected)
             corrected["type"] = "sql-error"
             query_fixes.append(corrected)
             query_result = get_sql_result(eng, corrected["corrected"])
@@ -271,9 +276,10 @@ Above is the code and the error it produced. Here is the corrected code:
 
 ```
     """
-
-    print(f"OPENAI PYTHON ERROR, RETRYING, ATTEMPT NUMBER [{it}]")
-    print(f"THIS IS THE INPUT PROMPT TO OPENAI PYTHON AFTER ERROR \n\n{prompt}\n\nEND OF PROMPT")
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print(f"OPENAI PYTHON ERROR, RETRYING, ATTEMPT NUMBER [{it}]")
+    # print(f"THIS IS THE INPUT PROMPT TO OPENAI PYTHON AFTER ERROR \n\n{prompt}\n\nEND OF PROMPT")
+    prompt = inspect.cleandoc(prompt)
     resp = completion(prompt)
     corrected = resp  # resp.json()["choices"][0]["text"]
     corrected = corrected.split("```")[0]
@@ -315,9 +321,10 @@ Do not compute median, averages or any other aggregation at this step, simply se
 """
     # Be very selective in the columns of interest.
     # Comment the query with your logic.
-
+    prompt = inspect.cleandoc(prompt)
     resp = completion(prompt)
-    print(f"OPENAI SQL CHAT RESPONSE: \n{resp}\n")
+    # TODO 2023-04-24: move from prints to proper logging.
+    # print(f"OPENAI SQL CHAT RESPONSE: \n{resp}\n")
     # print("CLEANING HACK: REMOVE DOUBLE QUOTES FROM SQL REPLY")
     resp = resp.replace('\"', '`')
     # resp = resp.replace("\'", '`')
