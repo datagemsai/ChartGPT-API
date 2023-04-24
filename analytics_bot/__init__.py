@@ -1,5 +1,4 @@
 from typing import Optional
-from dotenv import load_dotenv
 from analytics_bot.handle_chart_request import process_chart_requests
 from analytics_bot.handle_data_request import process_data_requests
 from analytics_bot.handle_sql_request import process_sql_requests
@@ -11,10 +10,9 @@ import os
 import openai
 
 
-# Load environment variables from the .env file
-load_dotenv()
-
-openai.api_key = os.environ.get("OPENAI_API_KEY", st.secrets["OPENAI_API_KEY"])
+# Load secrets / environment variables from .streamlit directory secrets.toml
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+gcp_service_account = st.secrets["gcp_service_account"]
 
 def run(dataset_id, project_id: Optional[str] = None, questions=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
     if chart_requests is None:
@@ -26,7 +24,6 @@ def run(dataset_id, project_id: Optional[str] = None, questions=None, sql_reques
     if questions is None:
         questions = []
 
-    gcp_service_account = st.secrets["gcp_service_account"]
     project_id = project_id if project_id else gcp_service_account["project_id"]
     eng = create_engine(f"bigquery://{project_id}/{dataset_id}", credentials_info=gcp_service_account)
     
