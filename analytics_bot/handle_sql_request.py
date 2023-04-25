@@ -1,10 +1,10 @@
+
 from typing import List
-import sqlalchemy
 from dataclasses import asdict
+import inspect
 from analytics_bot.base import get_sql_result, completion
 
-extract_prompt = """
-Reproduce the SQL statement from the following, exactly as written:
+extract_prompt = """Reproduce the SQL statement from the following, exactly as written:
 
 {sql}
 
@@ -16,7 +16,11 @@ def process_sql_requests(eng, sql_requests: List):
     results = []
     for request in sql_requests:
         q = request["question"]
-        resp = completion(extract_prompt.format(sql=q))
+        prompt = extract_prompt.format(sql=q)
+        prompt = inspect.cleandoc(prompt)
+        # TODO 2023-04-24: move from prints to proper logging.
+        # print("\nINPUT PROMPT TO QUERYING SQL IN process_sql_requests: \n{prompt}\n\nEND OF PROMPT")
+        resp = completion(prompt)
         sql = resp  # resp.json()["choices"][0]["text"].split("```")[0]
         sql = sql.strip().strip("```")
         print(sql)

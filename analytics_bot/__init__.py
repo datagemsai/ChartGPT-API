@@ -14,6 +14,7 @@ import openai
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 gcp_service_account = st.secrets["gcp_service_account"]
 
+
 def run(dataset_id, project_id: Optional[str] = None, questions=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
     if chart_requests is None:
         chart_requests = []

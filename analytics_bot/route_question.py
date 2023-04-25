@@ -1,5 +1,7 @@
+
 from typing import List
 from analytics_bot.base import completion
+import inspect
 
 
 question = {
@@ -30,14 +32,18 @@ class: sql query
 message: {question}
 class:
 """
+    prompt = inspect.cleandoc(prompt)  # as per end of https://stackoverflow.com/questions/54429373/indentation-when-using-multi-line-strings
+
     for q in questions:
         prompt = prompt.format(question=q["question"])
         resp = completion(prompt)
+        # TODO 2023-04-24: move from prints to proper logging.
+        # print(f"\nOPENAI BOT THINKS THAT THIS REQUEST IS: {resp}\n")
         # q["route"] = resp  # resp.json()["choices"][0]["text"]
         # route = resp  # resp.json()["choices"][0]["text"]
         q['route'] = resp
         # print(q)  # TODO improve logging of request
-        print(f"INPUT QUESTION: [{q['question']}]")  # TODO improve logging of request
+        # print(f"INPUT QUESTION: \n{q['question']}\n")  # TODO improve logging of request
         if "sql" in q["route"].lower():
             sql_requests.append(q)
         elif "chart" in q["route"].lower():
@@ -47,3 +53,4 @@ class:
         else:
             print(f"Unknown route!")
             data_requests.append(q)
+
