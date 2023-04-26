@@ -12,6 +12,9 @@ import openai
 import inspect
 
 
+def tables_summary(eng):
+    return SQLDatabase(engine=eng).get_table_info(table_names=None).replace("CREATE", "")
+
 def table_info(table):
     # TODO 2023-04-17:  upgrade with BQ info
     field_summary = "\n\t".join(

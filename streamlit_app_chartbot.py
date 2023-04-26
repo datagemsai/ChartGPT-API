@@ -1,8 +1,14 @@
-
+from collections import namedtuple
+import altair as alt
+import math
+import pandas as pd
 import streamlit as st
 
 # Custom imports
-from analytics_bot_langchain.agents import run
+import sys
+from analytics_bot import run
+import plotly.express as px
+
 """
 # ***REMOVED*** Analytics AGI
 """
@@ -42,16 +48,7 @@ sample_questions = {
     ],
     "dune_dataset": [
         "Plot the borrow volume across the protocols nftfi, benddao, arcade, jpegd from December 2022 to March 2023",
-        "Plot the 30-day median number of users starting from August 2022",
-        "Plot the weekly NFT finance market share percentage by unique users",
-        "On what date x2y2 had the highest number of users?",
-        "Plot the weekly distribution of unique users over time",
-        "Using dataset 'dune_dataset', plot the borrow volume over time for nftfi, benddao, arcade, jpegd",
-        "Plot the total loan volume per day using Plotly",
-        "Give three visualizations from dune_dataset",
-        "Return a chart which will help me understand user dynamics across protocols",
-        # "Give one powerful visualization on dune_dataset which a primary and secondary y-axis or stacked bar charts, and return it with good layout including legend and colors. You may use log y axis",
-        # "Give two powerful visualization on dune_dataset which use primary and secondary y-axis and return it with good layout including legend and colors",
+        # "Plot the loan principal amount across the protocols nftfi, benddao, arcade, jpegd for December 2022 to February 2023"
     ],
 }
 
@@ -74,6 +71,6 @@ with st.echo(code_location='above'):
     # If the button is clicked or the user presses enter
     if submit_button:
         with st.spinner('Thinking...'):
-            run(question=question)
+            run(questions=[{'question': question}], dataset_id=dataset_id, project_id=BQ_PROJECT_ID)
         st.success('Analytics complete!')
         st.balloons()
