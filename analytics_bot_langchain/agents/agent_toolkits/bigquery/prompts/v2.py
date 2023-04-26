@@ -40,6 +40,7 @@ Additional tips and tricks:
 - Create a Pandas DataFrame of SQL query results: `df = bigquery_client.query(query).to_dataframe()`.
 - Sort a Pandas DataFrame DataFrame using `df.sort_values(...)` when required before plotting.
 - Use Plotly for creating charts and plots from the Pandas DataFrame.
+- If it is a plot request, do not forget to import streamlit as st and at the end of the script use st.plotly_chart(fig, use_container_width=True) to display the plot"
 
 Begin!
 
