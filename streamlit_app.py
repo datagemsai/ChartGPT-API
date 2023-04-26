@@ -1,6 +1,5 @@
 from enum import Enum
 import streamlit as st
-from functools import partial
 
 # Custom imports
 import analytics_bot_langchain
@@ -11,23 +10,6 @@ import analytics_bot
 """
 
 ENV = st.secrets["ENV"]
-
-
-class StreamlitWriter:
-    def write(self, text):
-        # Filter out newlines and other whitespace from the output
-        if text.strip():
-            st.write(text)
-
-    def flush(self):
-        # Streamlit doesn't need flush, but it's part of the file-like object API
-        pass
-
-# Reroute stdout to StreamlitWriter
-# if ENV == "production":
-#     original_stdout = sys.stdout
-#     sys.stdout = StreamlitWriter()
-
 
 sample_questions = {
     "dune_dataset": [
