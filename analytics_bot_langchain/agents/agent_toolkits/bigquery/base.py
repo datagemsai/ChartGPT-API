@@ -47,6 +47,7 @@ def create_bigquery_agent(
         import streamlit as st
         """)
         query = prefix + "\n" + query
+        query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
         query = re.sub(".*fig.show().*\n?", "st.plotly_chart(fig, use_container_width=True)", query)
         return query
@@ -77,4 +78,5 @@ def create_bigquery_agent(
         max_iterations=max_iterations,
         max_execution_time=max_execution_time,
         early_stopping_method=early_stopping_method,
+        callback_manager=callback_manager,
     )
