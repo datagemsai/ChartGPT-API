@@ -32,30 +32,6 @@ Data for table: {table.port_name}:
     """
     return s
 
-
-def query_gpt(prompt, **kwargs) -> str:
-    # llm = ChatOpenAI(
-    #     model_name="gpt-3.5-turbo",
-    #     temperature=0
-    # )
-
-    # prompt_template = PromptTemplate(
-    #     input_variables=["prompt"],
-    #     template=prompt,
-    # )
-    # chain = LLMChain(llm=llm, prompt=prompt_template)
-    # return chain.run("")
-
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        temperature=0.5,
-        messages=[
-            {"role": "user", "content": prompt},
-        ]
-    )
-    return response["choices"][0]["message"]["content"]
-
-
 def query_davinci(prompt, **kwargs) -> str:
     api_key = os.environ['OPENAI_API_KEY']
     params = {
@@ -77,7 +53,6 @@ def query_davinci(prompt, **kwargs) -> str:
 
 
 def completion(prompt, **kwargs):
-    # return query_gpt(prompt=prompt)
     return query_davinci(prompt=prompt, **kwargs)
 
 
