@@ -15,6 +15,7 @@
 
 - Never query for all columns from a table. You must query only the columns that are needed to answer the question.
 - Pay attention to use only the column names you can see in the tables. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
+- If it is a plot request, do not forget to import streamlit as st and at the end of the script use st.plotly_chart(fig, use_container_width=True) to display the plot
 """
 
 PREFIX = """
@@ -39,8 +40,8 @@ Additional tips and tricks:
 - Column names: `tables_summary[dataset_id][table_id]`
 - Create a Pandas DataFrame of SQL query results: `df = bigquery_client.query(query).to_dataframe()`.
 - Sort a Pandas DataFrame DataFrame using `df.sort_values(...)` when required before plotting.
-- Use Plotly for creating charts and plots from the Pandas DataFrame.
-- If it is a plot request, do not forget to import streamlit as st and at the end of the script use st.plotly_chart(fig, use_container_width=True) to display the plot"
+- Use Plotly for creating charts and plots from the Pandas DataFrame
+- Show the Plotly chart using: `st.plotly_chart(fig, use_container_width=True)`
 
 Begin!
 

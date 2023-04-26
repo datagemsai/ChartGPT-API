@@ -1,11 +1,13 @@
 from typing import Any, List, Optional
+import inspect
+import re
 
 from langchain.agents.agent import AgentExecutor
 from langchain.agents.mrkl.base import ZeroShotAgent
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
-from langchain.tools.python.tool import PythonAstREPLTool
+from analytics_bot_langchain.tools.python.tool import PythonAstREPLTool
 
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_tables_summary
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
@@ -39,6 +41,19 @@ def create_bigquery_agent(
     tables_summary = get_tables_summary(client=bigquery_client)
     python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
     python_tool.description = python_tool_description
+
+    def query_post_processing(query: str) -> str:
+        prefix = inspect.cleandoc("""
+        import streamlit as st
+        """)
+        query = prefix + "\n" + query
+        query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
+        query = re.sub(".*bigquery_client =.*\n?", "", query)
+        query = re.sub(".*fig.show().*\n?", "st.plotly_chart(fig, use_container_width=True)", query)
+        return query
+
+    python_tool.query_post_processing = query_post_processing
+
     tools = [python_tool]
     prompt = ZeroShotAgent.create_prompt(
         tools, prefix=prefix, suffix=suffix, input_variables=input_variables
@@ -63,4 +78,5 @@ def create_bigquery_agent(
         max_iterations=max_iterations,
         max_execution_time=max_execution_time,
         early_stopping_method=early_stopping_method,
+        callback_manager=callback_manager,
     )
