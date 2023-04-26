@@ -1,5 +1,4 @@
-from analytics_bot_langchain.agents.app import run
-
+from analytics_bot_langchain.app import run
 
 __all__ = [
     "run"

@@ -1,17 +1,16 @@
-
+from enum import Enum
 import streamlit as st
 from functools import partial
 
 # Custom imports
 import analytics_bot_langchain
 import analytics_bot
+
 """
 # NFTfi Analytics AGI
 """
 
 ENV = st.secrets["ENV"]
-BQ_PROJECT_ID = st.secrets["BQ_PROJECT_ID"]
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 
 class StreamlitWriter:
@@ -55,29 +54,25 @@ sample_questions = {
     "nftfi_loan_data": [
         "Plot the loan principal amount of the top 5 asset classes by volume over time",
     ],
-    "run_all_dune": None,
 }
 
-sample_agents = {
-    'Langchain': analytics_bot_langchain.agents.run,
-    'Chartbot': analytics_bot.run,
-}
-
+class Agents(Enum):
+    LangChain = 1
+    ChartBot = 2
 
 with st.echo(code_location='above'):
-    agent = st.selectbox('Select agent:', sample_agents.keys())
-
-    dataset_id = st.selectbox('Select dataset:', sample_questions.keys())
+    agent = st.selectbox('Select agent:', Agents._member_names_)
 
     sample_questions_for_dataset = [""]  # Create unselected option
-    sample_questions_for_dataset.extend(sample_questions[dataset_id])
-    sample_question = st.selectbox('Select sample question (optional):', sample_questions_for_dataset)
 
-    run = sample_agents[agent]
-    if agent == 'Chartbot':
-        # Charbot run function (i.e. analytics_bot.run) has more arguments than analytics_bot_langchain.agents.run,
-        # so create a partial function of it to match signatures.
-        run = partial(run, dataset_id=dataset_id, project_id=BQ_PROJECT_ID)
+    if agent == Agents.ChartBot.name:
+        # ChartBot is not able to select a dataset to answer a query
+        dataset_id = st.selectbox('Select dataset:', sample_questions.keys())
+        sample_questions_for_dataset.extend(sample_questions[dataset_id])
+    else:
+        sample_questions_for_dataset.extend([item for sublist in sample_questions.values() for item in sublist])
+    
+    sample_question = st.selectbox('Select sample question (optional):', sample_questions_for_dataset)
 
     if not sample_question:
         question = st.text_input("Enter your question:")
@@ -90,6 +85,11 @@ with st.echo(code_location='above'):
     # If the button is clicked or the user presses enter
     if submit_button:
         with st.spinner('Thinking...'):
-            run(question=question)
+            if agent == Agents.LangChain.name:
+                analytics_bot_langchain.run(question=question)
+            elif agent == Agents.ChartBot.name:
+                analytics_bot.run(question=question, dataset_id=dataset_id)
+            else:
+                st.error(f'Invalid agent type: {agent}')
         st.success('Analytics complete!')
         st.balloons()
