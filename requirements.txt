@@ -6,6 +6,7 @@ watchdog
 # AGI
 langchain
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
+# git+https://github.com/cadlabs/langchain.git@cadlabs/python_tool_sanitization#egg=langchain
 openai
 wolframalpha
 python-dotenv
