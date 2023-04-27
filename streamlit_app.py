@@ -36,6 +36,10 @@ sample_questions = {
     "nftfi_loan_data": [
         "Plot the loan principal amount of the top 5 asset classes by volume over time",
     ],
+    "dex_data": [
+        "From dex_data, give a plot to provide an understanding of swaps across blockchains",
+        "Give three visualizations",
+    ],
 }
 
 class Agents(Enum):
@@ -47,12 +51,12 @@ agent = st.selectbox('Select agent:', Agents._member_names_)
 
 sample_questions_for_dataset = [""]  # Create unselected option
 
-if agent == Agents.ChartBot.name:
+#if agent == Agents.ChartBot.name:
     # ChartBot is not able to select a dataset to answer a query
-    dataset_id = st.selectbox('Select dataset:', sample_questions.keys())
-    sample_questions_for_dataset.extend(sample_questions[dataset_id])
-else:
-    sample_questions_for_dataset.extend([item for sublist in sample_questions.values() for item in sublist])
+dataset_id = st.selectbox('Select dataset:', sample_questions.keys())
+sample_questions_for_dataset.extend(sample_questions[dataset_id])
+#else:
+#    sample_questions_for_dataset.extend([item for sublist in sample_questions.values() for item in sublist])
 
 sample_question = st.selectbox('Select sample question (optional):', sample_questions_for_dataset)
 

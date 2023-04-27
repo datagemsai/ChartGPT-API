@@ -1,5 +1,6 @@
 # from analytics_bot_langchain.data.dune import run
 import time
+from datetime import datetime
 
 # run()
 import dotenv
@@ -16,26 +17,28 @@ from dune_client.models import ExecutionState
 
 dotenv.load_dotenv()
 dune = DuneClient(os.environ["DUNE_API_KEY"])
+# Set the display options to show all columns and rows
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.expand_frame_repr", False)
 
-
-def run(query_id=2419712):
+def run(query_id=2419712, time="1", frequency="HOUR"):
     query = Query(
         name="Sample Query",
         query_id=query_id,
-        # params=[
-        #     QueryParameter.text_type(name="TextField", value="Word"),
-        #     QueryParameter.number_type(name="NumberField", value=3.1415926535),
-        #     QueryParameter.date_type(name="DateField", value="2022-05-04 00:00:00"),
-        #     QueryParameter.enum_type(name="EnumField", value="Option 1"),
-        # ],
+        params=[
+            QueryParameter.text_type(name="time", value=time),
+            QueryParameter.text_type(name="frequency", value=frequency),
+        ],
     )
     print("Results available at", query.url())
     results = dune.refresh(query)
-    time.sleep(30)
+    # time.sleep(30)
     if results.state == ExecutionState.COMPLETED:
         df = pd.DataFrame(results.result.rows, columns=results.result.metadata.column_names)
+        df.to_csv(f'dex_data_{time}_{frequency}_{datetime.now().strftime("%Y-%m-%d %H:%M").replace(" ", "_")}.csv', index=False)
     else:
         raise Exception(results.state)
     return df
 
-print(run())
+print(run(2421110))
