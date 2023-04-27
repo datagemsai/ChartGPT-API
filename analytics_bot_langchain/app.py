@@ -96,6 +96,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
 
 callback_manager = CallbackManager([CustomCallbackHandler()])
 
+
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"]).with_scopes([
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/bigquery",
