@@ -1,17 +1,27 @@
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 import inspect
 import re
+import logging
 
+from langchain.prompts.few_shot import FewShotPromptTemplate
+from langchain.prompts.prompt import PromptTemplate
 from langchain.agents.agent import AgentExecutor
 from langchain.agents.mrkl.base import ZeroShotAgent
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from analytics_bot_langchain.tools.python.tool import PythonAstREPLTool
-
+from pydantic import root_validator
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_tables_summary
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
+from langchain.schema import (
+    AgentAction,
+    BaseMessage
+)
+from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
 
+
+logger = logging.getLogger(__name__)
 
 python_tool_description = (
     "A Python shell. Use this to execute python commands. "
@@ -21,6 +31,41 @@ python_tool_description = (
     # Custom
     "Do not try to check the output."
 )
+
+class CustomAgent(ZeroShotAgent):
+    output_parser = CustomOutputParser
+
+    @root_validator(allow_reuse=True)
+    def validate_prompt(cls, values: Dict) -> Dict:
+        """Validate that prompt matches format."""
+        prompt = values["llm_chain"].prompt
+        if "agent_scratchpad" not in prompt.input_variables:
+            logger.warning(
+                "`agent_scratchpad` should be a variable in prompt.input_variables."
+                " Did not find it, so adding it at the end."
+            )
+            prompt.input_variables.append("agent_scratchpad")
+            if isinstance(prompt, PromptTemplate):
+                prompt.template += "\n{agent_scratchpad}"
+            elif isinstance(prompt, FewShotPromptTemplate):
+                prompt.suffix += "\n{agent_scratchpad}"
+            else:
+                raise ValueError(f"Got unexpected prompt type {type(prompt)}")
+        return values
+    
+    def _construct_scratchpad(
+        self, intermediate_steps: List[Tuple[AgentAction, str]]
+    ) -> Union[str, List[BaseMessage]]:
+        """Construct the scratchpad that lets the agent continue its thought process."""
+        thoughts = ""
+        for action, observation in intermediate_steps:
+            character_limit = 1000
+            if len(str(observation)) > character_limit:
+                observation = str(observation)[:character_limit]
+            thoughts += action.log
+            thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}"
+        return thoughts
+
 
 def create_bigquery_agent(
     llm: BaseLLM,
@@ -45,11 +90,17 @@ def create_bigquery_agent(
     def query_post_processing(query: str) -> str:
         prefix = inspect.cleandoc("""
         import streamlit as st
+
+        # Monkey patching
+        from plotly.graph_objs._figure import Figure
+        def st_show(self):
+            import streamlit as st
+            st.plotly_chart(self, use_container_width=True)
+        Figure.show = st_show
         """)
         query = prefix + "\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
-        query = re.sub(".*fig.show().*\n?", "st.plotly_chart(fig, use_container_width=True)", query)
         return query
 
     python_tool.query_post_processing = query_post_processing
@@ -69,7 +120,7 @@ def create_bigquery_agent(
         callback_manager=callback_manager,
     )
     tool_names = [tool.name for tool in tools]
-    agent = ZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names, **kwargs)
+    agent = CustomAgent(llm_chain=llm_chain, allowed_tools=tool_names, **kwargs)
     return AgentExecutor.from_agent_and_tools(
         agent=agent,
         tools=tools,

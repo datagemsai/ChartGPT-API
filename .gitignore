@@ -132,3 +132,5 @@ dmypy.json
 secrets/*
 docs/*
 .streamlit/secrets.toml
+.idea/*
+secrets.toml
