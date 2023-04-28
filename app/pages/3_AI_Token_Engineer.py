@@ -1,5 +1,5 @@
 import streamlit as st
-from app.Intro import ai_token_engineer_description
+from app.config.content import ai_token_engineer_description
 
 
 PAGE_NAME = "AI Token Engineer"

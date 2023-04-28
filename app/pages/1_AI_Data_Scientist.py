@@ -1,7 +1,7 @@
 import streamlit as st
 
 import traceback
-from app.Intro import ai_data_scientist_description
+from app.config.content import ai_data_scientist_description
 import analytics_bot_langchain
 
 # Display app name
