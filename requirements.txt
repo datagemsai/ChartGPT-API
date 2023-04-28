@@ -1,6 +1,6 @@
 # altair
 pandas
-streamlit
+streamlit==1.21.0
 watchdog
 langchain==0.0.148
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
