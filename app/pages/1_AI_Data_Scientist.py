@@ -14,7 +14,7 @@ Figure.show = st_show
 # Display app name
 APP_NAME = "AI Data Scientist" # st.secrets["APP_NAME"]
 st.set_page_config(page_title=APP_NAME, page_icon="📈")
-st.markdown("# " + APP_NAME)
+st.markdown("# " + APP_NAME + " 📈")
 
 st.markdown(ai_data_scientist_description)
 

@@ -4,7 +4,6 @@ import altair as alt
 import math
 import pandas as pd
 import streamlit as st
-from PIL import Image
 import os
 from dotenv import load_dotenv, dotenv_values
 from copy import copy
@@ -17,7 +16,9 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 
 from app.Intro import radcad_assistant_description
 
-st.markdown("# radCAD Assistant")
+PAGE_NAME = "radCAD Assistant"
+st.set_page_config(page_title=PAGE_NAME, page_icon="⚙️")
+st.markdown("# " + PAGE_NAME + " ⚙️")
 st.markdown(radcad_assistant_description)
 
 st.warning('This assistant is still in beta and learning from the radCAD knowledge base.')
@@ -42,9 +43,6 @@ st.secrets._secrets = env_variables
 # load_dotenv()
 # set_secret_from_env("OPENAI_API_KEY")
 # set_secret_from_env("ACTIVELOOP_TOKEN")
-
-# image = Image.open('logo.png')
-# st.image(image)
 
 @st.cache_resource(show_spinner=False)
 def load_model() -> ConversationalRetrievalChain:

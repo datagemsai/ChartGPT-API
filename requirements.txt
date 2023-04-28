@@ -2,7 +2,7 @@
 pandas
 streamlit
 watchdog
-langchain
+langchain==0.0.148
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
 openai
 # wolframalpha
