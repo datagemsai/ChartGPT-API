@@ -18,6 +18,18 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python:Streamlit",
+            "type": "python",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "${file}",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

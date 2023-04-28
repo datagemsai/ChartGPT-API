@@ -6,8 +6,9 @@ from io import StringIO
 from typing import Dict, Optional
 import re
 from collections.abc import Callable
-
 from pydantic import Field, root_validator
+from analytics_bot_langchain.tools.python.secure_ast import secure_eval, secure_exec
+import streamlit as st
 
 from langchain.tools.base import BaseTool
 from langchain.utilities import PythonREPL
@@ -32,7 +33,7 @@ class PythonAstREPLTool(BaseTool):
     sanitize_input: bool = True
     query_post_processing: Optional[Callable[[str], str]] = None
 
-    @root_validator(pre=True)
+    @root_validator(pre=True, allow_reuse=True)
     def validate_python_version(cls, values: Dict) -> Dict:
         """Validate valid python version."""
         if sys.version_info < (3, 9):
@@ -52,24 +53,34 @@ class PythonAstREPLTool(BaseTool):
                 query = query.strip().strip("```")
             if self.query_post_processing:
                 query = self.query_post_processing(query)
+
             tree = ast.parse(query)
             module = ast.Module(tree.body[:-1], type_ignores=[])
-            exec(ast.unparse(module), self.globals, self.locals)  # type: ignore
+            
+            try:
+                secure_exec(ast.unparse(module), custom_globals=self.globals, custom_locals=self.locals)  # type: ignore
+            except ValueError as e:
+                st.error(e)
+                return "Stop"
+            
             module_end = ast.Module(tree.body[-1:], type_ignores=[])
             module_end_str = ast.unparse(module_end)  # type: ignore
             try:
-                return eval(module_end_str, self.globals, self.locals)
+                output = secure_eval(module_end_str, custom_globals=self.globals, custom_locals=self.locals)
             except Exception:
                 old_stdout = sys.stdout
                 sys.stdout = mystdout = StringIO()
                 try:
-                    exec(module_end_str, self.globals, self.locals)
+                    secure_exec(module_end_str, custom_globals=self.globals, custom_locals=self.locals)
                     sys.stdout = old_stdout
                     output = mystdout.getvalue()
+                except ValueError as e:
+                    st.error(e)
+                    return "Stop"
                 except Exception as e:
                     sys.stdout = old_stdout
                     output = str(e)
-                return output
+            return output
         except Exception as e:
             return "{}: {}".format(type(e).__name__, str(e))
 
