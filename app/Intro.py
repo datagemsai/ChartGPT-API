@@ -15,6 +15,7 @@ for key, value in env_variables.items():
         # Use ast.literal_eval so that dictionaries are converted appropriately
         converted_value = ast.literal_eval(value.replace("\n", "\\n"))
         print(key)
+        print(type(converted_value))
         print(converted_value)
         env_variables[key] = converted_value
     except Exception as e:
