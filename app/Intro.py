@@ -13,7 +13,10 @@ env_variables = copy(dotenv_values() or os.environ)
 for key, value in env_variables.items():
     try:
         # Use ast.literal_eval so that dictionaries are converted appropriately
-        env_variables[key] = ast.literal_eval(value.replace("\n", "\\n"))
+        converted_value = ast.literal_eval(value.replace("\n", "\\n"))
+        print(key)
+        print(converted_value)
+        env_variables[key] = converted_value
     except Exception as e:
         pass
 
