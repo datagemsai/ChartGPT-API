@@ -1,8 +1,5 @@
-# from analytics_bot_langchain.data.dune import run
-import time
-from datetime import datetime
 
-# run()
+from datetime import datetime
 import dotenv
 import os
 import pandas as pd
@@ -12,11 +9,9 @@ from dune_client.client import DuneClient
 from dune_client.query import Query
 from dune_client.models import ExecutionState
 
-
-# foo = 'https://api.dune.com/api/v1/query/2419712/results?api_key=<api_key>'
-
 dotenv.load_dotenv()
 dune = DuneClient(os.environ["DUNE_API_KEY"])
+
 # Set the display options to show all columns and rows
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)

@@ -1,7 +1,5 @@
+
 from typing import Dict
-
-import setup
-
 import os
 import glob
 import pandas as pd
@@ -9,27 +7,25 @@ import re
 import locale
 from locale import atof
 import numpy as np
-
-import google.auth
+from google.oauth2 import service_account
 from google.cloud import bigquery
+import streamlit as st
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-
-
+import dotenv
+dotenv.load_dotenv()
 
 overwrite_existing_table = True
 # Load all CSV files from directory into single BigQuery dataset
 
 
-# Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the path of the JSON file that contains your service account key
-credentials, _ = google.auth.default(
-    scopes=[
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/bigquery",
-    ]
-)
+credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"]).with_scopes([
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/bigquery",
+])
+client = bigquery.Client(credentials=credentials)
 
 
 def format_bigquery_column_names(df):
@@ -122,7 +118,7 @@ def locale_to_float_dataframe(df):
     return df
 
 
-def clean_local_csv_files(csv_file_directory = "analytics_bot_langchain/data/dune/dex/"):
+def clean_local_csv_files(csv_file_directory="analytics_bot_langchain/data/dune/dex/"):
     dataframes = {}
 
     for csv_file_path in glob.glob(os.path.join(csv_file_directory, "*.csv")):
@@ -155,10 +151,7 @@ def clean_local_csv_files(csv_file_directory = "analytics_bot_langchain/data/dun
         format_bigquery_column_names(df)
     return dataframes
 
-def save_to_bigquery(dataframes: Dict, project_id = "psychic-medley-383515", dataset_id = "dex"):
-    # Initialize the BigQuery client
-    client = bigquery.Client(credentials=credentials)
-
+def save_to_bigquery(dataframes: Dict, client=client, project_id = "psychic-medley-383515", dataset_id = "dex"):
     for df_name, df in dataframes.items():
         # Construct a reference to the table
         table_ref = client.dataset(dataset_id, project=project_id).table(df_name)
@@ -189,3 +182,6 @@ def save_to_bigquery(dataframes: Dict, project_id = "psychic-medley-383515", dat
         print(f"Loaded {job.output_rows} rows into {dataset_id}.{df_name}.")
 
 
+def clean_csv_files_and_save_to_bigquery():
+    dataframes = clean_local_csv_files()
+    save_to_bigquery(dataframes=dataframes)
