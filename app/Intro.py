@@ -3,7 +3,7 @@ from dotenv import load_dotenv, dotenv_values
 from copy import copy
 import os
 import ast
-
+from PIL import Image
 
 # Environment variables take preference over Streamlit secrets
 load_dotenv()
@@ -20,9 +20,12 @@ for key, value in env_variables.items():
 st.secrets._secrets = env_variables
 
 st.set_page_config(
-    page_title="Home",
-    page_icon="👋",
+    page_title="cadGPT",
+    page_icon="🧠",
 )
+
+image = Image.open('logo.png')
+st.image(image)
 
 st.write("# Welcome to cadGPT! 👋")
 
