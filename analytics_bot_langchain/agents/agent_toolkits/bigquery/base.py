@@ -70,6 +70,7 @@ class CustomAgent(ZeroShotAgent):
 def create_bigquery_agent(
     llm: BaseLLM,
     bigquery_client: Any,
+    dataset_ids: Optional[List] = None,
     callback_manager: Optional[BaseCallbackManager] = None,
     prefix: str = PREFIX,
     suffix: str = SUFFIX,
@@ -83,7 +84,7 @@ def create_bigquery_agent(
 ) -> AgentExecutor:
     if input_variables is None:
         input_variables = ["tables_summary", "project_id", "input", "agent_scratchpad"]
-    tables_summary = get_tables_summary(client=bigquery_client)
+    tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
     python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
     python_tool.description = python_tool_description
 
