@@ -1,13 +1,5 @@
-from collections import namedtuple
 from typing import Dict
-import altair as alt
-import math
-import pandas as pd
 import streamlit as st
-import os
-from dotenv import load_dotenv, dotenv_values
-from copy import copy
-import ast
 
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
@@ -16,33 +8,13 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 
 from app.Intro import radcad_assistant_description
 
+
 PAGE_NAME = "radCAD Assistant"
 st.set_page_config(page_title=PAGE_NAME, page_icon="⚙️")
 st.markdown("# " + PAGE_NAME + " ⚙️")
 st.markdown(radcad_assistant_description)
 
 st.warning('This assistant is still in beta and learning from the radCAD knowledge base.')
-
-# Environment variables take preference over Streamlit secrets
-load_dotenv()
-# If .env exists, give preference
-env_variables = copy(dotenv_values() or os.environ)
-
-for key, value in env_variables.items():
-    try:
-        # Use ast.literal_eval so that dictionaries are converted appropriately
-        env_variables[key] = ast.literal_eval(value.replace("\n", "\\n"))
-    except Exception as e:
-        pass
-
-st.secrets._secrets = env_variables
-
-# def set_secret_from_env(secret_key: str) -> None:
-#     st.secrets[secret_key] = os.environ[secret_key]
-
-# load_dotenv()
-# set_secret_from_env("OPENAI_API_KEY")
-# set_secret_from_env("ACTIVELOOP_TOKEN")
 
 @st.cache_resource(show_spinner=False)
 def load_model() -> ConversationalRetrievalChain:
