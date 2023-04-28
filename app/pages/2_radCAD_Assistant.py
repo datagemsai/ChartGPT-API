@@ -6,7 +6,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.vectorstores import DeepLake
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-from app.Intro import radcad_assistant_description
+from app.config.content import radcad_assistant_description
 
 
 PAGE_NAME = "radCAD Assistant"
