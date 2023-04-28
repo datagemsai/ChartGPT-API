@@ -1,10 +1,9 @@
 import streamlit as st
 
-from dotenv import load_dotenv, dotenv_values
-import os
-import ast
-from copy import copy
 import traceback
+from app.Intro import ai_data_scientist_description
+import analytics_bot_langchain
+
 
 # Monkey patching
 from plotly.graph_objs._figure import Figure
@@ -12,25 +11,12 @@ def st_show(self):
     st.plotly_chart(self, use_container_width=True)
 Figure.show = st_show 
 
-# Environment variables take preference over Streamlit secrets
-load_dotenv()
-# If .env exists, give preference
-env_variables = copy(dotenv_values() or os.environ)
-
-for key, value in env_variables.items():
-    try:
-        # Use ast.literal_eval so that dictionaries are converted appropriately
-        env_variables[key] = ast.literal_eval(value.replace("\n", "\\n"))
-    except Exception as e:
-        pass
-
-st.secrets._secrets = env_variables
-
-# Custom imports that require Streamlit secrets
-import analytics_bot_langchain
-
 # Display app name
-st.markdown(st.secrets["APP_NAME"])
+APP_NAME = "AI Data Scientist" # st.secrets["APP_NAME"]
+st.set_page_config(page_title=APP_NAME, page_icon="📈")
+st.markdown("# " + APP_NAME)
+
+st.markdown(ai_data_scientist_description)
 
 st.markdown("### Question")
 

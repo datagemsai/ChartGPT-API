@@ -10,4 +10,4 @@ kernel:
 	. venv/bin/activate; python -m ipykernel install --user --name python-cadlabs-agi --display-name "Python (CADLabs AGI)"
 
 run:
-	. venv/bin/activate; python -m streamlit run app/main.py
+	. venv/bin/activate; python -m streamlit run app/Intro.py
