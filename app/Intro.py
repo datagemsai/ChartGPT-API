@@ -21,7 +21,9 @@ for key, value in env_variables.items():
     except Exception as e:
         pass
 
+print(type(env_variables["gcp_service_account"]))
 st.secrets._secrets = env_variables
+print(type(st.secrets["gcp_service_account"]))
 
 st.set_page_config(
     page_title="cadGPT",
