@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import inspect
 
-from analytics_bot.base import completion, pyplot_preamble, plotly_preamble, PlotResult, pyplot_exec_prefix, fix_python_bug
+from chartbot.base import completion, pyplot_preamble, plotly_preamble, PlotResult, pyplot_exec_prefix, fix_python_bug
 
 
 def chart_completion(question, result, tables_summary, plot_lib='matplotlib'):

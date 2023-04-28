@@ -3,7 +3,7 @@
 from dataclasses import asdict
 
 from . import base
-from analytics_bot.base import sql_completion_pipeline
+from chartbot.base import sql_completion_pipeline
 
 
 

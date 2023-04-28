@@ -1,4 +1,4 @@
-from analytics_bot import run
+from chartbot import run
 
 
 run(

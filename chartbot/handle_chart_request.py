@@ -3,8 +3,8 @@
 from dataclasses import asdict
 from typing import Dict, List
 
-from analytics_bot.base import sql_completion_pipeline, sql_completion
-from analytics_bot.make_plot import plot_charts
+from chartbot.base import sql_completion_pipeline, sql_completion
+from chartbot.make_plot import plot_charts
 
 
 def handle_chart_request(eng, request: Dict, tables_summary: str, query_fixes=None) -> Dict:

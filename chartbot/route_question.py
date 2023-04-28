@@ -1,6 +1,6 @@
 
 from typing import List
-from analytics_bot.base import completion
+from chartbot.base import completion
 import inspect
 
 

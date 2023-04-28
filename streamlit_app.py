@@ -3,7 +3,7 @@ import streamlit as st
 
 # Custom imports
 import analytics_bot_langchain
-import analytics_bot
+import chartbot
 
 """
 # NFTfi Analytics AGI
@@ -75,7 +75,7 @@ if submit_button:
         if agent == Agents.LangChain.name:
             analytics_bot_langchain.run(question=question)
         elif agent == Agents.ChartBot.name:
-            analytics_bot.run(question=question, dataset_id=dataset_id)
+            chartbot.run(question=question, dataset_id=dataset_id)
         else:
             st.error(f'Invalid agent type: {agent}')
     st.success('Analytics complete!')

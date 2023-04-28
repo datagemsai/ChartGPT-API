@@ -2,7 +2,7 @@
 from typing import List
 from dataclasses import asdict
 import inspect
-from analytics_bot.base import get_sql_result, completion
+from chartbot.base import get_sql_result, completion
 
 extract_prompt = """Reproduce the SQL statement from the following, exactly as written:
 

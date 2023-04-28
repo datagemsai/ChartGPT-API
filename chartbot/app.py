@@ -1,9 +1,9 @@
 from typing import Optional
-from analytics_bot.handle_chart_request import process_chart_requests
-from analytics_bot.handle_data_request import process_data_requests
-from analytics_bot.handle_sql_request import process_sql_requests
-from analytics_bot.route_question import process_questions
-from analytics_bot.base import tables_summary
+from chartbot.handle_chart_request import process_chart_requests
+from chartbot.handle_data_request import process_data_requests
+from chartbot.handle_sql_request import process_sql_requests
+from chartbot.route_question import process_questions
+from chartbot.base import tables_summary
 from sqlalchemy.engine import create_engine
 import streamlit as st
 import os
