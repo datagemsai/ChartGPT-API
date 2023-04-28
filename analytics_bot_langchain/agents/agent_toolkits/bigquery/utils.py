@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 from google.cloud import bigquery
 
 
@@ -11,8 +11,13 @@ def get_table_ids(client: bigquery.Client) -> List[str]:
     return [table.table_id for dataset_id in dataset_ids for table in client.list_tables(dataset_id)]
 
 
-def get_tables_summary(client: bigquery.Client, include_types=False) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
-    dataset_ids = get_dataset_ids(client=client)
+def get_tables_summary(
+        client: bigquery.Client,
+        dataset_ids: Optional[List] = None,
+        include_types = False
+) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
+    if not dataset_ids:
+        dataset_ids = get_dataset_ids(client=client)
 
     tables_summary = {}
     for dataset_id in dataset_ids:
