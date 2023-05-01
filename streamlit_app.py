@@ -36,10 +36,11 @@ sample_questions = {
     "nftfi_loan_data": [
         "Plot the loan principal amount of the top 5 asset classes by volume over time",
     ],
-    "dex_data": [
-        "From dex_data, give a plot to provide an understanding of swaps across blockchains",
+    "dex": [
+        "From dex, give a plot to provide an understanding of swaps across blockchains",
         "Plot the five most traded token pairs",
         "Give three visualizations",
+        "Give three visualizations by grouping by taker to understand who made most trade",
     ],
 }
 

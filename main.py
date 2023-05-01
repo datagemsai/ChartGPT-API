@@ -3,3 +3,4 @@
 from analytics_bot_langchain.data.bigquery_pipeline import clean_csv_files_and_save_to_bigquery
 
 clean_csv_files_and_save_to_bigquery()
+
