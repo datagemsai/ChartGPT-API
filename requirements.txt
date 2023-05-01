@@ -1,36 +1,34 @@
-# Streamlit
-altair
+# altair
 pandas
-streamlit
+streamlit==1.21.0
 watchdog
-# AGI
-langchain
+langchain==0.0.148
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
-# git+https://github.com/cadlabs/langchain.git@cadlabs/python_tool_sanitization#egg=langchain
 openai
-wolframalpha
+# wolframalpha
 python-dotenv
-google-search-results
+# google-search-results
 google-cloud-bigquery[pandas]
 google-api-python-client==2.70.0
 google-auth-httplib2
 google-auth-oauthlib
 ipykernel
-matplotlib
+# matplotlib
 plotly
-jupyterlab
+# jupyterlab
 pytest
-notebook
-ipywidgets
+# notebook
+# ipywidgets
 pandas
 numpy
-pyarrow
-PyPDF2
+# pyarrow
+# PyPDF2
 unstructured
-chromadb
+# chromadb
 lxml
 tiktoken
 flask_sqlalchemy
 sqlalchemy-bigquery[bqstorage]
-pinecone-client
-faiss-cpu
+# pinecone-client
+# faiss-cpu
+deeplake

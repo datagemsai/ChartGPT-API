@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+    app:
+        image: cadGPT
+        build:
+            dockerfile: ./Dockerfile
+            context: .
+        environment:
+            - PORT=${PORT}
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - ACTIVELOOP_TOKEN=${ACTIVELOOP_TOKEN}
+        ports:
+            - ${PORT}:${PORT}
+        # volumes:
+        #     - ./app:/usr/app/src/
