@@ -262,34 +262,58 @@ def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField], clien
         print(f"Loaded {job.output_rows} rows into {dataset_id}.{df_name}.")
 
 
-# Define the table schema
-dex_data_schema = [
-    bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("version", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("block_date", bigquery.enums.SqlTypeNames.TIMESTAMP),
-    bigquery.SchemaField("block_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
-    bigquery.SchemaField("token_bought_symbol", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("token_sold_symbol", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("token_pair", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("token_bought_amount", bigquery.enums.SqlTypeNames.FLOAT),
-    bigquery.SchemaField("token_sold_amount", bigquery.enums.SqlTypeNames.FLOAT),
-    bigquery.SchemaField("token_bought_amount_raw", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("token_sold_amount_raw", bigquery.enums.SqlTypeNames.STRING),
-    # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),
-    bigquery.SchemaField("token_bought_address", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("token_sold_address", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("taker", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("maker", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("project_contract_address", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("tx_hash", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("tx_from", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("tx_to", bigquery.enums.SqlTypeNames.STRING),
-    # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),
-    bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
-]
+def get_schema(table_name='nft_lending_aggregated_borrow'):
+    if table_name == 'nft_lending_aggregated_borrow':
+        return [
+            bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField(f"bend_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"paraspace_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"total_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"bend_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"paraspace_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
+        ]
+    elif table_name == 'dex':
+        # Define the table schema
+        dex_data_schema = [
+            bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("version", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("block_date", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("block_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("token_bought_symbol", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_sold_symbol", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_pair", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_bought_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_sold_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_bought_amount_raw", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_sold_amount_raw", bigquery.enums.SqlTypeNames.STRING),
+            # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_bought_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_sold_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("taker", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("maker", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("project_contract_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("tx_hash", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("tx_from", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("tx_to", bigquery.enums.SqlTypeNames.STRING),
+            # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
+        ]
 
 
-def clean_csv_files_and_save_to_bigquery(schema: List[bigquery.SchemaField], datatype: Datatype = Datatype.nftfi, overwrite_existing_table=True):
+def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype = Datatype.nftfi, overwrite_existing_table=True):
     dataframes = clean_local_csv_files(datatype=datatype)
+    schema = get_schema(table_name=table_name)
     save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table, schema=schema)
