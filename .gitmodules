@@ -1,0 +1,3 @@
+[submodule "radCAD"]
+	path = radCAD
+	url = https://github.com/***REMOVED***/radCAD.git
