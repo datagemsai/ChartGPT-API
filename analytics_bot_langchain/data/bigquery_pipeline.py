@@ -1,5 +1,4 @@
-
-from typing import Dict
+from typing import Dict, List
 import os
 import glob
 import pandas as pd
@@ -11,11 +10,13 @@ from google.oauth2 import service_account
 from google.cloud import bigquery
 import streamlit as st
 from pandas.api.types import is_numeric_dtype, is_string_dtype
-
+from enum import Enum
 import pprint
+
 pp = pprint.PrettyPrinter(indent=4)
 
 import dotenv
+
 dotenv.load_dotenv()
 
 # Load all CSV files from directory into single BigQuery dataset
@@ -26,6 +27,10 @@ credentials = service_account.Credentials.from_service_account_info(st.secrets["
     "https://www.googleapis.com/auth/bigquery",
 ])
 client = bigquery.Client(credentials=credentials)
+
+class Datatype(Enum):
+    dex = "dex"
+    nftfi = "nftfi"
 
 
 def format_bigquery_column_names(df):
@@ -43,6 +48,7 @@ def format_bigquery_column_names(df):
         # Convert remaining camel-case string to kebab-case
         s = re.sub(r'(?<!^)(?<!_)(?=[A-Z])(?![A-Z])', '_', s).lower()
         return s
+
     # Apply the function to all column names
     df.columns = df.columns.map(camel_to_kebab)
     return df
@@ -182,9 +188,9 @@ def set_datatype(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def clean_local_csv_files(csv_file_directory="analytics_bot_langchain/data/dune/dex/"):
+def clean_local_csv_files(datatype: Datatype):
     dataframes = {}
-
+    csv_file_directory = f"analytics_bot_langchain/data/dune/{datatype.value}/"
     for csv_file_path in glob.glob(os.path.join(csv_file_directory, "*.csv")):
         # Get the file name from the file path
         file_name = os.path.basename(csv_file_path)
@@ -201,23 +207,27 @@ def clean_local_csv_files(csv_file_directory="analytics_bot_langchain/data/dune/
                 engine='python',
                 on_bad_lines='warn'
             )
-            # .dropna()
         )
 
         df = drop_if_entirely_nans(df=df)
         df = clean_nans(df=df)
         df = set_datatype(df=df)
-        df['token_bought_amount_raw'] = df['token_bought_amount_raw'].astype(str)
-        df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
-        df['block_time'] = pd.to_datetime(df['block_time'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
-        df['block_date'] = pd.to_datetime(df['block_date'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
+        if datatype.value == datatype.dex:
+            df['token_bought_amount_raw'] = df['token_bought_amount_raw'].astype(str)
+            df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
+            df['block_time'] = pd.to_datetime(df['block_time'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
+            df['block_date'] = pd.to_datetime(df['block_date'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
+        elif datatype == datatype.nftfi:
+            for col in df.columns:
+                if col == 'dt':
+                    continue
+                df[col] = df[col].astype(int)
+            df['dt'] = pd.to_datetime(df['dt'], format='%Y-%m-%d %H:%M')
 
-        # format_bigquery_column_names(df)
-        if "nftfi_loan_data" in file_name:
+        if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
             clean_nftfi_loan_dataframe(df)
-        # Convert locale strings to float
-        df = locale_to_float_dataframe(df)
-        # df.dropna(inplace=True)
+
+        df = locale_to_float_dataframe(df)  # Convert locale strings to float
         dataframes[file_name] = df
 
         list(dataframes.values())[0].head()
@@ -225,38 +235,11 @@ def clean_local_csv_files(csv_file_directory="analytics_bot_langchain/data/dune/
     return dataframes
 
 
-def save_to_bigquery(dataframes: Dict, client=client, project_id="psychic-medley-383515", dataset_id="dex", overwrite_existing_table=False):
+def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField], client=client, project_id="psychic-medley-383515", dataset_id="dex", overwrite_existing_table=False):
     for df_name, df in dataframes.items():
-        # Construct a reference to the table
-        df_name = df_name.replace(':', '_')
-        table_ref = client.dataset(dataset_id, project=project_id).table(df_name)
 
-        # Define the table schema
-        schema = [
-            bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("version", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("block_date", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("block_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("token_bought_symbol", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("token_sold_symbol", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("token_pair", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("token_bought_amount", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("token_sold_amount", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("token_bought_amount_raw", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("token_sold_amount_raw", bigquery.enums.SqlTypeNames.STRING),
-            # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("token_bought_address", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("token_sold_address", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("taker", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("maker", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("project_contract_address", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("tx_hash", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("tx_from", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("tx_to", bigquery.enums.SqlTypeNames.STRING),
-            # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
-        ]
+        df_name = df_name.replace(':', '_')
+        table_ref = client.dataset(dataset_id, project=project_id).table(df_name)  # Construct a reference to the table
 
         # Upload the data to BigQuery
         if overwrite_existing_table:
@@ -279,9 +262,34 @@ def save_to_bigquery(dataframes: Dict, client=client, project_id="psychic-medley
         print(f"Loaded {job.output_rows} rows into {dataset_id}.{df_name}.")
 
 
-def clean_csv_files_and_save_to_bigquery():
-    dataframes = clean_local_csv_files()
-    overwrite_existing_table = True
-    save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table)
+# Define the table schema
+dex_data_schema = [
+    bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("version", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("block_date", bigquery.enums.SqlTypeNames.TIMESTAMP),
+    bigquery.SchemaField("block_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+    bigquery.SchemaField("token_bought_symbol", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("token_sold_symbol", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("token_pair", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("token_bought_amount", bigquery.enums.SqlTypeNames.FLOAT),
+    bigquery.SchemaField("token_sold_amount", bigquery.enums.SqlTypeNames.FLOAT),
+    bigquery.SchemaField("token_bought_amount_raw", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("token_sold_amount_raw", bigquery.enums.SqlTypeNames.STRING),
+    # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),
+    bigquery.SchemaField("token_bought_address", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("token_sold_address", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("taker", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("maker", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("project_contract_address", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("tx_hash", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("tx_from", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("tx_to", bigquery.enums.SqlTypeNames.STRING),
+    # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),
+    bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
+]
 
 
+def clean_csv_files_and_save_to_bigquery(schema: List[bigquery.SchemaField], datatype: Datatype = Datatype.nftfi, overwrite_existing_table=True):
+    dataframes = clean_local_csv_files(datatype=datatype)
+    save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table, schema=schema)
