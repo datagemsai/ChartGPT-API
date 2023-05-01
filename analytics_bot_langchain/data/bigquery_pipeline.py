@@ -231,7 +231,6 @@ def clean_local_csv_files(datatype: Datatype):
         dataframes[file_name] = df
 
         list(dataframes.values())[0].head()
-        # format_bigquery_column_names(df)
     return dataframes
 
 
@@ -284,9 +283,30 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField(f"x2y2_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
             bigquery.SchemaField(f"paraspace_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
         ]
+    elif table_name == 'nft_lending_aggregated_repay':
+        return [
+            bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField(f"bend_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"paraspace_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"total_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"bend_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"paraspace_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+        ]
     elif table_name == 'dex':
-        # Define the table schema
-        dex_data_schema = [
+        # Return the Dune dex schema
+        return [
             bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("version", bigquery.enums.SqlTypeNames.STRING),
@@ -299,7 +319,7 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField("token_sold_amount", bigquery.enums.SqlTypeNames.FLOAT),
             bigquery.SchemaField("token_bought_amount_raw", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("token_sold_amount_raw", bigquery.enums.SqlTypeNames.STRING),
-            # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),
+            # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),  # EMPTY IN DUNE hence cleaned away
             bigquery.SchemaField("token_bought_address", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("token_sold_address", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("taker", bigquery.enums.SqlTypeNames.STRING),
@@ -308,7 +328,7 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField("tx_hash", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("tx_from", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("tx_to", bigquery.enums.SqlTypeNames.STRING),
-            # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),
+            # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),  # EMPTY IN DUNE hence cleaned away
             bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
         ]
 

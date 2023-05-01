@@ -20,7 +20,7 @@ pd.set_option("display.max_rows", None)
 pd.set_option("display.expand_frame_repr", False)
 
 
-def run(file_name: str, datatype: Datatype=Datatype.nftfi, query_id=2419712, time="1", frequency="HOUR", is_dex_data=False):
+def run_query(file_name: str, datatype: Datatype=Datatype.nftfi, query_id=2419712, time="1", frequency="HOUR", is_dex_data=False):
     params = []
     file_name = f"analytics_bot_langchain/data/dune/{datatype.value}/" + file_name
     if is_dex_data:
