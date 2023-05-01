@@ -5,13 +5,14 @@ from analytics_bot.handle_sql_request import process_sql_requests
 from analytics_bot.route_question import process_questions
 from analytics_bot.base import tables_summary
 from sqlalchemy.engine import create_engine
-import streamlit as st
 import os
 import openai
+import json
+
 
 # Load secrets / environment variables from .streamlit directory secrets.toml
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-gcp_service_account = st.secrets["gcp_service_account"]
+openai.api_key = os.environ["OPENAI_API_KEY"]
+gcp_service_account = json.loads(os.environ["gcp_service_account"], strict=False)
 
 
 def run(dataset_id, project_id: Optional[str] = None, questions=None, question=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:

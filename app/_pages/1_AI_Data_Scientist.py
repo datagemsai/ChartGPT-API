@@ -1,11 +1,12 @@
 import streamlit as st
-
+import os
 import traceback
 from app.config.content import ai_data_scientist_description
 import analytics_bot_langchain
 
+
 # Display app name
-PAGE_NAME = "AI Data Scientist" # st.secrets["APP_NAME"]
+PAGE_NAME = "AI Data Scientist"
 st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
 st.markdown("# " + PAGE_NAME + " 📈")
 st.markdown(ai_data_scientist_description)
@@ -19,7 +20,7 @@ Figure.show = st_show
 st.markdown("### Question")
 
 # Import sample question for project
-if st.secrets["PROJECT"] == "NFTFI":
+if os.environ["PROJECT"] == "NFTFI":
     from app.config.nftfi import sample_questions
 else:
     from app.config.default import sample_questions
