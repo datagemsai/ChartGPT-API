@@ -7,10 +7,12 @@ from google.oauth2 import service_account
 import streamlit as st
 from analytics_bot_langchain.callback_handler import CustomCallbackHandler
 from langchain.callbacks.base import CallbackManager
+import os
+import json
 
 
 callback_manager = CallbackManager([CustomCallbackHandler()])
-credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"]).with_scopes([
+credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes([
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/bigquery",
 ])
