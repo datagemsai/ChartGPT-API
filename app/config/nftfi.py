@@ -1,4 +1,4 @@
-sample_questions = {
+datasets = {
     "dune_dataset": [
         "Plot the borrow volume across the protocols nftfi, benddao, arcade, jpegd from December 2022 to March 2023",
         "Give three visualizations from dune_dataset",

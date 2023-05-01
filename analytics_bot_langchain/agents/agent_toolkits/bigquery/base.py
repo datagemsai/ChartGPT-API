@@ -102,6 +102,7 @@ def create_bigquery_agent(
         query = prefix + "\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
+        query = query.replace("print", "st.write")
         return query
 
     python_tool.query_post_processing = query_post_processing

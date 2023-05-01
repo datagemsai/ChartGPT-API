@@ -20,4 +20,7 @@ COPY analytics_bot_langchain ./analytics_bot_langchain
 EXPOSE $PORT
 HEALTHCHECK CMD curl --fail http://localhost:$PORT/_stcore/health
 
-CMD ["sh", "-c", "python -m streamlit run app/Intro.py --server.port=$PORT --server.address=0.0.0.0"]
+# Multi-page application, after renaming `app/_pages/` to `app/pages/`:
+# CMD ["sh", "-c", "python -m streamlit run app/Intro.py --server.port=$PORT --server.address=0.0.0.0"]
+# Single-page application:
+CMD ["sh", "-c", "python -m streamlit run app/chartGPT.py --server.port=$PORT --server.address=0.0.0.0"]
