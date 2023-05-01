@@ -10,6 +10,7 @@ import numpy as np
 from google.oauth2 import service_account
 from google.cloud import bigquery
 import streamlit as st
+from pandas.api.types import is_numeric_dtype, is_string_dtype
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -17,7 +18,6 @@ pp = pprint.PrettyPrinter(indent=4)
 import dotenv
 dotenv.load_dotenv()
 
-overwrite_existing_table = True
 # Load all CSV files from directory into single BigQuery dataset
 
 
@@ -35,8 +35,9 @@ def format_bigquery_column_names(df):
     df.columns = df.columns.str.strip()
     # Replace spaces with underscore
     df.columns = df.columns.str.replace(' ', '_')
-    # Define a function to convert camel-case to kebab-case
+
     def camel_to_kebab(s):
+        """ Define a function to convert camel-case to kebab-case """
         # Replace consecutive capital letters with a single lowercase letter
         s = re.sub(r'(?<=[a-z])(?=[A-Z])', '_', s)
         # Convert remaining camel-case string to kebab-case
@@ -45,6 +46,7 @@ def format_bigquery_column_names(df):
     # Apply the function to all column names
     df.columns = df.columns.map(camel_to_kebab)
     return df
+
 
 def clean_nftfi_loan_dataframe(df) -> pd.DataFrame:
     # Convert date from Google datetime to Pandas datetime
@@ -73,14 +75,16 @@ def clean_nftfi_loan_dataframe(df) -> pd.DataFrame:
 
     # Drop last column as it is unnamed
     df = df.drop('', axis=1, errors='ignore')
-
     return df
+
 
 def is_percentage_string(s):
     return isinstance(s, str) and ("%" in s)
 
+
 def is_locale_string(s):
     return isinstance(s, str) and ("," in s or "." in s) and s.replace(',', '').replace('.', '').isnumeric()
+
 
 def locale_to_float(string):
     if is_locale_string(string):
@@ -90,6 +94,7 @@ def locale_to_float(string):
             locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')  # US locale, using dot as decimal separator        
         string = atof(string)
     return string
+
 
 def locale_to_float_series(series):
     # Check if the column contains locale strings
@@ -111,10 +116,69 @@ def locale_to_float_series(series):
 
     return series
 
+
 def locale_to_float_dataframe(df):
     # Iterate over all columns in the DataFrame
     for column in df.columns:
         df[column] = locale_to_float_series(df[column])
+    return df
+
+
+def clean_nans(df: pd.DataFrame) -> pd.DataFrame:
+    df_cleaned = df.copy()
+    for column in df.columns:
+        if df[column].isna().any():
+            print(f"Column {column} contains NaN values.")
+
+            # Drop the rows containing NaN values in column
+            df_cleaned = df_cleaned.dropna(subset=[column])
+
+            print("\nOriginal DataFrame:")
+            print(df)
+
+            print(f"\nDataFrame after dropping rows with NaN values in column {column}:")
+            print(df_cleaned)
+        else:
+            print(f"Column {column} does not contain NaN values.")
+    return df_cleaned
+
+
+def fill_if_entirely_nans(df: pd.DataFrame) -> pd.DataFrame:
+    # Iterate through the columns and check if the entire column contains NaN values
+    for column in df.columns:
+        if df[column].isna().all():
+            print(f"Column {column} contains only NaN values.")
+
+            # Check the data type of the column and replace NaN values accordingly
+            if is_numeric_dtype(df[column]):
+                df[column] = df[column].fillna(0)
+            elif is_string_dtype(df[column]):
+                df[column] = df[column].fillna('')
+    return df
+
+
+def drop_if_entirely_nans(df: pd.DataFrame) -> pd.DataFrame:
+    # Iterate through the columns and check if the entire column contains NaN values
+    for column in df.columns:
+        if df[column].isna().all():
+            print(f"Column {column} contains only NaN values.")
+
+            # Drop the column containing only NaN values
+            df.drop(column, axis=1, inplace=True)
+    return df
+
+
+def set_datatype(df: pd.DataFrame) -> pd.DataFrame:
+    for column in df.columns:
+        # Check for string type
+        if any(isinstance(val, str) for val in df[column]):
+            df[column] = df[column].astype(str)
+        # Check for float type
+        elif any(isinstance(val, float) and not isinstance(val, int) for val in df[column]):
+            df[column] = df[column].astype(float)
+        # Check for integer type
+        elif all(isinstance(val, int) for val in df[column]):
+            df[column] = df[column].astype(int)
     return df
 
 
@@ -131,34 +195,67 @@ def clean_local_csv_files(csv_file_directory="analytics_bot_langchain/data/dune/
         df = (
             pd.read_csv(
                 csv_file_path,
-                # dtype=str,
+                dtype=str,
                 usecols=lambda column: not column.startswith("Unnamed"),
                 encoding='utf-8',
                 engine='python',
                 on_bad_lines='warn'
             )
-            .dropna()
+            # .dropna()
         )
-        format_bigquery_column_names(df)
+
+        df = drop_if_entirely_nans(df=df)
+        df = clean_nans(df=df)
+        df = set_datatype(df=df)
+        df['token_bought_amount_raw'] = df['token_bought_amount_raw'].astype(str)
+        df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
+        df['block_time'] = pd.to_datetime(df['block_time'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
+        df['block_date'] = pd.to_datetime(df['block_date'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
+
+        # format_bigquery_column_names(df)
         if "nftfi_loan_data" in file_name:
             clean_nftfi_loan_dataframe(df)
         # Convert locale strings to float
         df = locale_to_float_dataframe(df)
-        df.dropna(inplace=True)
+        # df.dropna(inplace=True)
         dataframes[file_name] = df
 
         list(dataframes.values())[0].head()
-        format_bigquery_column_names(df)
+        # format_bigquery_column_names(df)
     return dataframes
 
-def save_to_bigquery(dataframes: Dict, client=client, project_id = "psychic-medley-383515", dataset_id = "dex"):
+
+def save_to_bigquery(dataframes: Dict, client=client, project_id="psychic-medley-383515", dataset_id="dex", overwrite_existing_table=False):
     for df_name, df in dataframes.items():
         # Construct a reference to the table
+        df_name = df_name.replace(':', '_')
         table_ref = client.dataset(dataset_id, project=project_id).table(df_name)
 
         # Define the table schema
         schema = [
-            bigquery.SchemaField("date", bigquery.enums.SqlTypeNames.DATE),
+            bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("version", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("block_date", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("block_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("token_bought_symbol", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_sold_symbol", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_pair", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_bought_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_sold_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_bought_amount_raw", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_sold_amount_raw", bigquery.enums.SqlTypeNames.STRING),
+            # bigquery.SchemaField("amount_usd", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_bought_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("token_sold_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("taker", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("maker", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("project_contract_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("tx_hash", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("tx_from", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("tx_to", bigquery.enums.SqlTypeNames.STRING),
+            # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
         ]
 
         # Upload the data to BigQuery
@@ -184,4 +281,7 @@ def save_to_bigquery(dataframes: Dict, client=client, project_id = "psychic-medl
 
 def clean_csv_files_and_save_to_bigquery():
     dataframes = clean_local_csv_files()
-    save_to_bigquery(dataframes=dataframes)
+    overwrite_existing_table = True
+    save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table)
+
+

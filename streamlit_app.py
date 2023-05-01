@@ -43,6 +43,7 @@ sample_questions = {
     ],
 }
 
+
 class Agents(Enum):
     LangChain = 1
     ChartBot = 2
