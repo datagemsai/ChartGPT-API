@@ -31,7 +31,8 @@ allowed_builtins = {
     "__import__",
     "print",
     "list",
-    "dict"
+    "dict",
+    "set",
 }
 
 insecure_functions = {
