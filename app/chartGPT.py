@@ -1,12 +1,18 @@
 from copy import copy
+from dataclasses import dataclass
 import streamlit as st
 from PIL import Image
 import os
 import traceback
 from app.config.content import chartgpt_description
 import analytics_bot_langchain
+from analytics_bot_langchain.app import client
 from plotly.graph_objs._figure import Figure
-import base64
+from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
+from app.config.default import Dataset
+from langchain.schema import OutputParserException
+from google.cloud.bigquery import Client
+from app import DEBUG
 
 
 # Display app name
@@ -19,10 +25,10 @@ st.image(cadlabs_logo)
 st.markdown("# " + PAGE_NAME + " 📈")
 st.markdown(chartgpt_description)
 
-# Monkey patching
+# Monkey patching of Plotly show()
 def st_show(self):
     st.plotly_chart(self, use_container_width=True)
-Figure.show = st_show 
+Figure.show = st_show
 
 # Import sample question for project
 if os.environ["PROJECT"] == "NFTFI":
@@ -30,55 +36,78 @@ if os.environ["PROJECT"] == "NFTFI":
 else:
     from app.config.default import datasets
 
-dataset_ids = list(datasets.keys())
+# dataset_ids = [dataset.id for dataset in datasets]
 
-# TODO In future we can add cards to present datasets more visually:
-# from streamlit_card import card
-# for dataset_id, sample_questions in datasets.items():
-#     hasClicked = card(
-#         title=dataset_id,
-#         text=f"\"{sample_questions[0]}\"",
-#         # image="http://placekitten.com/200/300",
-#         # url="https://github.com/gamcoh/st-card"
-#     )
+st.markdown("### 1. Select a dataset")
 
-st.markdown("### Question")
+# st.write("You have access to the following datasets:")
+# for dataset in datasets:
+#     st.markdown(f"- **{dataset.name}**: {dataset.description}")
 
 # dataset_id = st.selectbox('Select dataset (optional):', [""] + dataset_ids)
-dataset_id = st.selectbox('Select dataset:', dataset_ids, index=0)
+dataset = st.selectbox('Select a dataset:', datasets, index=0, label_visibility="collapsed")
+
+# Monkey patching of BigQuery list_datasets()
+@dataclass
+class MockBQDataset:
+    dataset_id: str
+
+Client.list_datasets = lambda *kwargs: [MockBQDataset(dataset.id)]
+# tables = list(client.list_tables(dataset.id))
+# Client.list_tables = lambda *kwargs: tables
+
+st.markdown(f"#### Dataset description")
+st.markdown(dataset.description)
+
+@st.cache_data
+def display_sample_dataframes(dataset: Dataset) -> None:
+    sample_dataframes = get_sample_dataframes(client, dataset.id)
+    for table_id, df in sample_dataframes.items():
+        st.markdown(f"**\`{table_id}\` table:**")
+        st.dataframe(df)
+
+st.markdown(f"#### Table sample data")
+display_sample_dataframes(dataset)
+
+st.markdown("### 2. Ask a question")
 
 sample_questions_for_dataset = [""]  # Create unselected option
-if dataset_id:
-    sample_questions_for_dataset.extend(datasets[dataset_id])
+if dataset:
+    # Get a list of all sample questions for the selected dataset
+    sample_questions_for_dataset.extend(dataset.sample_questions)
 else:
-    sample_questions_for_dataset.extend([item for sublist in datasets.values() for item in sublist])
+    # Get a list of all sample questions from the dataclass using list comprehension
+    sample_questions_for_dataset.extend([item for sublist in [dataset.sample_questions for dataset in datasets] for item in sublist])
 
-sample_question = st.selectbox('Select sample question (optional):', sample_questions_for_dataset)
+sample_question = st.selectbox('Select a sample question (optional):', sample_questions_for_dataset)
 
-if not sample_question:
-    question = st.text_input("Enter your question:")
-else:
-    question = sample_question
+# custom_question = None
+# if not sample_question:
+st.markdown("**OR**")
+custom_question = st.text_input("Enter a question:", disabled=bool(sample_question))
 
 # Button for submitting the input
 submit_button = st.button("Submit")
 
-st.markdown("### Answer")
+st.markdown("### 3. Get an answer")
 
 # If the button is clicked or the user presses enter
 if submit_button:
-    st.divider()
+    question = sample_question or custom_question
     with st.spinner('Thinking...'):
         try:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-            agent = analytics_bot_langchain.get_agent(dataset_ids=dataset_ids)
+            agent = analytics_bot_langchain.get_agent(dataset_ids=[dataset.id])
             agent.run(input=question)
             st.success('Analytics complete!')
             st.balloons()
-        except Exception as e:
-            # For example, catch LangChain OutputParserException:
+        except OutputParserException as e:
             st.error("Analytics failed." + "\n\n" + str(e))
-            traceback.print_stack()
+        except Exception as e:
+            if DEBUG:
+                raise e
+            else:
+                st.error("Analytics failed for unknown reason, please try again.")
 else:
     st.markdown("...")
 

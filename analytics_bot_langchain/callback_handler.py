@@ -83,10 +83,10 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Optional[str],
     ) -> None:
         """Run when agent ends."""
-        st.write(text)
+        st.markdown(text)
 
     def on_agent_finish(
         self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Run on agent end."""
-        st.write(finish.log)
+        st.markdown(finish.log)
