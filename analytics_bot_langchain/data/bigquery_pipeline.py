@@ -186,10 +186,14 @@ def set_datatype(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def clean_local_csv_files(datatype: Datatype, table_name: str):
+def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool):
     dataframes = {}
     csv_file_directory = f"analytics_bot_langchain/data/dune/{datatype.value}/"
-    for csv_file_path in glob.glob(os.path.join(csv_file_directory, "*.csv")):
+    if dune_query:
+        files = [csv_file_directory + table_name + '.csv']
+    else:
+        files = glob.glob(os.path.join(csv_file_directory, "*.csv"))
+    for csv_file_path in files:
         # Get the file name from the file path
         file_name = os.path.basename(csv_file_path)
         # Remove the file extension
@@ -223,7 +227,20 @@ def clean_local_csv_files(datatype: Datatype, table_name: str):
                     df[col] = df[col].astype(float)
                 elif 'borrow' in table_name:
                     df[col] = df[col].astype(int)
-            df['dt'] = pd.to_datetime(df['dt'], format='%Y-%m-%d %H:%M')
+                elif 'users' in table_name:
+                    df[col] = df[col].astype(int)
+                elif 'liq' in table_name:
+                    df[col] = df[col].astype(int)
+                elif 'nft_collection' in table_name:
+                    df['num_nft_as_collateral'] = df['num_nft_as_collateral'].astype(int)
+                    df['borrow_usd'] = df['borrow_usd'].astype(float)
+                    df['num_unique_nft'] = df['num_unique_nft'].astype(int)
+                    df['ranking'] = df['ranking'].astype(int)
+                    break
+                else:
+                    raise Exception(f'unspecified datatype for {table_name}')
+            if 'collection' not in table_name:
+                df['dt'] = pd.to_datetime(df['dt'], format='%Y-%m-%d %H:%M')
 
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
             clean_nftfi_loan_dataframe(df)
@@ -282,6 +299,25 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField(f"x2y2_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
             bigquery.SchemaField(f"paraspace_cumu_borrow_volume", bigquery.enums.SqlTypeNames.INTEGER),
         ]
+    elif table_name == 'nft_lending_liquidate':
+        return [
+            bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField(f"bend_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_num_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"total_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"bend_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_cumu_nft_liq", bigquery.enums.SqlTypeNames.INTEGER),
+        ]
     elif table_name == 'nft_lending_aggregated_repay':
         return [
             bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
@@ -302,6 +338,36 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField(f"cumu_repay_volume_drops", bigquery.enums.SqlTypeNames.FLOAT64),
             bigquery.SchemaField(f"cumu_repay_volume_x2y2", bigquery.enums.SqlTypeNames.FLOAT64),
             bigquery.SchemaField(f"cumu_repay_volume_paraspace", bigquery.enums.SqlTypeNames.FLOAT64),
+        ]
+    elif table_name == 'nft_lending_aggregated_repay':
+        return [
+            bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField(f"bend_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"nftfi_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"pine_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"arcade_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"jpegd_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"drops_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"x2y2_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"paraspace_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"total_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_bend_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_nftfi_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_pine_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_arcade_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_jpegd_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_drops_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_x2y2_users", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"cumu_paraspace_users", bigquery.enums.SqlTypeNames.INTEGER),
+        ]
+    elif table_name == 'nft_lending_aggregated_nft_collection':
+        return [
+            bigquery.SchemaField(f"num_nft_as_collateral", bigquery.enums.SqlTypeNames.INT64),
+            bigquery.SchemaField(f"borrow_usd", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"num_unique_nft", bigquery.enums.SqlTypeNames.INT64),
+            bigquery.SchemaField(f"nft_collection", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField(f"platform", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField(f"ranking", bigquery.enums.SqlTypeNames.INT64),
         ]
     elif table_name == 'dex':
         # Return the Dune dex schema
@@ -332,8 +398,8 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
         ]
 
 
-def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, overwrite_existing_table=True):
-    dataframes = clean_local_csv_files(datatype=datatype, table_name=table_name)
+def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, dune_query: bool, overwrite_existing_table=True):
+    dataframes = clean_local_csv_files(datatype=datatype, table_name=table_name, dune_query=dune_query)
     schema = get_schema(table_name=table_name)
     if datatype == Datatype.nftfi:
         dataset_id = 'dune_dataset'

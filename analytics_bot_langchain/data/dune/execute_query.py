@@ -1,5 +1,4 @@
 
-from datetime import datetime
 import dotenv
 import os
 import pandas as pd
@@ -20,7 +19,7 @@ pd.set_option("display.max_rows", None)
 pd.set_option("display.expand_frame_repr", False)
 
 
-def run_query(file_name: str, datatype: Datatype=Datatype.nftfi, query_id=2419712, time="1", frequency="HOUR"):
+def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="1", frequency="HOUR"):
     params = []
     file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
     file_name = file_path + file_name
@@ -37,7 +36,6 @@ def run_query(file_name: str, datatype: Datatype=Datatype.nftfi, query_id=241971
     )
     print("Results available at", query.url())
     results = dune.refresh(query)
-    # time.sleep(30)
     if results.state == ExecutionState.COMPLETED:
         df = pd.DataFrame(results.result.rows, columns=results.result.metadata.column_names)
         df.to_csv(f'{file_name}.csv', index=False)
