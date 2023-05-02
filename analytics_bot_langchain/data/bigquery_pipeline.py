@@ -20,9 +20,9 @@ import dotenv
 dotenv.load_dotenv()
 
 # Load all CSV files from directory into single BigQuery dataset
+import json
 
-
-credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"]).with_scopes([
+credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes([
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/bigquery",
 ])
@@ -402,7 +402,7 @@ def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, du
     dataframes = clean_local_csv_files(datatype=datatype, table_name=table_name, dune_query=dune_query)
     schema = get_schema(table_name=table_name)
     if datatype == Datatype.nftfi:
-        dataset_id = 'dune_dataset'
+        dataset_id = table_name
     elif datatype == Datatype.dex:
         dataset_id = 'dex'
     else:

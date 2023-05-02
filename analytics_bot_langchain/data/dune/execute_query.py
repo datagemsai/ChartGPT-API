@@ -21,6 +21,7 @@ pd.set_option("display.expand_frame_repr", False)
 
 def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="1", frequency="HOUR"):
     params = []
+    print(f"\n************  QUERYING [{file_name}]  ************"*2)
     file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
     file_name = file_path + file_name
     if datatype == Datatype.dex:
