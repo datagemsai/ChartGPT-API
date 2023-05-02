@@ -2,10 +2,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import inspect
 import re
 import logging
+from pydantic import Field
 
 from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
-from langchain.agents.agent import AgentExecutor
+from langchain.agents.agent import AgentExecutor, AgentOutputParser
 from langchain.agents.mrkl.base import ZeroShotAgent
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
@@ -19,6 +20,7 @@ from langchain.schema import (
     BaseMessage
 )
 from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
+from analytics_bot_langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,17 @@ python_tool_description = (
 )
 
 class CustomAgent(ZeroShotAgent):
-    output_parser = CustomOutputParser
+    output_parser: AgentOutputParser = Field(default_factory=CustomOutputParser)
+
+    @property
+    def observation_prefix(self) -> str:
+        """Prefix to append the observation with."""
+        return "Observation: "
+
+    @property
+    def llm_prefix(self) -> str:
+        """Prefix to append the llm call with."""
+        return "Thought: "
 
     @root_validator(allow_reuse=True)
     def validate_prompt(cls, values: Dict) -> Dict:
@@ -83,7 +95,7 @@ def create_bigquery_agent(
     **kwargs: Any,
 ) -> AgentExecutor:
     if input_variables is None:
-        input_variables = ["tables_summary", "project_id", "input", "agent_scratchpad"]
+        input_variables = ["tables_summary", "input", "agent_scratchpad"]
     tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
     python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
     python_tool.description = python_tool_description
@@ -109,12 +121,11 @@ def create_bigquery_agent(
 
     tools = [python_tool]
     prompt = ZeroShotAgent.create_prompt(
-        tools, prefix=prefix, suffix=suffix, input_variables=input_variables
+        tools, prefix=prefix, suffix=suffix, format_instructions=FORMAT_INSTRUCTIONS, input_variables=input_variables
     )
     tables_summary_escaped = "{" + str(tables_summary) + "}"
     partial_prompt = prompt.partial(
         tables_summary=tables_summary_escaped,
-        project_id=bigquery_client.project,
     )
     llm_chain = LLMChain(
         llm=llm,
@@ -132,4 +143,5 @@ def create_bigquery_agent(
         max_execution_time=max_execution_time,
         early_stopping_method=early_stopping_method,
         callback_manager=callback_manager,
+        output_parser=CustomOutputParser,
     )
