@@ -28,6 +28,7 @@ credentials = service_account.Credentials.from_service_account_info(st.secrets["
 ])
 client = bigquery.Client(credentials=credentials)
 
+
 class Datatype(Enum):
     dex = "dex"
     nftfi = "nftfi"
@@ -139,11 +140,8 @@ def clean_nans(df: pd.DataFrame) -> pd.DataFrame:
             # Drop the rows containing NaN values in column
             df_cleaned = df_cleaned.dropna(subset=[column])
 
-            print("\nOriginal DataFrame:")
-            print(df)
-
-            print(f"\nDataFrame after dropping rows with NaN values in column {column}:")
-            print(df_cleaned)
+            print(f"\nOriginal DataFrame length: {df.shape[0]}")
+            print(f"\nDataFrame after dropping rows with NaN values in column {column}: {df_cleaned.shape[0]}")
         else:
             print(f"Column {column} does not contain NaN values.")
     return df_cleaned
@@ -188,7 +186,7 @@ def set_datatype(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def clean_local_csv_files(datatype: Datatype):
+def clean_local_csv_files(datatype: Datatype, table_name: str):
     dataframes = {}
     csv_file_directory = f"analytics_bot_langchain/data/dune/{datatype.value}/"
     for csv_file_path in glob.glob(os.path.join(csv_file_directory, "*.csv")):
@@ -212,7 +210,7 @@ def clean_local_csv_files(datatype: Datatype):
         df = drop_if_entirely_nans(df=df)
         df = clean_nans(df=df)
         df = set_datatype(df=df)
-        if datatype.value == datatype.dex:
+        if datatype == datatype.dex:
             df['token_bought_amount_raw'] = df['token_bought_amount_raw'].astype(str)
             df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
             df['block_time'] = pd.to_datetime(df['block_time'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
@@ -221,7 +219,10 @@ def clean_local_csv_files(datatype: Datatype):
             for col in df.columns:
                 if col == 'dt':
                     continue
-                df[col] = df[col].astype(int)
+                if 'repay' in table_name:
+                    df[col] = df[col].astype(float)
+                elif 'borrow' in table_name:
+                    df[col] = df[col].astype(int)
             df['dt'] = pd.to_datetime(df['dt'], format='%Y-%m-%d %H:%M')
 
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
@@ -229,12 +230,10 @@ def clean_local_csv_files(datatype: Datatype):
 
         df = locale_to_float_dataframe(df)  # Convert locale strings to float
         dataframes[file_name] = df
-
-        list(dataframes.values())[0].head()
     return dataframes
 
 
-def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField], client=client, project_id="psychic-medley-383515", dataset_id="dex", overwrite_existing_table=False):
+def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  dataset_id: str, client=client, project_id="psychic-medley-383515", overwrite_existing_table=False):
     for df_name, df in dataframes.items():
 
         df_name = df_name.replace(':', '_')
@@ -286,23 +285,23 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
     elif table_name == 'nft_lending_aggregated_repay':
         return [
             bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField(f"bend_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"nftfi_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"pine_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"arcade_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"jpegd_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"drops_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"x2y2_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"paraspace_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"total_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"bend_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"nftfi_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"pine_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"arcade_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"jpegd_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"drops_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"x2y2_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField(f"paraspace_cumu_repay_volume", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField(f"bend_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"nftfi_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"pine_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"arcade_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"jpegd_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"drops_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"x2y2_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"paraspace_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"total_repay_volume", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_bend", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_nftfi", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_pine", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_arcade", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_jpegd", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_drops", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_x2y2", bigquery.enums.SqlTypeNames.FLOAT64),
+            bigquery.SchemaField(f"cumu_repay_volume_paraspace", bigquery.enums.SqlTypeNames.FLOAT64),
         ]
     elif table_name == 'dex':
         # Return the Dune dex schema
@@ -333,7 +332,13 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
         ]
 
 
-def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype = Datatype.nftfi, overwrite_existing_table=True):
-    dataframes = clean_local_csv_files(datatype=datatype)
+def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, overwrite_existing_table=True):
+    dataframes = clean_local_csv_files(datatype=datatype, table_name=table_name)
     schema = get_schema(table_name=table_name)
-    save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table, schema=schema)
+    if datatype == Datatype.nftfi:
+        dataset_id = 'dune_dataset'
+    elif datatype == Datatype.dex:
+        dataset_id = 'dex'
+    else:
+        raise Exception(f"Unrecognized datatype {datatype}, cannot match it with BQ dataset")
+    save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table, schema=schema, dataset_id=dataset_id)

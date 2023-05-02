@@ -20,11 +20,12 @@ pd.set_option("display.max_rows", None)
 pd.set_option("display.expand_frame_repr", False)
 
 
-def run_query(file_name: str, datatype: Datatype=Datatype.nftfi, query_id=2419712, time="1", frequency="HOUR", is_dex_data=False):
+def run_query(file_name: str, datatype: Datatype=Datatype.nftfi, query_id=2419712, time="1", frequency="HOUR"):
     params = []
-    file_name = f"analytics_bot_langchain/data/dune/{datatype.value}/" + file_name
-    if is_dex_data:
-        file_name = f'dex_data_{time}_{frequency}_{datetime.now().strftime("%Y-%m-%d %H:%M").replace(" ", "_")}.csv'
+    file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
+    file_name = file_path + file_name
+    if datatype == Datatype.dex:
+        file_name = file_path + f'dex'
         params = [
             QueryParameter.text_type(name="time", value=time),
             QueryParameter.text_type(name="frequency", value=frequency),
