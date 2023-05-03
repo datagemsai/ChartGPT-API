@@ -16,8 +16,6 @@ class Dataset:
 datasets = [
     Dataset(
         name="Decentralized Exchange Trades",
-        # TODO Rename as follows
-        # id = "ethereum_dex_transactions",
         id="dex_trades",
         description="A dataset of decentralized exchange (DEX) transactions across L1 and L2 blockchains.",
         sample_questions=[
@@ -30,8 +28,6 @@ datasets = [
     ),
     Dataset(
         name="NFT Lending Protocol Aggregate Borrow Volume",
-        # TODO Rename as follows
-        # id = "nft_lending_aggregate_borrow_volume",
         id="nft_lending_aggregated_borrow",
         description="A dataset of the aggregate borrow volume for different NFT lending protocols.",
         sample_questions=[
