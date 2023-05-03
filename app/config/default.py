@@ -15,11 +15,11 @@ class Dataset:
 
 datasets = [
     Dataset(
-        name="Ethereum Decentralized Exchange Transactions",
+        name="Decentralized Exchange Trades",
         # TODO Rename as follows
         # id = "ethereum_dex_transactions",
-        id="ethereum_dex_transactions",
-        description="A dataset of decentralized exchange (DEX) transactions on the Ethereum Blockchain.",
+        id="dex_trades",
+        description="A dataset of decentralized exchange (DEX) transactions across L1 and L2 blockchains.",
         sample_questions=[
             "Plot a pie chart of the top 5 takers with highest transaction count, group the remainder takers as Others category",
             "Plot top 5 projects by transaction count",
