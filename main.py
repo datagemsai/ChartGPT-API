@@ -9,7 +9,7 @@ tables_id = {
         "nft_lending_aggregated_users": 1227127,
         "nft_lending_aggregated_nft_collection": 1227168,
         "nft_lending_liquidate": 1241427,
-        "ethereum_dex_transactions": 2421110,
+        "dex_trades": 2421110,
 }
 
 
@@ -23,8 +23,8 @@ def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, dataty
 # table_name = "nft_lending_aggregated_repay"
 # datatype = Datatype.nftfi
 
-table = "ethereum_dex_transactions"
-datatype = Datatype.ethereum_dex_transactions
+table = "dex_trades"
+datatype = Datatype.dex_trades
 
 # table_name = "nft_lending_aggregated_users"
 # datatype = Datatype.nftfi
