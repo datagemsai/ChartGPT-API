@@ -51,7 +51,7 @@ datasets = [
             "Plot the average valuation for US Analytics companies by State",
             "Plot top 5 companies by job openings",
             "What is the average number of employees for AI companies from CA state",
-            "Plot the average revenue for CA, TX, MA, NY state companies",
+            "Plot the average revenue for companies from following four states: CA, TX, MA, NY",
         ],
     )
 ]
