@@ -13,7 +13,7 @@ datasets = {
         "Plot daily borrow volumes for each protocol in February 2023",
         "Plot monthly cumulative borrow volumes for each protocol",
     ],
-    "growjo_fatest_growing_companies": [
+    "growjo_fastest_growing_companies": [
         "Plot total funding by country",
         "Plot the average valuation for US Analytics companies by State",
         "Plot top 5 companies by job openings",
