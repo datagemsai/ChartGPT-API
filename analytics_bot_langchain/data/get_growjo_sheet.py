@@ -16,7 +16,7 @@ schema = [
         bigquery.SchemaField("country", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("employees", bigquery.enums.SqlTypeNames.INTEGER),
         bigquery.SchemaField("linkedin_url", bigquery.enums.SqlTypeNames.STRING),
-        bigquery.SchemaField("founded", bigquery.enums.SqlTypeNames.STRING),
+        # bigquery.SchemaField("founded", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("Industry", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("CityRanking", bigquery.enums.SqlTypeNames.INTEGER),
         bigquery.SchemaField("estimated_revenues", bigquery.enums.SqlTypeNames.FLOAT),
@@ -38,11 +38,12 @@ credentials = service_account.Credentials.from_service_account_info(json.loads(o
 ])
 
 
-def clean_funded(df):
+def clean_founded(df):
     # old_rows = df.shape[0]
     # df = df.loc[df['founded'] != '']
     # print(f"Dropped [{old_rows - df.shape[0]}] rows from removing rows with empty 'founded' values")
-    df['founded'] = df['founded'].astype(str)
+    # df['founded'] = df['founded'].astype(str)
+    df.drop('founded', axis=1, inplace=True)
     return df
 
 
@@ -89,14 +90,20 @@ def clean_growth_percentage(df):
     return df
 
 
+def clean_employees(df):
+    df['employees'] = df['employees'].replace('', 0).astype(int)
+    return df
+
+
 def clean_df(df):
-    df = clean_funded(df=df)
+    df = clean_founded(df=df)
     df = clean_job_openings(df=df)
     df = clean_valuation(df=df)
     df = clean_contact_info(df=df)
     df = clean_company_name(df=df)
     df = clean_total_funding(df=df)
     df = clean_growth_percentage(df=df)
+    df = clean_employees(df=df)
     return df
 
 
