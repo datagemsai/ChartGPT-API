@@ -42,8 +42,7 @@ You have access to the following datasets, tables, and columns:
 tables_summary = {tables_summary}
 ```
 
-BigQuery project ID: {project_id}
-Always qualify and select SQL table names with a project ID and dataset ID, for example: ```FROM `project_id.dataset_id.table_id````
+Always qualify and select SQL table names with the correct dataset ID, for example: ```FROM `dataset_id.table_id````
 Get all column names for a specific table using: `tables_summary[dataset_id][table_id]`
 
 Begin!
