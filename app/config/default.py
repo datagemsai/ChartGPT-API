@@ -34,17 +34,23 @@ datasets = [
         id = "nft_lending_aggregated_borrow",
         description = "A dataset of the aggregate borrow volume for different NFT lending protocols.",
         sample_questions = [
-        "Plot the monthly loan volume grouped by protocol",
-        "Plot a stacked bar chart of loan volume grouped by protocol since August 2022",
-        "Plot top 3 protocols on April 3rd 2023",
-        "Plot daily borrow volumes for each protocol in February 2023",
-        "Plot monthly cumulative borrow volumes for each protocol",
+            "Plot the monthly loan volume grouped by protocol",
+            "Plot a stacked bar chart of loan volume grouped by protocol since August 2022",
+            "Plot top 3 protocols on April 3rd 2023",
+            "Plot daily borrow volumes for each protocol in February 2023",
+            "Plot monthly cumulative borrow volumes for each protocol",
         ],
     ),
     Dataset(
         name = "Growjo - Fastest Growing Companies",
         id = "growjo_fastest_growing_companies",
-        description = "",
-        sample_questions = [""],
+        description = "Analyse the fastest growing companies in the AI & Analytics space according to Growjo",
+        sample_questions = [
+            "Plot total funding by country",
+            "Plot the average valuation for US Analytics companies by State",
+            "Plot top 5 companies by job openings",
+            "What is the average number of employees for AI companies from CA state",
+            "Plot the average revenue for CA, TX, MA, NY state companies",
+        ],
     )
 ]
