@@ -19,7 +19,7 @@ pd.set_option("display.max_rows", None)
 pd.set_option("display.expand_frame_repr", False)
 
 
-def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="1", frequency="HOUR"):
+def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="3", frequency="HOUR"):
     params = []
     print(f"\n************  QUERYING [{file_name}]  ************"*2)
     file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
@@ -36,7 +36,7 @@ def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="1", fr
         params=params,
     )
     print("Results available at", query.url())
-    results = dune.refresh(query)
+    results = dune.refresh(query, ping_frequency=10)
     if results.state == ExecutionState.COMPLETED:
         df = pd.DataFrame(results.result.rows, columns=results.result.metadata.column_names)
         df.to_csv(f'{file_name}.csv', index=False)

@@ -142,8 +142,6 @@ def clean_nans(df: pd.DataFrame) -> pd.DataFrame:
 
             print(f"\nOriginal DataFrame length: {df.shape[0]}")
             print(f"\nDataFrame after dropping rows with NaN values in column {column}: {df_cleaned.shape[0]}")
-        else:
-            print(f"Column {column} does not contain NaN values.")
     return df_cleaned
 
 
@@ -219,6 +217,7 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
             df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
             df['block_time'] = pd.to_datetime(df['block_time'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
             df['block_date'] = pd.to_datetime(df['block_date'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
+            df = df[df['blockchain'] != 'fantom']
         elif datatype == datatype.nftfi:
             for col in df.columns:
                 if col == 'dt':
