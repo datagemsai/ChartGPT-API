@@ -45,7 +45,7 @@ datasets = [
     Dataset(
         name="Growjo - Fastest Growing Companies",
         id="growjo_fastest_growing_companies",
-        description="Analyse the fastest growing companies in the AI & Analytics space according to Growjo",
+        description="Analyse the fastest growing companies in the AI & Analytics space according to Growjo.",
         sample_questions=[
             "Plot total funding by country",
             "Plot the average valuation for US Analytics companies by State",

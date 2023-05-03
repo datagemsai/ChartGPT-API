@@ -7,7 +7,6 @@ import traceback
 from app.config.content import chartgpt_description
 import analytics_bot_langchain
 from analytics_bot_langchain.app import client
-from plotly.graph_objs._figure import Figure
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
 from app.config.default import Dataset
 from langchain.schema import OutputParserException
@@ -24,11 +23,6 @@ st.image(***REMOVED***_logo)
 
 st.markdown("# " + PAGE_NAME + " 📈")
 st.markdown(chartgpt_description)
-
-# Monkey patching of Plotly show()
-def st_show(self):
-    st.plotly_chart(self, use_container_width=True)
-Figure.show = st_show
 
 # Import sample question for project
 if os.environ["PROJECT"] == "NFTFI":

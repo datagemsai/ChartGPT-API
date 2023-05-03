@@ -102,14 +102,8 @@ def create_bigquery_agent(
 
     def query_post_processing(query: str) -> str:
         prefix = inspect.cleandoc("""
+        # Add custom imports and config here for agent
         import streamlit as st
-
-        # Monkey patching
-        from plotly.graph_objs._figure import Figure
-        def st_show(self):
-            import streamlit as st
-            st.plotly_chart(self, use_container_width=True)
-        Figure.show = st_show
         """)
         query = prefix + "\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
