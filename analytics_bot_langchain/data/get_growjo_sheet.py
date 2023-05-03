@@ -17,7 +17,6 @@ schema = [
         bigquery.SchemaField("employees", bigquery.enums.SqlTypeNames.INTEGER),
         bigquery.SchemaField("linkedin_url", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("founded", bigquery.enums.SqlTypeNames.STRING),
-
         bigquery.SchemaField("Industry", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("CityRanking", bigquery.enums.SqlTypeNames.INTEGER),
         bigquery.SchemaField("estimated_revenues", bigquery.enums.SqlTypeNames.FLOAT),
@@ -25,12 +24,11 @@ schema = [
         bigquery.SchemaField("keywords", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("LeadInvestors", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("Accelerator", bigquery.enums.SqlTypeNames.STRING),
-
         bigquery.SchemaField("btype", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("total_funding", bigquery.enums.SqlTypeNames.FLOAT),
         bigquery.SchemaField("product_url", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("indeed_url", bigquery.enums.SqlTypeNames.STRING),
-        bigquery.SchemaField("growth_percentage", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("growth_percentage", bigquery.enums.SqlTypeNames.FLOAT),
     ]
 
 
@@ -53,9 +51,9 @@ def clean_job_openings(df):
     return df
 
 
-def clean_valuations(df):
-    # df['valuations'] = df['valuations'].replace('', 0).astype(int)
-    df = df.drop('valuations', axis=1, errors='ignore')
+def clean_valuation(df):
+    # df['valuation'] = df['valuation'].replace('', 0).astype(int)
+    df = df.drop('valuation', axis=1, errors='ignore')
     return df
 
 
@@ -72,12 +70,33 @@ def clean_company_name(df):
     return df
 
 
+def clean_total_funding(df):
+    duplicated_column = 'total_funding'
+    column_indices = [i for i, name in enumerate(df.columns) if name == duplicated_column]
+
+    # Drop the first occurrence of the duplicated column
+    if len(column_indices) > 1:
+        df = df.iloc[:, [i for i in range(df.shape[1]) if i != column_indices[0]]]
+
+    specific_string = '#VALUE!'
+    df = df[~df[duplicated_column].str.contains(specific_string, na=False)]  # drop rows which contain specific_string
+    df['total_funding'] = df['total_funding'].replace('', 0).astype(int)
+    return df
+
+
+def clean_growth_percentage(df):
+    df['growth_percentage'] = df['growth_percentage'].replace('', 0.0).astype(float)
+    return df
+
+
 def clean_df(df):
     df = clean_funded(df=df)
     df = clean_job_openings(df=df)
-    df = clean_valuations(df=df)
+    df = clean_valuation(df=df)
     df = clean_contact_info(df=df)
     df = clean_company_name(df=df)
+    df = clean_total_funding(df=df)
+    df = clean_growth_percentage(df=df)
     return df
 
 
