@@ -1,6 +1,7 @@
 
 from analytics_bot_langchain.data.bigquery_pipeline import clean_csv_files_and_save_to_bigquery, Datatype
 from analytics_bot_langchain.data.dune.execute_query import run_query
+from analytics_bot_langchain.data.get_growjo_sheet import save_sheet_as_csv
 
 tables_id = {
         "nft_lending_aggregated_borrow": 1205836,
@@ -37,6 +38,6 @@ datatype = Datatype.ethereum_dex_transactions
 # table_name = "nft_lending_aggregated_borrow"
 # datatype = Datatype.nftfi
 # for table in tables_id.keys():
-query_dune_api_and_save_dataset_to_bq(table_name=table, query_id=tables_id[table], datatype=datatype, dune_query=False)
+# query_dune_api_and_save_dataset_to_bq(table_name=table, query_id=tables_id[table], datatype=datatype, dune_query=False)
 
-
+save_sheet_as_csv()
