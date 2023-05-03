@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple, Union, Optional
 from google.cloud import bigquery
+import pandas as pd
 
 
 def get_dataset_ids(client: bigquery.Client) -> List[str]:
@@ -32,3 +33,17 @@ def get_tables_summary(
                 for schema_field in table.schema
             ]
     return tables_summary
+
+def get_sample_dataframes(
+    client: bigquery.Client,
+    dataset_id: str,
+) -> Dict[str, pd.DataFrame]:
+    sample_dfs = {}
+    for table_item in client.list_tables(dataset_id):
+        table_id = table_item.table_id
+
+        query = f"SELECT * FROM `{client.project}.{dataset_id}.{table_id}` LIMIT 1"
+        df = client.query(query).to_dataframe()
+
+        sample_dfs[table_id] = df
+    return sample_dfs
