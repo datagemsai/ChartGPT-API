@@ -109,6 +109,19 @@ def create_bigquery_agent(
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
         query = query.replace("print", "st.write")
+
+        # Matches the SQL query by searching for "FROM `project_id.dataset_id.table_id`" and "FROM `dataset_id.table_id`"
+        # since both can happen and are valid. The regexp assumes that each project_id, dataset_id etc. can take any alphanumeric value.
+        new_dataset_id = dataset_ids[0]
+        new_table_id = dataset_ids[0]
+
+        pattern = r"FROM \`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\`"
+        query = re.sub(pattern, lambda m: f"FROM `{new_dataset_id}.{new_table_id}`", query)
+
+        pattern = r"FROM \`([a-zA-Z0-9_-]+).([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\`"
+        query = re.sub(pattern, lambda m: f"FROM `{new_dataset_id}.{new_table_id}`", query)
+
+        query = query.replace("print", "st.write")
         return query
 
     python_tool.query_post_processing = query_post_processing

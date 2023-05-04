@@ -41,10 +41,12 @@ st.markdown("### 1. Select a dataset")
 # dataset_id = st.selectbox('Select dataset (optional):', [""] + dataset_ids)
 dataset = st.selectbox('Select a dataset:', datasets, index=0, label_visibility="collapsed")
 
+
 # Monkey patching of BigQuery list_datasets()
 @dataclass
 class MockBQDataset:
     dataset_id: str
+
 
 Client.list_datasets = lambda *kwargs: [MockBQDataset(dataset.id)]
 # tables = list(client.list_tables(dataset.id))
@@ -53,12 +55,14 @@ Client.list_datasets = lambda *kwargs: [MockBQDataset(dataset.id)]
 st.markdown(f"#### Dataset description")
 st.markdown(dataset.description)
 
+
 @st.cache_data
 def display_sample_dataframes(dataset: Dataset) -> None:
     sample_dataframes = get_sample_dataframes(client, dataset.id)
     for table_id, df in sample_dataframes.items():
         st.markdown(f"**\`{table_id}\` table:**")
         st.dataframe(df)
+
 
 st.markdown(f"#### Table sample data")
 display_sample_dataframes(dataset)
