@@ -18,10 +18,23 @@ from app import DEBUG
 PAGE_NAME = "ChartGPT"
 st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
 
-***REMOVED***_logo = Image.open('logo.png')
-st.image(***REMOVED***_logo)
+st.markdown(
+"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQTQQQK06"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-st.markdown("# " + PAGE_NAME + " 📈")
+  gtag('config', 'G-5LQTQQQK06');
+</script>
+""", unsafe_allow_html=True)
+
+# logo = Image.open('media/logo.png')
+logo = Image.open('media/logo_chartgpt.png')
+st.image(logo)
+# st.markdown("# " + PAGE_NAME + " 📈")
 st.markdown(chartgpt_description)
 
 # Import sample question for project
@@ -58,7 +71,7 @@ def display_sample_dataframes(dataset: Dataset) -> None:
     sample_dataframes = get_sample_dataframes(client, dataset.id)
     for table_id, df in sample_dataframes.items():
         st.markdown(f"**\`{table_id}\` table:**")
-        st.dataframe(df)
+        st.dataframe(df.head())
 
 st.markdown(f"#### Table sample data")
 display_sample_dataframes(dataset)
@@ -78,12 +91,32 @@ sample_question = st.selectbox('Select a sample question (optional):', sample_qu
 # custom_question = None
 # if not sample_question:
 st.markdown("**OR**")
-custom_question = st.text_input("Enter a question:", disabled=bool(sample_question))
+custom_question = st.text_area(
+    "Enter a question: (coming soon!)",
+    disabled=bool(sample_question)
+)
 
 # Button for submitting the input
 submit_button = st.button("Submit")
 
 st.markdown("### 3. Get an answer")
+
+# TODO Add coming soon features
+# file = ...
+# _ = st.download_button(
+#     label="Download data (coming soon!)",
+#     data=file,
+#     # file_name="flower.png",
+#     mime="text/csv",
+#     disabled=True,
+# )
+# _ = st.download_button(
+#     label="Download chart (coming soon!)",
+#     data=file,
+#     # file_name="flower.png",
+#     mime="image/png",
+#     disabled=True,
+# )
 
 # If the button is clicked or the user presses enter
 if submit_button:

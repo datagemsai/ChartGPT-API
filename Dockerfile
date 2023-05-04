@@ -12,10 +12,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-COPY .streamlit ./.streamlit/
-COPY logo.png ./
 COPY app ./app
 COPY analytics_bot_langchain ./analytics_bot_langchain
+COPY .streamlit ./.streamlit/
+COPY media ./media
 
 EXPOSE $PORT
 HEALTHCHECK CMD curl --fail http://localhost:$PORT/_stcore/health
