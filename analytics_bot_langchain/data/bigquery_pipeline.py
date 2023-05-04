@@ -30,7 +30,7 @@ client = bigquery.Client(credentials=credentials)
 
 
 class Datatype(Enum):
-    dex_trades = "dex_trades"
+    decentralized_exchange_trades = "decentralized_exchange_trades"
     nftfi = "nftfi"
 
 
@@ -212,7 +212,7 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
         df = drop_if_entirely_nans(df=df)
         df = clean_nans(df=df)
         df = set_datatype(df=df)
-        if datatype == datatype.dex_trades:
+        if datatype == datatype.decentralized_exchange_trades:
             df['token_bought_amount_raw'] = df['token_bought_amount_raw'].astype(str)
             df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
             df['block_time'] = pd.to_datetime(df['block_time'], format='%Y-%m-%d %H:%M:%S.%f %Z', utc=True)
@@ -367,8 +367,8 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField(f"platform", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField(f"ranking", bigquery.enums.SqlTypeNames.INT64),
         ]
-    elif table_name == 'dex_trades':
-        # Return the Dune dex_trades schema
+    elif table_name == 'decentralized_exchange_trades':
+        # Return the Dune decentralized_exchange_trades schema
         return [
             bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("project", bigquery.enums.SqlTypeNames.STRING),
@@ -401,8 +401,8 @@ def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, du
     schema = get_schema(table_name=table_name)
     if datatype == Datatype.nftfi:
         dataset_id = table_name
-    elif datatype == Datatype.dex_trades:
-        dataset_id = 'dex_trades'
+    elif datatype == Datatype.decentralized_exchange_trades:
+        dataset_id = 'decentralized_exchange_trades'
     else:
         raise Exception(f"Unrecognized datatype {datatype}, cannot match it with BQ dataset")
     save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table, schema=schema, dataset_id=dataset_id)

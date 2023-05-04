@@ -24,8 +24,8 @@ def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="3", fr
     print(f"\n************  QUERYING [{file_name}]  ************"*2)
     file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
     file_name = file_path + file_name
-    if datatype == Datatype.dex_trades:
-        file_name = file_path + f'dex_trades'
+    if datatype == Datatype.decentralized_exchange_trades:
+        file_name = file_path + f'decentralized_exchange_trades'
         params = [
             QueryParameter.text_type(name="time", value=time),
             QueryParameter.text_type(name="frequency", value=frequency),
