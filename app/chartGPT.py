@@ -92,7 +92,7 @@ sample_question = st.selectbox('Select a sample question (optional):', sample_qu
 # if not sample_question:
 st.markdown("**OR**")
 custom_question = st.text_area(
-    "Enter a question: (coming soon!)",
+    "Enter a question:",
     disabled=bool(sample_question)
 )
 
