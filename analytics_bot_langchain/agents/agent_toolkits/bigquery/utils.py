@@ -42,7 +42,7 @@ def get_sample_dataframes(
     for table_item in client.list_tables(dataset_id):
         table_id = table_item.table_id
 
-        query = f"SELECT * FROM `{client.project}.{dataset_id}.{table_id}` LIMIT 1"
+        query = f"SELECT * FROM `{client.project}.{dataset_id}.{table_id}` LIMIT 100"
         df = client.query(query).to_dataframe()
 
         sample_dfs[table_id] = df
