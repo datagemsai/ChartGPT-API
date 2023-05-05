@@ -141,6 +141,9 @@ def allowed_node(node, allowed_imports):
                 raise ValueError(f"Importing '{alias.name}' is not allowed")
     if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in insecure_functions:
         raise ValueError(f"Function '{node.func.id}' is not allowed")
+    if isinstance(node, (ast.Attribute, ast.Name)):
+        if node.attr.startswith('_') if hasattr(node, 'attr') else node.id.startswith('_'):
+            raise ValueError(f"Accessing private members is not allowed")
 
 def analyze_ast(node, allowed_imports, max_depth, current_depth=0):
     if current_depth >= max_depth:
