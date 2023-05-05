@@ -37,6 +37,11 @@ st.image(logo)
 # st.markdown("# " + PAGE_NAME + " 📈")
 st.markdown(chartgpt_description)
 
+st.warning("""
+This is an **early access** version of ChartGPT.
+We're still working on improving the model's performance, finding bugs, and adding more features and datasets.
+""", icon="🚨")
+
 # Import sample question for project
 if os.environ["PROJECT"] == "NFTFI":
     from app.config.nftfi import datasets
