@@ -11,3 +11,6 @@ kernel:
 
 run:
 	. venv/bin/activate; python -m streamlit run app/chartGPT.py
+
+test_sample_questions:
+	. venv/bin/activate; pytest -n 8 tests/test_sample_questions.py
