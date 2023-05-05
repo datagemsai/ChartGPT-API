@@ -1,3 +1,4 @@
+import inspect
 import re
 from typing import Union
 
@@ -31,9 +32,10 @@ class CustomOutputParser(AgentOutputParser):
                 log=llm_output
             )
         else:
-            return AgentAction(tool="python_repl_ast", tool_input="""
+            return AgentAction(tool="python_repl_ast", tool_input=inspect.cleandoc("""
             ```python
-            # {llm_output}
+            # Thought: {llm_output}
+            print(llm_output)
             ```
-            """, log=llm_output)
+            """), log=llm_output)
             # raise OutputParserException(llm_output)
