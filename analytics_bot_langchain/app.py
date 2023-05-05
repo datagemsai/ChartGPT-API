@@ -26,7 +26,7 @@ def get_agent(dataset_ids: Optional[List] = None):
         invalid_dataset_ids = set(dataset_ids) - set(available_dataset_ids)
         assert not invalid_dataset_ids, f"Dataset IDs {invalid_dataset_ids} not available"
     return create_bigquery_agent(
-        ChatOpenAI(model="gpt-3.5-turbo", temperature=0),
+        ChatOpenAI(model="gpt-4", temperature=0),
         bigquery_client=client,
         dataset_ids=dataset_ids,
         verbose=True,

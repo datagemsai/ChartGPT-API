@@ -4,18 +4,12 @@ import ast
 import sys
 from io import StringIO
 from typing import Dict, Optional
-import re
 from collections.abc import Callable
 from pydantic import Field, root_validator
 from analytics_bot_langchain.tools.python.secure_ast import secure_eval, secure_exec
 import streamlit as st
-
 from langchain.tools.base import BaseTool
-from langchain.utilities import PythonREPL
-
-
-def _get_default_python_repl() -> PythonREPL:
-    return PythonREPL(_globals=globals(), _locals=None)
+import logging
 
 
 class PythonAstREPLTool(BaseTool):
@@ -23,7 +17,7 @@ class PythonAstREPLTool(BaseTool):
 
     name = "python_repl_ast"
     description = (
-        "A Python shell. Use this to execute python commands. "
+        "A Python shell. Use this to execute python commands including: BigQuery queries, Pandas analytics, Plotly charts. "
         "Input should be a valid python command. "
         "When using this tool, sometimes output is abbreviated - "
         "make sure it does not look abbreviated before using it in your answer."
