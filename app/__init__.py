@@ -33,5 +33,15 @@ pd.DataFrame._repr_html_ = lambda self: pd_display(self)
 def st_show(self):
     import streamlit as st
     st.plotly_chart(self, use_container_width=True)
+    return "Plotly Figure created successfully"
 Figure.show = st_show
 pio.show = st_show
+
+# TODO Find out how to make this work: Monkey patching of Python standard data type __repr__()
+# def st_repr(self):
+#     import streamlit as st
+#     st.write(self)
+#     return ""
+# str.__repr__ = st_repr
+# int.__repr__ = st_repr
+# float.__repr__ = st_repr
