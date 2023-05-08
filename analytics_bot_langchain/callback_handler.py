@@ -2,7 +2,6 @@ import streamlit as st
 from langchain.callbacks.base import BaseCallbackHandler
 from typing import Any, Dict, List, Optional, Union
 from langchain.schema import AgentAction, AgentFinish, LLMResult
-import os
 
 
 class CustomCallbackHandler(BaseCallbackHandler):
@@ -61,13 +60,12 @@ class CustomCallbackHandler(BaseCallbackHandler):
     def on_tool_end(
         self,
         output: str,
-        color: Optional[str] = None,
         observation_prefix: Optional[str] = None,
         llm_prefix: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
         """If not the final action, print out observation."""
-        st.markdown(output.log)
+        pass
 
     def on_tool_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
