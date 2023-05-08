@@ -54,9 +54,9 @@ datasets = [
         ],
     ),
     Dataset(
-        name="NFT Lending Aggregated NFT Collection",
+        name="NFT Lending Aggregated by NFT Collection",
         id="nft_lending_aggregated_nft_collection",
-        description="",
+        description="Borrowed dollar amounts and number of NFTs locked for each NFT collection",
         sample_questions=[
             "Do EDA",
             "Give me three visualizations",
