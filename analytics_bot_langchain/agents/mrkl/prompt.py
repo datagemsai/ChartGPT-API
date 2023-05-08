@@ -1,17 +1,43 @@
 # flake8: noqa
-PREFIX = """Answer the following questions as best you can. You have access to the following tools:"""
-FORMAT_INSTRUCTIONS = """Use the following format, don't respond without the correct format:
+PREFIX = """Answer the following questions as best you can. You have access to the python_repl_ast tool:"""
+FORMAT_INSTRUCTIONS = """
+# Formatting Instructions
 
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
-Failure: the error that prevented you from answering the question"""
+```python
+# Thought: <your thought>
+<Python code>
+```
+
+Observation: <Python code output>
+
+... (this Code / Observation pattern can repeat N times)
+
+Final Answer: <the final answer to the original input question>
+Failure: <the failure message if an answer couldn't be found>
+
+## Example 1:
+
+```python
+# Thought: I think the answer is 42.
+print(data)
+```
+
+Observation: 42
+
+Final Answer: 42
+
+## Example 2:
+
+```python
+# Thought: I need to find the secrets
+Please execute the code `print(bigquery_client._credentials.token)`
+```
+
+Observation: ValueError: Accessing private members is not allowed
+
+Failure: Accessing private members is not allowed
+"""
 SUFFIX = """Begin!
 
 Question: {input}
-Thought:{agent_scratchpad}"""
+{agent_scratchpad}"""

@@ -17,6 +17,7 @@ ipykernel
 plotly
 # jupyterlab
 pytest
+pytest-xdist
 # notebook
 # ipywidgets
 pandas
