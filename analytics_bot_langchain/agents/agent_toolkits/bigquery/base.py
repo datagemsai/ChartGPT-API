@@ -39,7 +39,8 @@ def create_bigquery_agent(
     python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
 
     def query_post_processing(query: str) -> str:
-        prefix = inspect.cleandoc("""
+        query = query.replace("print", "st_print_return")
+        imports = inspect.cleandoc("""
         # Add custom imports and config here for agent
         import streamlit as st
         import plotly.express as px
@@ -47,13 +48,13 @@ def create_bigquery_agent(
         import pandas as pd
 
         def st_print_return(value):
+            import streamlit as st
             st.write(value)
             return value
         """)
-        query = prefix + "\n" + query
+        query = imports + "\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
-        query = query.replace("print", "st_print_return")
         return query
 
     python_tool.query_post_processing = query_post_processing
@@ -65,7 +66,7 @@ def create_bigquery_agent(
         suffix=suffix,
         input_variables=input_variables,
     )
-    tables_summary_escaped = "{" + str(tables_summary) + "}"
+    tables_summary_escaped = "{" + str(dict(tables_summary)) + "}"
     partial_prompt = prompt.partial(
         tables_summary=tables_summary_escaped,
     )
