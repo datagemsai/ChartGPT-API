@@ -31,6 +31,22 @@ st.markdown(
 </script>
 """, unsafe_allow_html=True)
 
+padding_top = 2
+padding_left = padding_right = 1
+padding_bottom = 10
+
+styl = f"""
+<style>
+    .appview-container .main .block-container{{
+        padding-top: {padding_top}rem;
+        padding-right: {padding_right}rem;
+        padding-left: {padding_left}rem;
+        padding-bottom: {padding_bottom}rem;
+    }}
+</style>
+"""
+st.markdown(styl, unsafe_allow_html=True)
+
 # logo = Image.open('media/logo.png')
 logo = Image.open('media/logo_chartgpt.png')
 st.image(logo)
