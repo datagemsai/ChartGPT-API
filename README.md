@@ -37,3 +37,13 @@ Run Streamlit app locally using `streamlit run streamlit_app.py` - open in a bro
 If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
 forums](https://discuss.streamlit.io).
 
+## Google BigQuery
+
+The Google Service Account used for the production app should be given the following roles:
+* BigQuery Data Viewer
+* BigQuery Job User
+* BigQuery Read Session User
+
+For developer access to BigQuery, where they are required to create and delete datasets, the Service Account should additionally have the following permissions:
+* BigQuery User
+* BigQuery Data Editor
