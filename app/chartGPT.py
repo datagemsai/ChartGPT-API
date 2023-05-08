@@ -91,6 +91,27 @@ else:
     # Get a list of all sample questions from the dataclass using list comprehension
     sample_questions_for_dataset.extend([item for sublist in [dataset.sample_questions for dataset in datasets] for item in sublist])
 
+st.markdown(
+    """
+<style>
+    .css-8ojfln {
+        font-size: 17px;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 95%;
+        position: relative;
+    }
+
+    .css-l2f9e0, .css-c2zpwa {
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 sample_question = st.selectbox('Select a sample question (optional):', sample_questions_for_dataset)
 
 # custom_question = None
