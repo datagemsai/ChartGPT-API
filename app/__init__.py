@@ -25,7 +25,7 @@ pd.options.plotting.backend = "plotly"
 def pd_display(self):
     import streamlit as st
     df_id = id(self)
-    if not df_id in st.session_state:
+    if df_id not in st.session_state:
         st.dataframe(self)
         st.session_state[df_id] = 1
 
@@ -59,10 +59,14 @@ pd.core.base.PandasObject._repr_html_ = lambda self: pd_display(self)
 # Monkey patching of Plotly show()
 def st_show(self):
     import streamlit as st
-    st.plotly_chart(self, use_container_width=True)
+    figure_id = id(self)
+    if figure_id not in st.session_state:
+        st.plotly_chart(self, use_container_width=True)
+        st.session_state[figure_id] = 1
     return "Plotly Figure created successfully"
 Figure.show = st_show
 pio.show = st_show
+Figure.__repr__ = st_show
 
 # TODO Find out how to make this work: Monkey patching of Python standard data type __repr__()
 # def st_repr(self):
