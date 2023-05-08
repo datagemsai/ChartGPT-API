@@ -35,7 +35,7 @@ class CustomOutputParser(AgentOutputParser):
             return AgentAction(tool="python_repl_ast", tool_input=inspect.cleandoc("""
             ```python
             # Thought: {llm_output}
-            print(llm_output)
+            print("{llm_output}")
             ```
-            """), log=llm_output)
+            """.format(llm_output=llm_output.replace('"', "\'"))), log=llm_output)
             # raise OutputParserException(llm_output)
