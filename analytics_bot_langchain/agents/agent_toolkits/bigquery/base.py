@@ -121,7 +121,6 @@ def create_bigquery_agent(
         pattern = r"FROM \`([a-zA-Z0-9_-]+).([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\`"
         query = re.sub(pattern, lambda m: f"FROM `{new_dataset_id}.{new_table_id}`", query)
 
-        query = query.replace("print", "st.write")
         return query
 
     python_tool.query_post_processing = query_post_processing

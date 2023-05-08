@@ -15,7 +15,7 @@ class Dataset:
 
 datasets = [
     Dataset(
-        name="Decentralized Exchanges (DEX) Trades",
+        name="Decentralized Exchange (DEX) Trades",
         # TODO Rename as follows
         # id = "ethereum_dex_transactions",
         id="dex_trades",
