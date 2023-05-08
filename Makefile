@@ -14,3 +14,9 @@ run:
 
 test_sample_questions:
 	. venv/bin/activate; pytest -n 8 tests/test_sample_questions.py
+
+gcloud-deploy-production:
+	gcloud app deploy gcloud_production.yaml
+
+gcloud-deploy-staging:
+	gcloud app deploy gcloud_staging.yaml
