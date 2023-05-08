@@ -89,5 +89,5 @@ class CustomAgent(ZeroShotAgent):
             if len(str(observation)) > character_limit:
                 observation = str(observation)[:character_limit]
             thoughts += action.log
-            thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}"
+            thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}\n"
         return thoughts
