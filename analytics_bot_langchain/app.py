@@ -12,12 +12,18 @@ import json
 
 
 callback_manager = CallbackManager([CustomCallbackHandler()])
-credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes([
+
+scopes = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/bigquery",
-])
-client = bigquery.Client(credentials=credentials)
+]
 
+if os.environ.get("gcp_service_account", False):
+    credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes(scopes)
+    client = bigquery.Client(credentials=credentials)
+else:
+    # If deployed using App Engine, use default App Engine credentials
+    client = bigquery.Client()
 
 @st.cache_resource
 def get_agent(dataset_ids: Optional[List] = None):
