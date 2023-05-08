@@ -49,5 +49,15 @@ datasets = [
             "What is the average number of employees for AI companies from CA state",
             "Plot the average revenue for companies from following four states: CA, TX, MA, NY",
         ],
+    ),
+    Dataset(
+        name="NFT Lending Aggregated NFT Collection",
+        id="nft_lending_aggregated_nft_collection",
+        description="",
+        sample_questions=[
+            "Do EDA",
+            "Give me three visualizations",
+            "Tell me more about Azuki and Artblocks",
+        ],
     )
 ]
