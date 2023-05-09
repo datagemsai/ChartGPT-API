@@ -153,6 +153,7 @@ st.markdown("### 3. Get an answer")
 #     disabled=True,
 # )
 
+
 # If the button is clicked or the user presses enter
 if submit_button:
     question = sample_question or custom_question
@@ -170,6 +171,21 @@ if submit_button:
                 raise e
             else:
                 st.error("Analytics failed for unknown reason, please try again.")
+        st.markdown("### Tell us how we could improve the product?")
+        collector = FeedbackCollector()
+        q1 = st.text_input("")
+        if q1:
+            button = st.button(label="submit")
+            if button:
+                feedback = collector.st_feedback(
+                    "custom",
+                    user_response={
+                        "": q1,
+                    },
+                    path="./feedback.json",
+                )
+                feedback.dict() if feedback else None
+
 else:
     st.markdown("...")
 
