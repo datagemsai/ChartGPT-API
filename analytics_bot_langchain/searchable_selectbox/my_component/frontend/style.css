@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.label {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--secondary-text-color);
+}
+
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-box {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--light-border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--input-background-color);
+  color: var(--text-color);
+  transition: all 0.2s ease-in-out;
+}
+
+.search-box:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.options-container
