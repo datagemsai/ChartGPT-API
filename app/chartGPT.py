@@ -12,6 +12,8 @@ from app.config.default import Dataset
 from langchain.schema import OutputParserException
 from google.cloud.bigquery import Client
 from app import DEBUG
+from trubrics.integrations.streamlit import FeedbackCollector
+import subprocess
 
 
 # Display app name
@@ -51,7 +53,19 @@ st.markdown(styl, unsafe_allow_html=True)
 logo = Image.open('media/logo_chartgpt.png')
 st.image(logo)
 # st.markdown("# " + PAGE_NAME + " 📈")
-st.markdown(chartgpt_description)
+
+
+# Get the current Git hash
+git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+
+# Create an orange background box with the Git hash printed in black, positioned on the right
+padding = 0
+st.write(f"""
+<div style='position: absolute; top: 0; right: 0; background-color: orange; width: fit-content; padding: {padding}px {padding}px {padding}px {padding}px;'>
+  <span style='color: black;'>Git version: {git_hash}</span>
+</div>
+""", unsafe_allow_html=True)
+st.write('\n\n\n\n\n\n\n'*10)  # hack to get both orange and yellow box to not merge
 
 st.warning("""
 This is an **early access** version of ChartGPT.
