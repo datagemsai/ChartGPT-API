@@ -171,7 +171,9 @@ if submit_button:
                 raise e
             else:
                 st.error("Analytics failed for unknown reason, please try again.")
-        st.markdown("### Tell us how we could improve the product?")
+
+        # TODO 2023-05-09: figure out why submitting restarts the app.
+        st.markdown("#### Tell us how we could improve the product?")
         collector = FeedbackCollector()
         q1 = st.text_input("")
         if q1:
