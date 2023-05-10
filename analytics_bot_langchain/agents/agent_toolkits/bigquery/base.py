@@ -63,10 +63,10 @@ def create_bigquery_agent(
         new_dataset_id = dataset_ids[0]
         new_table_id = dataset_ids[0]
 
-        pattern = r"FROM \`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\`"
+        pattern = r"FROM `([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`"
         query = re.sub(pattern, lambda m: f"FROM `{new_dataset_id}.{new_table_id}`", query)
 
-        pattern = r"FROM \`([a-zA-Z0-9_-]+).([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\`"
+        pattern = r"FROM `([a-zA-Z0-9_-]+).([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`"
         query = re.sub(pattern, lambda m: f"FROM `{new_dataset_id}.{new_table_id}`", query)
 
         return query
