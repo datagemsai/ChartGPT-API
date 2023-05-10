@@ -41,10 +41,6 @@ class PythonAstREPLTool(BaseTool):
     def _run(self, query: str) -> str:
         """Use the tool."""
         try:
-            if self.sanitize_input:
-                # Remove the triple backticks from the query.
-                query = query.strip().removeprefix("```python")
-                query = query.strip().strip("```")
             if self.query_post_processing:
                 query = self.query_post_processing(query)
 
@@ -54,8 +50,7 @@ class PythonAstREPLTool(BaseTool):
             try:
                 secure_exec(ast.unparse(module), custom_globals=self.globals, custom_locals=self.locals)  # type: ignore
             except ValueError as e:
-                st.error(e)
-                return "Stop"
+                return f"Failure: {e}"
             
             module_end = ast.Module(tree.body[-1:], type_ignores=[])
             module_end_str = ast.unparse(module_end)  # type: ignore
@@ -69,8 +64,7 @@ class PythonAstREPLTool(BaseTool):
                     sys.stdout = old_stdout
                     output = mystdout.getvalue()
                 except ValueError as e:
-                    st.error(e)
-                    return "Stop"
+                    return f"Failure: {e}"
                 except Exception as e:
                     sys.stdout = old_stdout
                     output = str(e)
