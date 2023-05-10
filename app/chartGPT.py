@@ -58,7 +58,7 @@ This is an **early access** version of ChartGPT.
 We're still working on improving the model's performance, finding bugs, and adding more features and datasets.
 """, icon="🚨")
 
-if os.environ.get("DISPLAY_USER_UPDATES", False):
+if app.DISPLAY_USER_UPDATES:
     st.warning("""
     **Update: 10 May 2023, 15:00 CET**
 
