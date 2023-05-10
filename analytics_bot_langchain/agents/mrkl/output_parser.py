@@ -10,8 +10,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-FINAL_ANSWER_ACTION = "Final Answer:"
-FAILURE_ACTION = "Failure:"
+FINAL_ANSWER_ACTION = "Analysis complete:"
+FAILURE_ACTION = "Analysis failed:"
+THOUGHT = "Thought:"
 
 class CustomOutputParser(AgentOutputParser):
     def get_format_instructions(self) -> str:
@@ -46,8 +47,14 @@ class CustomOutputParser(AgentOutputParser):
                 return_values={"output": llm_output.split(FINAL_ANSWER_ACTION)[-1].strip()},
                 log=llm_output
             )
+        elif THOUGHT in llm_output:
+            return AgentAction(tool="python_repl_ast", tool_input="", log=llm_output)
         else:
-            return AgentAction(tool="python_repl_ast", tool_input=inspect.cleandoc('''
-            display("""{llm_output}""")
-            '''.format(llm_output=llm_output.replace('"', "\'"))), log=llm_output)
-            # raise OutputParserException(llm_output)
+            # raise OutputParserException(f"Could not parse LLM output: `{llm_output}`")
+            # return AgentAction(tool="python_repl_ast", tool_input=inspect.cleandoc('''
+            # display("""{llm_output}""")
+            # '''.format(llm_output=llm_output.replace('"', "\'"))), log=llm_output)
+            return AgentFinish(
+                return_values={"output": llm_output.split(FINAL_ANSWER_ACTION)[-1].strip()},
+                log=llm_output
+            )
