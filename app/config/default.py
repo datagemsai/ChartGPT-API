@@ -19,7 +19,7 @@ datasets = [
         id="dex_trades",
         description="A dataset of decentralized exchange (DEX) transactions across L1 and L2 blockchains.",
         sample_questions=[
-            "Do EDA",
+            "Perform EDA",
             "Plot a pie chart of the top 5 takers with highest transaction count, group the remainder takers as Others category",
             "Plot top 5 projects by transaction count",
             "Plot the pairs corresponding to the largest USDC transactions",
@@ -32,7 +32,7 @@ datasets = [
         id="nft_lending_aggregated_borrow",
         description="A dataset of the aggregate borrow volume for different NFT lending protocols.",
         sample_questions=[
-            "Do EDA",
+            "Perform EDA",
             "Plot the monthly loan volume grouped by protocol",
             "Plot a stacked bar chart of loan volume grouped by protocol since August 2022",
             "Plot top 3 protocols on April 3rd 2023",
@@ -45,7 +45,7 @@ datasets = [
         id="growjo_fastest_growing_companies",
         description="Analyse the fastest growing companies in the AI & Analytics space according to Growjo.",
         sample_questions=[
-            "Do EDA",
+            "Perform EDA",
             "Plot total funding by country",
             "Plot the average valuation for US Analytics companies by State",
             "Plot top 5 companies by job openings",
@@ -58,7 +58,7 @@ datasets = [
         id="nft_lending_aggregated_nft_collection",
         description="Borrowed dollar amounts and number of NFTs locked for each NFT collection",
         sample_questions=[
-            "Do EDA",
+            "Perform EDA",
             "Give me three visualizations",
             "Tell me more about Azuki and Artblocks",
             "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
