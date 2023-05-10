@@ -6,13 +6,14 @@ from langchain.agents.agent import AgentOutputParser
 from analytics_bot_langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 from langchain.schema import AgentAction, AgentFinish, OutputParserException
 
-import logging
-logger = logging.getLogger(__name__)
+from app.utils import setup_logger
+logger = setup_logger()
 
 
 FINAL_ANSWER_ACTION = "Analysis complete:"
 FAILURE_ACTION = "Analysis failed:"
 THOUGHT = "Thought:"
+
 
 class CustomOutputParser(AgentOutputParser):
     def get_format_instructions(self) -> str:
@@ -41,8 +42,10 @@ class CustomOutputParser(AgentOutputParser):
             logger.debug(f"CustomOutputParser group 3: {match.group(3)}")
             return AgentAction(tool="python_repl_ast", tool_input=code, log=llm_output)
         elif FAILURE_ACTION in llm_output:
+            logger.error(f"FAILURE_ACTION [{FAILURE_ACTION}] in llm_output: \n{llm_output}")
             raise OutputParserException(llm_output)
         elif FINAL_ANSWER_ACTION in llm_output:
+            logger.info(f"FINAL_ANSWER_ACTION [{FINAL_ANSWER_ACTION}] in llm_output: \n{llm_output}")
             return AgentFinish(
                 return_values={"output": llm_output.split(FINAL_ANSWER_ACTION)[-1].strip()},
                 log=llm_output
