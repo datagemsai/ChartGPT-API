@@ -47,10 +47,10 @@ def create_bigquery_agent(
         import plotly.graph_objects as go
         import pandas as pd
 
-        def st_print_return(value):
+        def st_print_return(*args):
             import streamlit as st
-            st.write(value)
-            return value
+            st.write(*args)
+            return args
         """)
         query = imports + "\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
