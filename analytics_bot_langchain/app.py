@@ -11,6 +11,8 @@ import os
 import json
 
 
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4")
+
 callback_manager = CallbackManager([CustomCallbackHandler()])
 
 scopes = [
@@ -32,12 +34,12 @@ def get_agent(dataset_ids: Optional[List] = None):
         invalid_dataset_ids = set(dataset_ids) - set(available_dataset_ids)
         assert not invalid_dataset_ids, f"Dataset IDs {invalid_dataset_ids} not available"
     return create_bigquery_agent(
-        ChatOpenAI(model="gpt-4", temperature=0.5, request_timeout=180),
+        ChatOpenAI(model=OPENAI_MODEL, temperature=0.5, request_timeout=180),
         bigquery_client=client,
         dataset_ids=dataset_ids,
         verbose=True,
         callback_manager=callback_manager,
-        max_iterations=5,
+        max_iterations=10,
         max_execution_time=120,  # seconds
         early_stopping_method="generate",
     )
