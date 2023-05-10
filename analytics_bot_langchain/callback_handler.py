@@ -59,10 +59,13 @@ class CustomCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         """Run on agent action."""
         logger.info(f"on_agent_action: {action}")
-        st.markdown(inspect.cleandoc(f"""
-        ```python
-        {action.tool_input}
-        """))
+        new_lines = action.tool_input.count('\n')
+        should_display = new_lines > 1 or not "display" in action.tool_input
+        if should_display:
+            st.markdown(inspect.cleandoc(f"""
+            ```python
+            {action.tool_input}
+            """))
 
     def on_tool_end(
         self,
