@@ -8,7 +8,10 @@ from pandas.io.formats import (
     format as fmt,
 )
 from io import StringIO
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env
 load_dotenv()
@@ -16,7 +19,13 @@ load_dotenv()
 os.environ.update(st.secrets)
 
 DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
-if DEBUG: print("Application in debug mode, disable for production")
+if DEBUG: logger.info("Application in debug mode, disable for production")
+
+DISPLAY_USER_UPDATES = (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true')
+if DISPLAY_USER_UPDATES: logger.info("User updates will be displayed")
+
+MAINTENANCE_MODE = (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true')
+if MAINTENANCE_MODE: logger.info("Application in maintenance mode")
 
 # Set plotly as the default plotting backend for pandas
 pd.options.plotting.backend = "plotly"
