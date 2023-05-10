@@ -15,9 +15,9 @@ from app import DEBUG
 from trubrics.integrations.streamlit import FeedbackCollector
 import subprocess
 
-@st.cache_resource(experimental_allow_widgets=True)
-def run_wrapper(agent, question, room):
-    agent.run(input=question)
+# @st.cache_resource(experimental_allow_widgets=True)
+# def run_wrapper(agent, question, room):
+#     agent.run(input=question)
 
 
 def run(room: str):
@@ -113,6 +113,8 @@ def run(room: str):
         # Get a list of all sample questions from the dataclass using list comprehension
         sample_questions_for_dataset.extend([item for sublist in [dataset.sample_questions for dataset in datasets] for item in sublist])
 
+    # TODO 2023-05-09: can we pre-populate the default question by the one which
+    #  was chosen afterwards, when retrieving the state?
     sample_question = st.selectbox('Select a sample question (optional):', sample_questions_for_dataset)
 
     st.markdown("**OR**")
@@ -143,7 +145,6 @@ def run(room: str):
     #     disabled=True,
     # )
 
-
     # If the button is clicked or the user presses enter
     if submit_button:
         question = sample_question or custom_question
@@ -153,7 +154,8 @@ def run(room: str):
                 agent = analytics_bot_langchain.get_agent(dataset_ids=[dataset.id])
                 # TODO 2023-05-09: can we cache the run()? all we care about is the output. we can save the input
                 #  dataset and question from the select box as inputs?
-                run_wrapper(agent, question, room)
+                agent.run(question)
+                # run_wrapper(agent, question, room)
                 st.success('Analytics complete!')
                 st.balloons()
             except OutputParserException as e:
