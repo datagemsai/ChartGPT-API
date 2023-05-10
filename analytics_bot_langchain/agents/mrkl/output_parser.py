@@ -42,7 +42,7 @@ class CustomOutputParser(AgentOutputParser):
         else:
             tool_input = inspect.cleandoc("""
             ```python
-            ##### Thought: {llm_output}
+            ####### Thought: {llm_output}
             print("{llm_output}")
             ```
             """.format(llm_output=llm_output.replace('"', "\'")))

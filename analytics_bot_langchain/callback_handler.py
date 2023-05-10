@@ -57,7 +57,11 @@ class CustomCallbackHandler(BaseCallbackHandler):
         self, action: AgentAction, color: Optional[str] = None, **kwargs: Any
     ) -> Any:
         """Run on agent action."""
-        st.markdown(action.log)
+        if action.log not in st.session_state:
+            st.session_state[action.log] = 1
+            st.markdown(action.log)
+        else:
+            logger.warning("[on_agent_action] tried logging twice the same result!\n")
         logger.info(f"on_agent_action: \n{action.log}\n\n")
 
     def on_tool_end(
@@ -84,12 +88,20 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Optional[str],
     ) -> None:
         """Run when agent ends."""
+        if text not in st.session_state:
+            st.session_state[text] = 1
+            st.markdown(text)
+        else:
+            logger.warning("[on_text] tried logging twice the same result!\n")
         logger.info(f"on_text: \n{text}\n\n")
-        st.markdown(text)
 
     def on_agent_finish(
         self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Run on agent end."""
+        if finish.log not in st.session_state:
+            st.session_state[finish.log] = 1
+            st.markdown(finish.log)
+        else:
+            logger.warning("[on_agent_finish] tried logging twice the same result!\n")
         logger.info(f"on_agent_finish: \n{finish.log}\n\n")
-        st.markdown(finish.log)

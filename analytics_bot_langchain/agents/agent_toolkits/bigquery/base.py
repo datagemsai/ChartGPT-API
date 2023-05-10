@@ -49,7 +49,8 @@ def create_bigquery_agent(
 
         def st_print_return(value):
             import streamlit as st
-            st.write(value)
+            if value not in st.session_state:
+                st.write(value)
             return value
         """)
         query = imports + "\n" + query
