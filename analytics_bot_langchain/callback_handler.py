@@ -1,8 +1,11 @@
+import inspect
 import streamlit as st
 from langchain.callbacks.base import BaseCallbackHandler
 from typing import Any, Dict, List, Optional, Union
 from langchain.schema import AgentAction, AgentFinish, LLMResult
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CustomCallbackHandler(BaseCallbackHandler):
     def on_llm_start(
@@ -55,7 +58,11 @@ class CustomCallbackHandler(BaseCallbackHandler):
         self, action: AgentAction, color: Optional[str] = None, **kwargs: Any
     ) -> Any:
         """Run on agent action."""
-        st.markdown(action.log)
+        logger.info(f"on_agent_action: {action}")
+        st.markdown(inspect.cleandoc(f"""
+        ```python
+        {action.tool_input}
+        """))
 
     def on_tool_end(
         self,
@@ -65,7 +72,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """If not the final action, print out observation."""
-        pass
+        logger.info(f"on_tool_end: {output}")
 
     def on_tool_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
@@ -81,10 +88,11 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Optional[str],
     ) -> None:
         """Run when agent ends."""
-        st.markdown(text)
+        pass
 
     def on_agent_finish(
         self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Run on agent end."""
+        logger.info(f"on_agent_finish: {finish}")
         st.markdown(finish.log)
