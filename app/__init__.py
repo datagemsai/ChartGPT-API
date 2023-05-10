@@ -89,7 +89,7 @@ def st_show(self):
     if figure_id not in st.session_state:
         st.plotly_chart(self, use_container_width=True)
         st.session_state[figure_id] = 1
-    return "Plotly Figure created successfully"
+    return "Analytics successful: Plotly Figure created successfully"
 Figure.show = st_show
 pio.show = st_show
 Figure.__repr__ = st_show
