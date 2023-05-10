@@ -12,38 +12,39 @@ class CustomCallbackHandler(BaseCallbackHandler):
         self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> None:
         """Print out the prompts."""
-        pass
+        class_name = serialized["name"]
+        logger.info(f"on_llm_start: {class_name}")
 
     def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         """Do nothing."""
-        pass
+        logger.info(f"on_llm_end: {response}")
 
     def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
         """Do nothing."""
-        pass
+        logger.info(f"on_llm_new_token: {token}")
 
     def on_llm_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> None:
         """Do nothing."""
-        pass
+        logger.info(f"on_llm_error: {error}")
 
     def on_chain_start(
         self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> None:
         """Print out that we are entering a chain."""
         class_name = serialized["name"]
-        # st.markdown(f"Entering new {class_name} chain...")
+        logger.info(f"on_chain_start: {class_name}")
 
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Print out that we finished a chain."""
-        # st.markdown("Finished chain.")
+        logger.info(f"on_chain_end: {outputs}")
 
     def on_chain_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> None:
         """Do nothing."""
-        pass
+        logger.info(f"on_chain_error: {error}")
 
     def on_tool_start(
         self,
@@ -52,7 +53,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Do nothing."""
-        pass
+        logger.info(f"on_tool_start: {input_str}")
 
     def on_agent_action(
         self, action: AgentAction, color: Optional[str] = None, **kwargs: Any
@@ -81,7 +82,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> None:
         """Do nothing."""
-        pass
+        logger.info(f"on_tool_error: {error}")
 
     def on_text(
         self,
@@ -91,11 +92,11 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Optional[str],
     ) -> None:
         """Run when agent ends."""
-        pass
+        logger.info(f"on_text: {text}")
 
     def on_agent_finish(
         self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Run on agent end."""
         logger.info(f"on_agent_finish: {finish}")
-        st.markdown(finish.log)
+        st.markdown(finish.return_values["output"])
