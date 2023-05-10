@@ -91,8 +91,8 @@ class CustomAgent(ZeroShotAgent):
                 observation = str(observation)[:character_limit]
             thoughts += action.log
             thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}\n"
-            # thoughts += f"\n{observation}\n{self.llm_prefix}\n"
+            # Thoughts += f"\n{observation}\n{self.llm_prefix}\n"
             if thoughts[:2] == '# ':  # try hack to avoid having giant THOUGHTS in markdown due to #
-                thoughts = '##' + thoughts
+                thoughts = '######' + thoughts
             # logger.info(f"Agent thoughts: \n{thoughts}{SPACING_BETWEEN_COMMANDS}")
         return thoughts
