@@ -41,20 +41,37 @@ pd.DataFrame.display = lambda self: pd_display(self)
 pd.DataFrame.__repr__ = lambda self: pd_display(self)
 pd.DataFrame._repr_html_ = lambda self: pd_display(self)
 
-pd.core.indexing._iLocIndexer.__repr__ = lambda self: pd_display(self)
-pd.core.indexing._iLocIndexer._repr_html_ = lambda self: pd_display(self)
-
-pd.core.indexing._LocIndexer.__repr__ = lambda self: pd_display(self)
-pd.core.indexing._LocIndexer._repr_html_ = lambda self: pd_display(self)
+# TODO Determine if these patches are needed:
+# pd.core.indexing._iLocIndexer.__repr__ = lambda self: pd_display(self)
+# pd.core.indexing._iLocIndexer._repr_html_ = lambda self: pd_display(self)
+# pd.core.indexing._LocIndexer.__repr__ = lambda self: pd_display(self)
+# pd.core.indexing._LocIndexer._repr_html_ = lambda self: pd_display(self)
 
 pd.core.frame.DataFrame.__repr__ = lambda self: pd_display(self)
 pd.core.frame.DataFrame._repr_html_ = lambda self: pd_display(self)
 
-pd.core.series.Series.__repr__ = lambda self: pd_display(self)
-pd.core.series.Series._repr_html_ = lambda self: pd_display(self)
+def pandas_object_display(self):
+    import streamlit as st
+    df_id = id(self)
+    if df_id not in st.session_state:
+        st.dataframe(self)
+        st.session_state[df_id] = 1
 
-pd.core.base.PandasObject.__repr__ = lambda self: pd_display(self)
-pd.core.base.PandasObject._repr_html_ = lambda self: pd_display(self)
+    return object.__repr__(self)
+
+pd.core.base.PandasObject.__repr__ = lambda self: pandas_object_display(self)
+
+def series_display(self):
+    import streamlit as st
+    df_id = id(self)
+    if df_id not in st.session_state:
+        st.dataframe(self)
+        st.session_state[df_id] = 1
+
+    repr_params = fmt.get_series_repr_params()
+    return self.to_string(**repr_params)
+
+pd.core.series.Series.__repr__ = lambda self: series_display(self)
 
 # Monkey patching of Plotly show()
 def st_show(self):
