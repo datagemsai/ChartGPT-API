@@ -1,3 +1,4 @@
+import inspect
 from io import StringIO
 from typing import Dict, List, Tuple, Union, Optional
 from google.cloud import bigquery
@@ -44,6 +45,21 @@ def get_tables_summary(
                 for schema_field in table.schema
             ]
     return tables_summary
+
+def get_example_query(
+    client: bigquery.Client,
+    dataset_ids: Optional[List] = None,
+) -> str:
+    if not dataset_ids:
+        dataset_ids = get_dataset_ids(client=client)
+    example_query = ""
+    for dataset_id in dataset_ids:
+        for table_item in client.list_tables(dataset_id):
+            table_id = table_item.table_id
+            example_query += inspect.cleandoc(f"""
+            SELECT * FROM `{dataset_id}.{table_id}` LIMIT 100
+            """)
+    return example_query
 
 def get_sample_dataframes(
     client: bigquery.Client,
