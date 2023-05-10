@@ -15,9 +15,10 @@ from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
 from analytics_bot_langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 import logging
 from langchain.agents.mrkl.base import ZeroShotAgent
+from .output_parser import logger, SPACING_BETWEEN_COMMANDS
 
+# logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
 
 class CustomAgent(ZeroShotAgent):
     output_parser: AgentOutputParser = Field(default_factory=CustomOutputParser)
@@ -90,4 +91,8 @@ class CustomAgent(ZeroShotAgent):
                 observation = str(observation)[:character_limit]
             thoughts += action.log
             thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}\n"
+            # thoughts += f"\n{observation}\n{self.llm_prefix}\n"
+            if thoughts[:2] == '# ':  # try hack to avoid having giant THOUGHTS in markdown due to #
+                thoughts = '##' + thoughts
+            # logger.info(f"Agent thoughts: \n{thoughts}{SPACING_BETWEEN_COMMANDS}")
         return thoughts

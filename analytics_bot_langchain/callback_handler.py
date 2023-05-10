@@ -3,6 +3,8 @@ from langchain.callbacks.base import BaseCallbackHandler
 from typing import Any, Dict, List, Optional, Union
 from langchain.schema import AgentAction, AgentFinish, LLMResult
 
+from analytics_bot_langchain.agents.mrkl.output_parser import logger
+
 
 class CustomCallbackHandler(BaseCallbackHandler):
     def on_llm_start(
@@ -56,6 +58,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         """Run on agent action."""
         st.markdown(action.log)
+        logger.info(f"on_agent_action: \n{action.log}\n\n")
 
     def on_tool_end(
         self,
@@ -81,10 +84,12 @@ class CustomCallbackHandler(BaseCallbackHandler):
         **kwargs: Optional[str],
     ) -> None:
         """Run when agent ends."""
+        logger.info(f"on_text: \n{text}\n\n")
         st.markdown(text)
 
     def on_agent_finish(
         self, finish: AgentFinish, color: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Run on agent end."""
+        logger.info(f"on_agent_finish: \n{finish.log}\n\n")
         st.markdown(finish.log)

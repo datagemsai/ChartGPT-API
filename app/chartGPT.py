@@ -4,6 +4,8 @@ import streamlit as st
 from PIL import Image
 import os
 import traceback
+
+from analytics_bot_langchain.agents.mrkl.output_parser import logger
 from app.config.content import chartgpt_description
 import analytics_bot_langchain
 from analytics_bot_langchain.app import client
@@ -141,7 +143,10 @@ st.markdown("### 3. Get an answer")
 
 # If the button is clicked or the user presses enter
 if submit_button:
+    logger.info(f"**** APPLICATION STARTED ****\n\n")
+
     question = sample_question or custom_question
+    logger.info(f"Input sample question [{question}] for dataset [{dataset}]\n\n")
     with st.spinner('Thinking...'):
         try:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
