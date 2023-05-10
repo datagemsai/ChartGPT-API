@@ -19,7 +19,8 @@ Failure: <the failure message if an answer couldn't be found>
 
 ```python
 # Thought: I think the answer is 42.
-print(data)
+answer = 7 * 6
+print(answer)
 ```
 
 Observation: 42
