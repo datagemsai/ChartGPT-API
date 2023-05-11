@@ -11,7 +11,7 @@ import os
 import json
 
 
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
 
 callback_manager = CallbackManager([CustomCallbackHandler()])
 
