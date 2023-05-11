@@ -172,15 +172,15 @@ if submit_button:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
             agent = analytics_bot_langchain.get_agent(dataset_ids=[dataset.id])
             agent.run(input=question)
-            st.success('Analytics complete!')
+            st.success('Analysis complete!')
             st.balloons()
         except OutputParserException as e:
-            st.error("Analytics failed." + "\n\n" + str(e))
+            st.error("Analysis failed." + "\n\n" + str(e))
         except Exception as e:
             if app.DEBUG:
                 raise e
             else:
-                st.error("Analytics failed for unknown reason, please try again.")
+                st.error("Analysis failed for unknown reason, please try again.")
 else:
     st.markdown("...")
 

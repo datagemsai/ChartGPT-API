@@ -9,7 +9,7 @@ from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from analytics_bot_langchain.tools.python.tool import PythonAstREPLTool
-from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_tables_summary
+from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_tables_summary, get_example_query
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
 
@@ -33,13 +33,12 @@ def create_bigquery_agent(
     agent_executor_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs: Any,
 ) -> AgentExecutor:
-    if input_variables is None:
-        input_variables = ["tables_summary", "input", "agent_scratchpad"]
     tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
+    example_query = get_example_query(client=bigquery_client, dataset_ids=dataset_ids)
     python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
 
     def query_post_processing(query: str) -> str:
-        query = query.replace("print", "st_print_return")
+        query = query.replace("print(", "display(")
         imports = inspect.cleandoc("""
         # Add custom imports and config here for agent
         import streamlit as st
@@ -47,7 +46,7 @@ def create_bigquery_agent(
         import plotly.graph_objects as go
         import pandas as pd
 
-        def st_print_return(*args):
+        def display(*args):
             import streamlit as st
             st.write(*args)
             return args
@@ -58,8 +57,11 @@ def create_bigquery_agent(
         return query
 
     python_tool.query_post_processing = query_post_processing
-
     tools = [python_tool]
+
+    if input_variables is None:
+        input_variables = ["tables_summary", "example_query", "input", "agent_scratchpad"]
+
     prompt = CustomAgent.create_prompt(
         tools,
         prefix=prefix,
@@ -69,6 +71,7 @@ def create_bigquery_agent(
     tables_summary_escaped = "{" + str(dict(tables_summary)) + "}"
     partial_prompt = prompt.partial(
         tables_summary=tables_summary_escaped,
+        example_query=example_query,
     )
     llm_chain = LLMChain(
         llm=llm,
