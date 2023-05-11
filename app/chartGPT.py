@@ -1,4 +1,3 @@
-import subprocess
 from copy import copy
 from dataclasses import dataclass
 import streamlit as st
@@ -54,19 +53,6 @@ logo = Image.open('media/logo_chartgpt.png')
 st.image(logo)
 # st.markdown("# " + PAGE_NAME + " 📈")
 st.markdown(chartgpt_description)
-
-# Get the current Git hash
-git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
-
-# Create an orange background box with the Git hash printed in black, positioned on the right
-padding = 0
-st.write(f"""
-<div style='position: absolute; top: 0; right: 0; background-color: orange; width: fit-content; padding: {padding}px {padding}px {padding}px {padding}px;'>
-  <span style='color: black;'>Git version: {git_hash}</span>
-</div>
-""", unsafe_allow_html=True)
-st.write('\n\n\n\n\n\n\n'*10)  # hack to get both orange and yellow box to not merge
-
 
 st.info("""
 This is an **early access** version of ChartGPT.
