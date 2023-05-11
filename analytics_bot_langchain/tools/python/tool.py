@@ -50,7 +50,7 @@ class PythonAstREPLTool(BaseTool):
             try:
                 secure_exec(ast.unparse(module), custom_globals=self.globals, custom_locals=self.locals)  # type: ignore
             except ValueError as e:
-                return f"Failure: {e}"
+                return f"Analysis failed: {e}"
             
             module_end = ast.Module(tree.body[-1:], type_ignores=[])
             module_end_str = ast.unparse(module_end)  # type: ignore
@@ -64,7 +64,7 @@ class PythonAstREPLTool(BaseTool):
                     sys.stdout = old_stdout
                     output = mystdout.getvalue()
                 except ValueError as e:
-                    return f"Failure: {e}"
+                    return f"Analysis failed: {e}"
                 except Exception as e:
                     sys.stdout = old_stdout
                     output = str(e)
