@@ -56,6 +56,8 @@ st.markdown(chartgpt_description)
 st.info("""
 This is an **early access** version of ChartGPT.
 We're still working on improving the model's performance, finding bugs, and adding more features and datasets.
+
+Have any feedback or bug reports? [Let us know!](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)
 """, icon="🚨")
 
 if app.DISPLAY_USER_UPDATES:
@@ -175,12 +177,19 @@ if submit_button:
             st.success('Analysis complete!')
             st.balloons()
         except OutputParserException as e:
-            st.error("Analysis failed." + "\n\n" + str(e))
+            st.error(
+                "Analysis failed."
+                + "\n\n" + str(e)
+                + "\n\n" + "[We welcome any feedback or bug reports.](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)"
+            )
         except Exception as e:
             if app.DEBUG:
                 raise e
             else:
-                st.error("Analysis failed for unknown reason, please try again.")
+                st.error(
+                    "Analysis failed for unknown reason, please try again."
+                    + "\n\n" + "[We welcome any feedback or bug reports.](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)"
+                )
 else:
     st.markdown("...")
 
