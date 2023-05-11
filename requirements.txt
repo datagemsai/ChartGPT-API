@@ -33,3 +33,4 @@ sqlalchemy-bigquery[bqstorage]
 # pinecone-client
 # faiss-cpu
 deeplake
+networkx
