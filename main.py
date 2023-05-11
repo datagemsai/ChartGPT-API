@@ -4,12 +4,24 @@ from analytics_bot_langchain.data.dune.execute_query import run_query
 from analytics_bot_langchain.data.get_growjo_sheet import save_sheet_as_csv
 
 tables_id = {
-        "nft_lending_aggregated_borrow": 1205836,
-        "nft_lending_aggregated_repay": 1227068,
-        "nft_lending_aggregated_users": 1227127,
-        "nft_lending_aggregated_nft_collection": 1227168,
-        "nft_lending_liquidate": 1241427,
-        "decentralized_exchange_trades": 2421110,
+        # "nft_lending_aggregated_borrow": 1205836,
+        # "nft_lending_aggregated_repay": 1227068,
+        # "nft_lending_aggregated_users": 1227127,
+        # "nft_lending_aggregated_nft_collection": 1227168,
+        # "nft_lending_liquidate": 1241427,
+        # "decentralized_exchange_trades": 2421110,
+        "ordinals_marketplace_volume": 2148199,
+        "ordinals_marketplace_unique_users": 2148742,
+}
+tables_datatype = {
+        # "nft_lending_aggregated_borrow": Datatype.nftfi,
+        # "nft_lending_aggregated_repay": Datatype.nftfi,
+        # "nft_lending_aggregated_users": Datatype.nftfi,
+        # "nft_lending_aggregated_nft_collection": Datatype.nftfi,
+        # "nft_lending_liquidate": Datatype.nftfi,
+        # "decentralized_exchange_trades": Datatype.decentralized_exchange_trades,
+        "ordinals_marketplace_volume": Datatype.ordinals,
+        "ordinals_marketplace_unique_users": Datatype.ordinals,
 }
 
 
@@ -23,8 +35,8 @@ def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, dataty
 # table_name = "nft_lending_aggregated_repay"
 # datatype = Datatype.nftfi
 
-table = "decentralized_exchange_trades"
-datatype = Datatype.decentralized_exchange_trades
+# table = "decentralized_exchange_trades"
+# datatype = Datatype.decentralized_exchange_trades
 
 # table_name = "nft_lending_aggregated_users"
 # datatype = Datatype.nftfi
@@ -37,7 +49,7 @@ datatype = Datatype.decentralized_exchange_trades
 
 # table_name = "nft_lending_aggregated_borrow"
 # datatype = Datatype.nftfi
-# for table in tables_id.keys():
-query_dune_api_and_save_dataset_to_bq(table_name=table, query_id=tables_id[table], datatype=datatype, dune_query=False)
+for table in tables_id.keys():
+    query_dune_api_and_save_dataset_to_bq(table_name=table, query_id=tables_id[table], datatype=tables_datatype[table], dune_query=False)
 
 # save_sheet_as_csv()

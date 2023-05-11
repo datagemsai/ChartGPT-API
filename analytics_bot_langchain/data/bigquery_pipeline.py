@@ -32,6 +32,7 @@ client = bigquery.Client(credentials=credentials)
 class Datatype(Enum):
     decentralized_exchange_trades = "decentralized_exchange_trades"
     nftfi = "nftfi"
+    ordinals = "ordinals"
 
 
 def format_bigquery_column_names(df):
@@ -239,7 +240,13 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
                     raise Exception(f'unspecified datatype for {table_name}')
             if 'collection' not in table_name:
                 df['dt'] = pd.to_datetime(df['dt'], format='%Y-%m-%d %H:%M')
-
+        elif datatype == datatype.ordinals:
+            df['day'] = pd.to_datetime(df['day'])
+            if 'volume' in file_name:
+                df['volume'] = df['total'].astype(float)
+                df.drop(columns=['total'], axis=1)
+            else:
+                df['users'] = df['users'].astype(int)
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
             clean_nftfi_loan_dataframe(df)
 
@@ -394,6 +401,20 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),  # EMPTY IN DUNE hence cleaned away
             bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
         ]
+    elif table_name == 'ordinals_marketplace_volume':
+        # Return the Dune decentralized_exchange_trades schema
+        return [
+            bigquery.SchemaField("day", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("marketplace", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("volume", bigquery.enums.SqlTypeNames.FLOAT),
+        ]
+    elif table_name == 'ordinals_marketplace_unique_users':
+        # Return the Dune decentralized_exchange_trades schema
+        return [
+            bigquery.SchemaField("day", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("marketplace", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("users", bigquery.enums.SqlTypeNames.INTEGER),
+        ]
 
 
 def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, dune_query: bool, overwrite_existing_table=True):
@@ -403,6 +424,8 @@ def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, du
         dataset_id = table_name
     elif datatype == Datatype.decentralized_exchange_trades:
         dataset_id = 'decentralized_exchange_trades'
+    elif datatype == Datatype.ordinals:
+        dataset_id = table_name
     else:
         raise Exception(f"Unrecognized datatype {datatype}, cannot match it with BQ dataset")
     save_to_bigquery(dataframes=dataframes, overwrite_existing_table=overwrite_existing_table, schema=schema, dataset_id=dataset_id)

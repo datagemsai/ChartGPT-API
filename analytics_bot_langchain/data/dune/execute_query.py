@@ -23,6 +23,9 @@ def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="3", fr
     params = []
     print(f"\n************  QUERYING [{file_name}]  ************"*2)
     file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
+
     file_name = file_path + file_name
     if datatype == Datatype.decentralized_exchange_trades:
         file_name = file_path + f'decentralized_exchange_trades'
