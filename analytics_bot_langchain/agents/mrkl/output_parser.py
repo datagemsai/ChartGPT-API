@@ -1,7 +1,7 @@
 import inspect
 import re
 from typing import Union
-
+import streamlit as st
 from langchain.agents.agent import AgentOutputParser
 from analytics_bot_langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 from langchain.schema import AgentAction, AgentFinish, OutputParserException
@@ -36,9 +36,13 @@ class CustomOutputParser(AgentOutputParser):
                 .removesuffix("```")
                 .strip()
             )
-            logger.debug(f"CustomOutputParser group 1: {match.group(1)}")
-            logger.debug(f"CustomOutputParser group 2: {match.group(2)}")
-            logger.debug(f"CustomOutputParser group 3: {match.group(3)}")
+            thought = (
+                match
+                .group(1)
+                .removesuffix("Action Input:")
+                .strip()
+            )
+            st.markdown(thought)
             return AgentAction(tool="python_repl_ast", tool_input=code, log=llm_output)
         elif FAILURE_ACTION in llm_output:
             raise OutputParserException(llm_output)
