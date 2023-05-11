@@ -53,7 +53,7 @@ class CustomAgent(ZeroShotAgent):
         Returns:
             A PromptTemplate with the template assembled from the pieces here.
         """
-        tool_strings = "\n".join([f"{tool.name}: {tool.description}" for tool in tools])
+        tool_strings = "\n\n".join([f"## {tool.name}:\n\n{tool.description}" for tool in tools])
         # tool_names = ", ".join([tool.name for tool in tools])
         # format_instructions = format_instructions.format(tool_names=tool_names)
         template = "\n\n".join([prefix, tool_strings, format_instructions, suffix])
@@ -89,5 +89,7 @@ class CustomAgent(ZeroShotAgent):
             if len(str(observation)) > character_limit:
                 observation = str(observation)[:character_limit]
             thoughts += action.log
-            thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}\n"
+            thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}"
+        logger.info(f"===================== scratchpad start =====================\n{thoughts}")
+        logger.info("===================== scratchpad end =====================")
         return thoughts

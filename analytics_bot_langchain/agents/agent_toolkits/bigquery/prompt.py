@@ -1,4 +1,5 @@
 import analytics_bot_langchain.agents.agent_toolkits.bigquery.prompts.v2 as v2
+import analytics_bot_langchain.agents.agent_toolkits.bigquery.prompts.v3_optimized as v3_optimized
 
-PREFIX = v2.PREFIX
-SUFFIX = v2.SUFFIX
+PREFIX = v3_optimized.PREFIX
+SUFFIX = v3_optimized.SUFFIX

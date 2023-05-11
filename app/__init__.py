@@ -85,11 +85,11 @@ pd.core.series.Series.__repr__ = lambda self: series_display(self)
 # Monkey patching of Plotly show()
 def st_show(self):
     import streamlit as st
-    figure_id = id(self)
-    if figure_id not in st.session_state:
-        st.plotly_chart(self, use_container_width=True)
-        st.session_state[figure_id] = 1
-    return "Plotly Figure created successfully"
+    # figure_id = id(self)
+    # if figure_id not in st.session_state:
+    st.plotly_chart(self, use_container_width=True)
+    # st.session_state[figure_id] = 1
+    return "Plotly chart created successfully"
 Figure.show = st_show
 pio.show = st_show
 Figure.__repr__ = st_show
