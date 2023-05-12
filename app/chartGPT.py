@@ -95,9 +95,11 @@ else:
 
 st.markdown("### 1. Select a dataset")
 
-# st.write("You have access to the following datasets:")
-# for dataset in datasets:
-#     st.markdown(f"- **{dataset.name}**: {dataset.description}")
+st.info("""
+These are sample datasets that are updated periodically.
+
+If you have a request for a specific dataset or use case, [please reach out!](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)
+""")
 
 # dataset_id = st.selectbox('Select dataset (optional):', [""] + dataset_ids)
 dataset = st.selectbox('Select a dataset:', datasets, index=0, label_visibility="collapsed")
