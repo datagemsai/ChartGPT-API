@@ -63,5 +63,14 @@ datasets = [
             "Tell me more about Azuki and Artblocks",
             "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
         ],
+    ),
+    Dataset(
+        name="Ordinals marketplace",
+        id="ordinals_marketplace",
+        description="Total dollar transaction volume and unique users of Ordinals marketplaces",
+        sample_questions=[
+            "Perform EDA",
+            "Give me three visualizations",
+        ],
     )
 ]
