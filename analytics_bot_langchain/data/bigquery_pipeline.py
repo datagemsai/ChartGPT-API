@@ -22,11 +22,14 @@ dotenv.load_dotenv()
 # Load all CSV files from directory into single BigQuery dataset
 import json
 
-credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes([
+scopes = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/bigquery",
-])
-client = bigquery.Client(credentials=credentials)
+]
+
+if os.environ.get("gcp_service_account", False):
+    credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes(scopes)
+    client = bigquery.Client(credentials=credentials)
 
 
 class Datatype(Enum):
@@ -244,7 +247,7 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
             df['day'] = pd.to_datetime(df['day'])
             if 'volume' in file_name:
                 df['volume'] = df['total'].astype(float)
-                df.drop(columns=['total'], axis=1)
+                df = df.drop(columns=['total'], axis=1)
             else:
                 df['users'] = df['users'].astype(int)
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
@@ -255,11 +258,20 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
     return dataframes
 
 
+def merge_ordinals_dataframes(dataframes: Dict):
+    df1 = dataframes['ordinals_marketplace_volume']
+    df2 = dataframes['ordinals_marketplace_unique_users']
+    merged_df = df1.merge(df2, on=['day', 'marketplace'])
+    dataframes = {'ordinals_marketplace': merged_df}
+    return dataframes
+
+
 def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  dataset_id: str, client=client, project_id="psychic-medley-383515", overwrite_existing_table=False):
+    dataframes = merge_ordinals_dataframes(dataframes=dataframes)
     for df_name, df in dataframes.items():
 
         df_name = df_name.replace(':', '_')
-        table_ref = client.dataset(dataset_id, project=project_id).table(df_name)  # Construct a reference to the table
+        table_ref = client.dataset(df_name, project=project_id).table(df_name)  # Construct a reference to the table
 
         # Upload the data to BigQuery
         if overwrite_existing_table:
@@ -401,18 +413,11 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             # bigquery.SchemaField("trace_address", bigquery.enums.SqlTypeNames.STRING),  # EMPTY IN DUNE hence cleaned away
             bigquery.SchemaField("evt_index", bigquery.enums.SqlTypeNames.STRING),  # INTEGER
         ]
-    elif table_name == 'ordinals_marketplace_volume':
-        # Return the Dune decentralized_exchange_trades schema
+    elif table_name == 'ordinals_marketplace':
         return [
             bigquery.SchemaField("day", bigquery.enums.SqlTypeNames.TIMESTAMP),
             bigquery.SchemaField("marketplace", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("volume", bigquery.enums.SqlTypeNames.FLOAT),
-        ]
-    elif table_name == 'ordinals_marketplace_unique_users':
-        # Return the Dune decentralized_exchange_trades schema
-        return [
-            bigquery.SchemaField("day", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("marketplace", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("users", bigquery.enums.SqlTypeNames.INTEGER),
         ]
 
