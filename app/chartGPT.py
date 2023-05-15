@@ -176,7 +176,14 @@ if submit_button:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
             agent = analytics_bot_langchain.get_agent(dataset_ids=[dataset.id])
             agent.run(input=question)
-            st.success('Analysis complete!')
+            st.success(
+                f"""
+                Analysis complete!
+
+                Enjoying ChartGPT and eager for more? Join our waitlist to stay ahead with the latest updates.
+                You'll also be among the first to gain access when we roll out new features! Sign up [here](https://ne6tibkgvu7.typeform.com/to/ZqbYQVE6).
+                """
+            )
             st.balloons()
         except OutputParserException as e:
             st.error(
