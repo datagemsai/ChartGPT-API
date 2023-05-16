@@ -12,7 +12,7 @@ import json
 
 # Load secrets / environment variables from .streamlit directory secrets.toml
 openai.api_key = os.environ["OPENAI_API_KEY"]
-gcp_service_account = json.loads(os.environ["gcp_service_account"], strict=False)
+GCP_SERVICE_ACCOUNT = json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)
 
 
 def run(dataset_id, project_id: Optional[str] = None, questions=None, question=None, sql_requests=None, data_requests=None, chart_requests=None) -> bool:
@@ -27,8 +27,8 @@ def run(dataset_id, project_id: Optional[str] = None, questions=None, question=N
     elif (questions is None) and not (question is None):
         questions = [{'question': question}]
 
-    project_id = project_id if project_id else gcp_service_account["project_id"]
-    eng = create_engine(f"bigquery://{project_id}/{dataset_id}", credentials_info=gcp_service_account)
+    project_id = project_id if project_id else GCP_SERVICE_ACCOUNT["project_id"]
+    eng = create_engine(f"bigquery://{project_id}/{dataset_id}", credentials_info=GCP_SERVICE_ACCOUNT)
 
     process_questions(questions=questions, sql_requests=sql_requests, chart_requests=chart_requests, data_requests=data_requests)
     sql_agent_answers = process_sql_requests(eng=eng, sql_requests=sql_requests)

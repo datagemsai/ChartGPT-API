@@ -20,8 +20,8 @@ scopes = [
     "https://www.googleapis.com/auth/bigquery",
 ]
 
-if os.environ.get("gcp_service_account", False):
-    credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes(scopes)
+if os.environ.get("GCP_SERVICE_ACCOUNT", False):
+    credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)).with_scopes(scopes)
     client = bigquery.Client(credentials=credentials)
 else:
     # If deployed using App Engine, use default App Engine credentials

@@ -133,3 +133,4 @@ secrets/*
 docs/*
 .idea/*
 secrets.yaml
+outputs/*
