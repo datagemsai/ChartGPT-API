@@ -23,8 +23,7 @@ Wherever Google Auth expects the environment variable `GOOGLE_APPLICATION_CREDEN
 import streamlit as st
 from google.oauth2 import service_account
 
-
-credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+credentials = service_account.Credentials.from_service_account_info(st.secrets["GCP_SERVICE_ACCOUNT"])
 client = bigquery.Client(credentials=credentials)
 ```
 

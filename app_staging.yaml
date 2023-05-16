@@ -1,0 +1,35 @@
+# For deployment using: `gcloud app deploy`
+
+# `service: default` == production deployment
+# `service: staging` == staging deployment
+service: staging
+runtime: custom
+env: flex
+
+includes:
+  - secrets.yaml
+
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 4
+  cool_down_period_sec: 120
+  cpu_utilization:
+    target_utilization: 0.6
+
+resources:
+  cpu: 1
+  memory_gb: 4
+  disk_size_gb: 10
+
+# readiness_check:
+#   path: "/_stcore/health"
+#   check_interval_sec: 30
+#   timeout_sec: 30
+#   failure_threshold: 2
+#   success_threshold: 2
+#   app_start_timeout_sec: 1800
+
+handlers:
+  - url: /.*
+    script: auto
+    secure: always
