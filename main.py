@@ -1,55 +1,12 @@
+import pandas as pd
 
-from analytics_bot_langchain.data.bigquery_pipeline import clean_csv_files_and_save_to_bigquery, Datatype
-from analytics_bot_langchain.data.dune.execute_query import run_query
-from analytics_bot_langchain.data.get_growjo_sheet import save_sheet_as_csv
+from analytics_bot_langchain.data import metaquants
 
-tables_id = {
-        # "nft_lending_aggregated_borrow": 1205836,
-        # "nft_lending_aggregated_repay": 1227068,
-        # "nft_lending_aggregated_users": 1227127,
-        # "nft_lending_aggregated_nft_collection": 1227168,
-        # "nft_lending_liquidate": 1241427,
-        # "decentralized_exchange_trades": 2421110,
-        "ordinals_marketplace_volume": 2148199,
-        "ordinals_marketplace_unique_users": 2148742,
-}
-tables_datatype = {
-        # "nft_lending_aggregated_borrow": Datatype.nftfi,
-        # "nft_lending_aggregated_repay": Datatype.nftfi,
-        # "nft_lending_aggregated_users": Datatype.nftfi,
-        # "nft_lending_aggregated_nft_collection": Datatype.nftfi,
-        # "nft_lending_liquidate": Datatype.nftfi,
-        # "decentralized_exchange_trades": Datatype.decentralized_exchange_trades,
-        "ordinals_marketplace_volume": Datatype.ordinals,
-        "ordinals_marketplace_unique_users": Datatype.ordinals,
-}
+import pandas
+df = pd.read_csv('analytics_bot_langchain/data/metaquants/nft_finance_p2p.csv')
+df2 = pd.read_csv('analytics_bot_langchain/data/metaquants/nft_finance_p2pool.csv')
+exit(0)
 
 
-def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, datatype: Datatype, dune_query: bool):
-    if dune_query:
-        # if we query dune API, we save .csv locally and only upload that table to BQ. else we upload all tables in data/dune/nftfi/*.csv to BQ
-        run_query(file_name=table_name, datatype=datatype, query_id=query_id)
-    clean_csv_files_and_save_to_bigquery(table_name=table_name, datatype=datatype, dune_query=dune_query)
+metaquants.run_for_all()
 
-
-# table_name = "nft_lending_aggregated_repay"
-# datatype = Datatype.nftfi
-
-# table = "decentralized_exchange_trades"
-# datatype = Datatype.decentralized_exchange_trades
-
-# table_name = "nft_lending_aggregated_users"
-# datatype = Datatype.nftfi
-
-# table_name = "nft_lending_liquidate"
-# datatype = Datatype.nftfi
-
-# table_name = "nft_lending_aggregated_nft_collection"
-# datatype = Datatype.nftfi
-
-# table_name = "nft_lending_aggregated_borrow"
-# datatype = Datatype.nftfi
-for table in tables_id.keys():
-    query_dune_api_and_save_dataset_to_bq(table_name=table, query_id=tables_id[table], datatype=tables_datatype[table], dune_query=False)
-
-# save_sheet_as_csv()
