@@ -1,4 +1,5 @@
 # ChartGPT
+[![Build Status](https://github.com/CADLabs/ChartGPT/actions/workflows/python.yml/badge.svg)](https://github.com/CADLabs/ChartGPT/actions/workflows/python.yml)
 
 - [(Deprecated) analytics_bot/](analytics_bot/): Code based on https://www.patterns.app/blog/2023/02/07/chartbot-sql-analyst-gpt using OpenAI's davinci LLM directly via the API.
 - [analytics_bot_langchain/](analytics_bot_langchain/): LangChain-based BigQuery analytics agent "toolkit" using OpenAI's GPT-3.5-turbo LLM, see [notebooks/bigquery_agent_toolkit.ipynb](notebooks/bigquery_agent_toolkit.ipynb) for a demo. This code has been structured to match the software architecture of LangChain as much as possible, to remain compatible and be able to make PRs back to public repo.
