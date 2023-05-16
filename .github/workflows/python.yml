@@ -30,4 +30,4 @@ jobs:
         make install
     - name: Execute tests
       run: |
-        PYTHONPATH=. make test_sample_questions
+        PYTHONPATH=. pytest tests/test_sample_questions.py
