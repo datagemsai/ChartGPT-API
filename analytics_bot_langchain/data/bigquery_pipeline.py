@@ -42,6 +42,12 @@ class Datatype(Enum):
     metaquants = "metaquants"
 
 
+nft_finance_protocols_addresses = {
+    'bend': '0x3B968D2D299B895A5Fcf3BBa7A64ad0F566e6F88',
+    'jpegd': '0x923A36F8Fc2cf7628f01Dc2B781d81A9c48264f8',
+}
+
+
 def format_bigquery_column_names(df):
     # Remove special charachters
     df.columns = [re.sub(r'[^a-zA-Z0-9\s]+', '', column) for column in df.columns]
@@ -143,13 +149,13 @@ def clean_nans(df: pd.DataFrame) -> pd.DataFrame:
     df_cleaned = df.copy()
     for column in df.columns:
         if df[column].isna().any():
-            print(f"Column {column} contains NaN values.")
+            print(f"Column [{column}] contains NaN values.")
 
             # Drop the rows containing NaN values in column
             df_cleaned = df_cleaned.dropna(subset=[column])
 
-            print(f"\nOriginal DataFrame length: {df.shape[0]}")
-            print(f"\nDataFrame after dropping rows with NaN values in column {column}: {df_cleaned.shape[0]}")
+            print(f"\nOriginal DataFrame length: [{df.shape[0]}]")
+            print(f"\nNew DataFrame length after dropping rows with NaN values in column [{column}]: [{df_cleaned.shape[0]}], from [{df.shape[0]}] rows initially")
     return df_cleaned
 
 
@@ -221,7 +227,6 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
         )
 
         df = drop_if_entirely_nans(df=df)
-        df = clean_nans(df=df)
         df = set_datatype(df=df)
         # TODO 2023-05-17: go OOP and overload this method for each datatype
         if datatype == datatype.decentralized_exchange_trades:
@@ -268,13 +273,23 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
                 df['principal_amount'] = df['amt_taken']
                 df = df.drop(columns=['id', 'amt_taken'])
                 df['p2p_p2pool'] = 'p2pool'
+                df['from_address'] = ''
+                for protocol in df['protocol'].unique():
+                    df.loc[df['protocol'] == protocol, 'from_address'] = nft_finance_protocols_addresses[protocol]
+                df['roll_over'] = False
             elif ('p2p' in file_name) and not ('p2pool' in file_name):
                 df = df.drop(columns=['method'])
                 df['p2p_p2pool'] = 'p2p'
                 df['due_date'] = pd.to_datetime(df['due_date'], format="%Y-%m-%d %H:%M:%S%z")
+                df['roll_over'] = df['roll_over'].replace('', False)
+                df['roll_over'] = df['roll_over'].replace('nan', False)
+                df['roll_over'] = df['roll_over'].fillna(False)
+                df['roll_over'] = df['roll_over'].astype(bool)
 
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
             clean_nftfi_loan_dataframe(df)
+
+        df = clean_nans(df=df)
 
         df = locale_to_float_dataframe(df)  # Convert locale strings to float
         dataframes[file_name] = df
@@ -315,9 +330,9 @@ def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  data
         # Check if dataset exists, create it if not
         try:
             client.get_dataset(dataset_ref)  # Make an API request.
-            print(f"Dataset {dataset_ref} already exists")
+            print(f"Dataset [{dataset_ref}] already exists, now saving table")
         except NotFound:
-            print(f"Dataset {dataset_ref} is not found")
+            print(f"Dataset [{dataset_ref}] is not found, creating dataset")
             dataset = bigquery.Dataset(dataset_ref)
             dataset = client.create_dataset(dataset)  # Make an API request.
             print(f"Created dataset {client.project}.{dataset.dataset_id}")
@@ -489,7 +504,7 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField("collection_address", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("protocol", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("amt_in_usd", bigquery.enums.SqlTypeNames.BOOL),
-            bigquery.SchemaField("roll_over", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("roll_over", bigquery.enums.SqlTypeNames.BOOL),
             bigquery.SchemaField("block_number", bigquery.enums.SqlTypeNames.INTEGER),
             bigquery.SchemaField("p2p_p2pool", bigquery.enums.SqlTypeNames.STRING),
         ]
