@@ -6,6 +6,7 @@ import re
 import locale
 from locale import atof
 import numpy as np
+from google.api_core.exceptions import NotFound
 from google.oauth2 import service_account
 from google.cloud import bigquery
 import streamlit as st
@@ -38,6 +39,7 @@ class Datatype(Enum):
     decentralized_exchange_trades = "decentralized_exchange_trades"
     nftfi = "nftfi"
     ordinals = "ordinals"
+    metaquants = "metaquants"
 
 
 def format_bigquery_column_names(df):
@@ -192,7 +194,10 @@ def set_datatype(df: pd.DataFrame) -> pd.DataFrame:
 
 def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool):
     dataframes = {}
-    csv_file_directory = f"analytics_bot_langchain/data/dune/{datatype.value}/"
+    if dune_query:
+        csv_file_directory = f"analytics_bot_langchain/data/dune/{datatype.value}/"
+    else:
+        csv_file_directory = f"analytics_bot_langchain/data/{datatype.value}/"
     if dune_query:
         files = [csv_file_directory + table_name + '.csv']
     else:
@@ -218,6 +223,7 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
         df = drop_if_entirely_nans(df=df)
         df = clean_nans(df=df)
         df = set_datatype(df=df)
+        # TODO 2023-05-17: go OOP and overload this method for each datatype
         if datatype == datatype.decentralized_exchange_trades:
             df['token_bought_amount_raw'] = df['token_bought_amount_raw'].astype(str)
             df['token_sold_amount_raw'] = df['token_sold_amount_raw'].astype(str)
@@ -252,6 +258,21 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
                 df = df.drop(columns=['total'], axis=1)
             else:
                 df['users'] = df['users'].astype(int)
+        elif datatype == datatype.metaquants:
+            df['block_timestamp'] = pd.to_datetime(df['block_timestamp'], format="%Y-%m-%d %H:%M:%S%z")
+            for col in df.columns:
+                if table_name in ['hash', 'address', 'protocol', 'erc20_name']:
+                    df[col] = df[col].astype(str)
+            if 'p2pool' in file_name:
+                df['loan_id'] = df['id']
+                df['principal_amount'] = df['amt_taken']
+                df = df.drop(columns=['id', 'amt_taken'])
+                df['p2p_p2pool'] = 'p2pool'
+            elif ('p2p' in file_name) and not ('p2pool' in file_name):
+                df = df.drop(columns=['method'])
+                df['p2p_p2pool'] = 'p2p'
+                df['due_date'] = pd.to_datetime(df['due_date'], format="%Y-%m-%d %H:%M:%S%z")
+
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
             clean_nftfi_loan_dataframe(df)
 
@@ -260,20 +281,48 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
     return dataframes
 
 
-def merge_ordinals_dataframes(dataframes: Dict):
-    df1 = dataframes['ordinals_marketplace_volume']
-    df2 = dataframes['ordinals_marketplace_unique_users']
-    merged_df = df1.merge(df2, on=['day', 'marketplace'])
-    dataframes = {'ordinals_marketplace': merged_df}
+def merge_dataframes(dataframes: Dict,
+                     df1_name: str = 'ordinals_marketplace_volume',
+                     df2_name: str = 'ordinals_marketplace_unique_users',
+                     on: List = ['day', 'marketplace'],
+                     new_df_name: str = 'ordinals_marketplace'):
+    df1 = dataframes[df1_name]
+    df2 = dataframes[df2_name]
+    if on is not None:
+        merged_df = df1.merge(df2, on=on)
+    else:
+        df1 = df1.reset_index(drop=True)
+        df2 = df2.reset_index(drop=True)
+        merged_df = pd.concat([df1, df2], sort=False)
+    merged_df.sort_values('block_timestamp', ascending=False)
+    dataframes = {new_df_name: merged_df}
     return dataframes
 
 
-def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  dataset_id: str, client=client, project_id="psychic-medley-383515", overwrite_existing_table=False):
-    dataframes = merge_ordinals_dataframes(dataframes=dataframes)
+def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  dataset_id: str, project_id="psychic-medley-383515", overwrite_existing_table=False):
+    credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)).with_scopes([
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/bigquery",
+    ])
+    client = bigquery.Client(credentials=credentials)
+
+    dataframes = merge_dataframes(dataframes=dataframes, df1_name='nft_finance_p2p', df2_name='nft_finance_p2pool', new_df_name='nft_finance_p2p_p2pool', on=None)
     for df_name, df in dataframes.items():
 
         df_name = df_name.replace(':', '_')
-        table_ref = client.dataset(df_name, project=project_id).table(df_name)  # Construct a reference to the table
+        dataset_ref = client.dataset(df_name, project=project_id)  # Construct a reference to the dataset
+
+        # Check if dataset exists, create it if not
+        try:
+            client.get_dataset(dataset_ref)  # Make an API request.
+            print(f"Dataset {dataset_ref} already exists")
+        except NotFound:
+            print(f"Dataset {dataset_ref} is not found")
+            dataset = bigquery.Dataset(dataset_ref)
+            dataset = client.create_dataset(dataset)  # Make an API request.
+            print(f"Created dataset {client.project}.{dataset.dataset_id}")
+
+        table_ref = dataset_ref.table(df_name)  # Construct a reference to the table
 
         # Upload the data to BigQuery
         if overwrite_existing_table:
@@ -422,6 +471,28 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField("volume", bigquery.enums.SqlTypeNames.FLOAT),
             bigquery.SchemaField("users", bigquery.enums.SqlTypeNames.INTEGER),
         ]
+    elif table_name == 'nft_finance_p2p_p2pool':
+        return [
+            bigquery.SchemaField("transaction_hash",bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("block_timestamp", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("loan_id,", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField("to_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("from_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("principal_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("repayment_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("erc20_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("erc20_name", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("due_date", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("duration_in_days", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField("apr", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("token_id", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField("collection_address", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("protocol", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("amt_in_usd", bigquery.enums.SqlTypeNames.BOOL),
+            bigquery.SchemaField("roll_over", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("block_number", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField("p2p_p2pool", bigquery.enums.SqlTypeNames.STRING),
+        ]
 
 
 def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, dune_query: bool, overwrite_existing_table=True):
@@ -432,6 +503,8 @@ def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, du
     elif datatype == Datatype.decentralized_exchange_trades:
         dataset_id = 'decentralized_exchange_trades'
     elif datatype == Datatype.ordinals:
+        dataset_id = table_name
+    elif datatype == Datatype.metaquants:
         dataset_id = table_name
     else:
         raise Exception(f"Unrecognized datatype {datatype}, cannot match it with BQ dataset")
@@ -446,8 +519,11 @@ def run():
         # "nft_lending_aggregated_nft_collection": 1227168,
         # "nft_lending_liquidate": 1241427,
         # "decentralized_exchange_trades": 2421110,
-        "ordinals_marketplace_volume": 2148199,
-        "ordinals_marketplace_unique_users": 2148742,
+        # "ordinals_marketplace_volume": 2148199,
+        # "ordinals_marketplace_unique_users": 2148742,
+        # TODO 2023-05-17: upgrade to accomodate for non-Dune tables
+        "nft_finance_p2p": 0,
+        "nft_finance_p2pool": 0,
     }
     tables_datatype = {
         # "nft_lending_aggregated_borrow": Datatype.nftfi,
@@ -456,8 +532,10 @@ def run():
         # "nft_lending_aggregated_nft_collection": Datatype.nftfi,
         # "nft_lending_liquidate": Datatype.nftfi,
         # "decentralized_exchange_trades": Datatype.decentralized_exchange_trades,
-        "ordinals_marketplace_volume": Datatype.ordinals,
-        "ordinals_marketplace_unique_users": Datatype.ordinals,
+        # "ordinals_marketplace_volume": Datatype.ordinals,
+        # "ordinals_marketplace_unique_users": Datatype.ordinals,
+        "nft_finance_p2p": Datatype.metaquants,
+        "nft_finance_p2pool": Datatype.metaquants,
     }
 
     def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, datatype: Datatype, dune_query: bool):
@@ -465,6 +543,7 @@ def run():
             # if we query dune API, we save .csv locally and only upload that table to BQ. else we upload all tables in data/dune/nftfi/*.csv to BQ
             run_query(file_name=table_name, datatype=datatype, query_id=query_id)
         clean_csv_files_and_save_to_bigquery(table_name=table_name, datatype=datatype, dune_query=dune_query)
+
 
     # table_name = "nft_lending_aggregated_repay"
     # datatype = Datatype.nftfi

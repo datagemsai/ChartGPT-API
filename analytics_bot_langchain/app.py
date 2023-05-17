@@ -13,7 +13,7 @@ import dotenv
 dotenv.load_dotenv()
 
 callback_manager = CallbackManager([CustomCallbackHandler()])
-credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["gcp_service_account"], strict=False)).with_scopes([
+credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)).with_scopes([
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/bigquery",
 ])

@@ -8,7 +8,7 @@ from dune_client.client import DuneClient
 from dune_client.query import Query
 from dune_client.models import ExecutionState
 
-from analytics_bot_langchain.data.bigquery_pipeline import Datatype
+# from analytics_bot_langchain.data.bigquery_pipeline import Datatype
 
 dotenv.load_dotenv()
 dune = DuneClient(os.environ["DUNE_API_KEY"])
@@ -19,7 +19,7 @@ pd.set_option("display.max_rows", None)
 pd.set_option("display.expand_frame_repr", False)
 
 
-def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="3", frequency="HOUR"):
+def run_query(file_name: str, datatype, query_id=2419712, time="3", frequency="HOUR"):
     params = []
     print(f"\n************  QUERYING [{file_name}]  ************"*2)
     file_path = f"analytics_bot_langchain/data/dune/{datatype.value}/"
@@ -27,12 +27,14 @@ def run_query(file_name: str, datatype: Datatype, query_id=2419712, time="3", fr
         os.makedirs(file_path)
 
     file_name = file_path + file_name
-    if datatype == Datatype.decentralized_exchange_trades:
-        file_name = file_path + f'decentralized_exchange_trades'
-        params = [
-            QueryParameter.text_type(name="time", value=time),
-            QueryParameter.text_type(name="frequency", value=frequency),
-        ]
+    # TODO 2023-05-17: update back the correct path to query and save dex trades
+    #   commented out for now the import and use of Datatype to avoid circular imports
+    # if datatype == Datatype.decentralized_exchange_trades:
+    #     file_name = file_path + f'decentralized_exchange_trades'
+    #     params = [
+    #         QueryParameter.text_type(name="time", value=time),
+    #         QueryParameter.text_type(name="frequency", value=frequency),
+    #     ]
     query = Query(
         name="Sample Query",
         query_id=query_id,
