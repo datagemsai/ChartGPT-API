@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 def create_bigquery_agent(
     llm: BaseLLM,
     bigquery_client: Any,
+    google_sheets_client: Any,
     dataset_ids: Optional[List] = None,
     callback_manager: Optional[BaseCallbackManager] = None,
     prefix: str = PREFIX,
@@ -33,9 +34,19 @@ def create_bigquery_agent(
     agent_executor_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs: Any,
 ) -> AgentExecutor:
-    tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
-    example_query = get_example_query(client=bigquery_client, dataset_ids=dataset_ids)
-    python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
+    tables_summary = get_tables_summary(
+        client=bigquery_client,
+        dataset_ids=dataset_ids
+    )
+    example_query = get_example_query(
+        client=bigquery_client,
+        dataset_ids=dataset_ids
+    )
+    python_tool = PythonAstREPLTool(locals={
+        "tables_summary": tables_summary,
+        "bigquery_client": bigquery_client,
+        "google_sheets_client": google_sheets_client,
+    })
 
     def query_post_processing(query: str) -> str:
         query = query.replace("print(", "display(")
@@ -45,6 +56,7 @@ def create_bigquery_agent(
         import plotly.express as px
         import plotly.graph_objects as go
         import pandas as pd
+        import gspread
 
         def display(*args):
             import streamlit as st

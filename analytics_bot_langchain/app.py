@@ -9,6 +9,7 @@ from analytics_bot_langchain.callback_handler import CustomCallbackHandler
 from langchain.callbacks.base import CallbackManager
 import os
 import json
+import gspread
 
 
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
@@ -23,9 +24,11 @@ scopes = [
 if os.environ.get("GCP_SERVICE_ACCOUNT", False):
     credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)).with_scopes(scopes)
     client = bigquery.Client(credentials=credentials)
+    google_sheets_client = gspread.authorize(credentials)
 else:
     # If deployed using App Engine, use default App Engine credentials
     client = bigquery.Client()
+    google_sheets_client = gspread.Client()
 
 @st.cache_resource
 def get_agent(dataset_ids: Optional[List] = None):
@@ -36,6 +39,7 @@ def get_agent(dataset_ids: Optional[List] = None):
     return create_bigquery_agent(
         ChatOpenAI(model=OPENAI_MODEL, temperature=0, request_timeout=180),
         bigquery_client=client,
+        google_sheets_client=google_sheets_client,
         dataset_ids=dataset_ids,
         verbose=True,
         callback_manager=callback_manager,

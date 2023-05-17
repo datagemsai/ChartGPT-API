@@ -33,6 +33,7 @@ allowed_builtins = {
     "list",
     "dict",
     "set",
+    "Exception",
 }
 
 insecure_functions = {
@@ -62,6 +63,7 @@ allowed_imports = {
     "Figure",
     "make_subplots",
     "datetime",
+    "gspread",
     # GPT suggested:
     "google.cloud.bigquery",
     "numpy",
