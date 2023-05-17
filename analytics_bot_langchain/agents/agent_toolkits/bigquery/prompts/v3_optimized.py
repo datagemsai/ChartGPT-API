@@ -23,8 +23,6 @@ Or access public Google Sheets using the `google_sheets_client` object:
 spreadsheet = google_sheets_client.open_by_url('https://docs.google.com/spreadsheets/d/167JjRX8hxgMfxc9LYz9Yh6AOH56PlcaU38SjBkzFxmg/')
 spreadsheet_values = spreadsheet.sheet1.get_all_values(value_render_option="UNFORMATTED_VALUE")
 spreadsheet_dataframe = pd.DataFrame.from_records(spreadsheet_values[1:], columns=spreadsheet_values[0])
-
-spreadsheet_dataframe.head()
 ```
 
 # Example SQL Query
