@@ -285,6 +285,10 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
                 df['roll_over'] = df['roll_over'].replace('nan', False)
                 df['roll_over'] = df['roll_over'].fillna(False)
                 df['roll_over'] = df['roll_over'].astype(bool)
+                # Remove extreme outliers from the APR column
+                df["apr"] = df["apr"].astype(float)
+                q = df["apr"].quantile(0.99)
+                df = df[df["apr"] < q]
 
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
             clean_nftfi_loan_dataframe(df)
