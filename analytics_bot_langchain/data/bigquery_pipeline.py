@@ -365,6 +365,7 @@ def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  data
 
 
 def get_schema(table_name='nft_lending_aggregated_borrow'):
+    # TODO 2023-05-18: move get_schema() to standalone file or config
     if table_name == 'nft_lending_aggregated_borrow':
         return [
             bigquery.SchemaField(f"dt", bigquery.enums.SqlTypeNames.TIMESTAMP),
@@ -542,7 +543,7 @@ def run():
         # "ordinals_marketplace_unique_users": 2148742,
         # TODO 2023-05-17: upgrade to accomodate for non-Dune tables
         "nft_finance_p2p": 0,
-        "nft_finance_p2pool": 0,
+        # "nft_finance_p2pool": 0,
     }
     tables_datatype = {
         # "nft_lending_aggregated_borrow": Datatype.nftfi,
@@ -554,7 +555,7 @@ def run():
         # "ordinals_marketplace_volume": Datatype.ordinals,
         # "ordinals_marketplace_unique_users": Datatype.ordinals,
         "nft_finance_p2p": Datatype.metaquants,
-        "nft_finance_p2pool": Datatype.metaquants,
+        # "nft_finance_p2pool": Datatype.metaquants,
     }
 
     def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, datatype: Datatype, dune_query: bool):
