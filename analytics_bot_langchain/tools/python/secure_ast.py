@@ -31,7 +31,8 @@ allowed_builtins = {
     "__import__",
     "print",
     "list",
-    "dict"
+    "dict",
+    "set",
 }
 
 insecure_functions = {
@@ -47,6 +48,7 @@ insecure_functions = {
 }
 
 allowed_imports = {
+    "dataclass",
     "pandas",
     "streamlit",
     "bigquery",
@@ -58,7 +60,79 @@ allowed_imports = {
     "numpy",
     "math",
     "Figure",
-    "make_subplots"
+    "make_subplots",
+    "datetime",
+    # GPT suggested:
+    "google.cloud.bigquery",
+    "numpy",
+    "math",
+    "plotly.subplots",
+    # "matplotlib",
+    # "matplotlib.pyplot",
+    "seaborn",
+    # "scipy",
+    # "scipy.stats",
+    # "scipy.optimize",
+    # "scikit-learn",
+    # "sklearn",
+    # "sklearn.preprocessing",
+    # "sklearn.metrics",
+    # "sklearn.model_selection",
+    # "sklearn.linear_model",
+    # "sklearn.tree",
+    # "sklearn.ensemble",
+    # "sklearn.cluster",
+    # "sklearn.decomposition",
+    # "statsmodels",
+    # "statsmodels.api",
+    # "statsmodels.formula.api",
+    # "statsmodels.tsa.api",
+    # "statsmodels.stats.api",
+    # "tensorflow",
+    # "tensorflow.keras",
+    # "keras",
+    # "keras.models",
+    # "keras.layers",
+    # "keras.optimizers",
+    # "keras.preprocessing",
+    # "keras.callbacks",
+    # "keras.utils",
+    # "keras.datasets",
+    # "pytorch",
+    # "torch",
+    # "torch.nn",
+    # "torch.optim",
+    # "torch.utils.data",
+    # "torchvision",
+    # "torchvision.transforms",
+    # "torchvision.datasets",
+    # "torchtext",
+    # "nltk",
+    "spacy",
+    "gensim",
+    "psycopg2",
+    "dash",
+    "dash_core_components",
+    "dash_html_components",
+    "dash.dependencies",
+    "dash_table",
+    "lxml",
+    "geopandas",
+    "shapely",
+    "networkx",
+    "bokeh",
+    "holoviews",
+    "altair",
+    "time",
+    "datetime",
+    "pyarrow",
+    "dask",
+    "dask.dataframe",
+    "h5py",
+    "json",
+    "pickle",
+    "csv",
+    "re",
 }
 
 def allowed_node(node, allowed_imports):
@@ -68,6 +142,9 @@ def allowed_node(node, allowed_imports):
                 raise ValueError(f"Importing '{alias.name}' is not allowed")
     if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in insecure_functions:
         raise ValueError(f"Function '{node.func.id}' is not allowed")
+    if isinstance(node, (ast.Attribute, ast.Name)):
+        if (node.attr.startswith('._') or node.attr.startswith('.__')) if hasattr(node, 'attr') else (node.id.startswith('._') or node.id.startswith('.__')):
+            raise ValueError(f"Accessing private members is not allowed")
 
 def analyze_ast(node, allowed_imports, max_depth, current_depth=0):
     if current_depth >= max_depth:

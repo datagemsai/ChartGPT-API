@@ -1,6 +1,7 @@
-# NFTfi "AGI"
+# ChartGPT
+[![Build Status](https://github.com/CADLabs/ChartGPT/actions/workflows/python.yml/badge.svg)](https://github.com/CADLabs/ChartGPT/actions/workflows/python.yml)
 
-- [analytics_bot/](analytics_bot/): Code based on https://www.patterns.app/blog/2023/02/07/chartbot-sql-analyst-gpt using OpenAI's davinci LLM directly via the API.
+- [(Deprecated) analytics_bot/](analytics_bot/): Code based on https://www.patterns.app/blog/2023/02/07/chartbot-sql-analyst-gpt using OpenAI's davinci LLM directly via the API.
 - [analytics_bot_langchain/](analytics_bot_langchain/): LangChain-based BigQuery analytics agent "toolkit" using OpenAI's GPT-3.5-turbo LLM, see [notebooks/bigquery_agent_toolkit.ipynb](notebooks/bigquery_agent_toolkit.ipynb) for a demo. This code has been structured to match the software architecture of LangChain as much as possible, to remain compatible and be able to make PRs back to public repo.
 
 ## Development
@@ -23,8 +24,7 @@ Wherever Google Auth expects the environment variable `GOOGLE_APPLICATION_CREDEN
 import streamlit as st
 from google.oauth2 import service_account
 
-
-credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+credentials = service_account.Credentials.from_service_account_info(st.secrets["GCP_SERVICE_ACCOUNT"])
 client = bigquery.Client(credentials=credentials)
 ```
 
@@ -36,3 +36,14 @@ Run Streamlit app locally using `streamlit run streamlit_app.py` - open in a bro
 
 If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
 forums](https://discuss.streamlit.io).
+
+## Google BigQuery
+
+The Google Service Account used for the production app should be given the following roles:
+* BigQuery Data Viewer
+* BigQuery Job User
+* BigQuery Read Session User
+
+For developer access to BigQuery, where they are required to create and delete datasets, the Service Account should additionally have the following permissions:
+* BigQuery User
+* BigQuery Data Editor

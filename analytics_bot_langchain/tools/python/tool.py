@@ -4,18 +4,12 @@ import ast
 import sys
 from io import StringIO
 from typing import Dict, Optional
-import re
 from collections.abc import Callable
 from pydantic import Field, root_validator
 from analytics_bot_langchain.tools.python.secure_ast import secure_eval, secure_exec
 import streamlit as st
-
 from langchain.tools.base import BaseTool
-from langchain.utilities import PythonREPL
-
-
-def _get_default_python_repl() -> PythonREPL:
-    return PythonREPL(_globals=globals(), _locals=None)
+import logging
 
 
 class PythonAstREPLTool(BaseTool):
@@ -23,7 +17,7 @@ class PythonAstREPLTool(BaseTool):
 
     name = "python_repl_ast"
     description = (
-        "A Python shell. Use this to execute python commands. "
+        "A Python shell. Use this to execute python commands including: BigQuery queries, Pandas analytics, Plotly charts. "
         "Input should be a valid python command. "
         "When using this tool, sometimes output is abbreviated - "
         "make sure it does not look abbreviated before using it in your answer."
@@ -47,10 +41,6 @@ class PythonAstREPLTool(BaseTool):
     def _run(self, query: str) -> str:
         """Use the tool."""
         try:
-            if self.sanitize_input:
-                # Remove the triple backticks from the query.
-                query = query.strip().removeprefix("```python")
-                query = query.strip().strip("```")
             if self.query_post_processing:
                 query = self.query_post_processing(query)
 
@@ -60,8 +50,7 @@ class PythonAstREPLTool(BaseTool):
             try:
                 secure_exec(ast.unparse(module), custom_globals=self.globals, custom_locals=self.locals)  # type: ignore
             except ValueError as e:
-                st.error(e)
-                return "Stop"
+                return f"Analysis failed: {e}"
             
             module_end = ast.Module(tree.body[-1:], type_ignores=[])
             module_end_str = ast.unparse(module_end)  # type: ignore
@@ -75,8 +64,7 @@ class PythonAstREPLTool(BaseTool):
                     sys.stdout = old_stdout
                     output = mystdout.getvalue()
                 except ValueError as e:
-                    st.error(e)
-                    return "Stop"
+                    return f"Analysis failed: {e}"
                 except Exception as e:
                     sys.stdout = old_stdout
                     output = str(e)

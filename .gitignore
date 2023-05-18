@@ -131,6 +131,6 @@ dmypy.json
 # Custom
 secrets/*
 docs/*
-.streamlit/secrets.toml
 .idea/*
-secrets.toml
+secrets.yaml
+outputs/*
