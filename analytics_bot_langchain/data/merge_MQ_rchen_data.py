@@ -17,22 +17,29 @@ def merge_daily_nftfi_loan_volume():
 
 
 def merge_nftfi_volume_per_collection():
+    data_range_str = 'april_2023'
+
     data_dir = 'analytics_bot_langchain/data/metaquants/'
 
     # collection_address,protocol,past_month_amt_usd,all_time_amt_usd
-    metaquants = pd.read_csv(f'{data_dir}MQ_one_month_and_all_time_nftfi_borrow_volume_per_collection.csv')
+    metaquants = pd.read_csv(f'{data_dir}MQ_one_month_and_all_time_nftfi_borrow_volume_per_collection_april_2023.csv')
     # name,nftCollateralContract,all_time,past_month
-    rchen = pd.read_csv(f'{data_dir}rchen8_collection_loan_volume.csv')
+    rchen = pd.read_csv(f'{data_dir}rchen8_collection_loan_volume_april2023.csv')
 
     metaquants = metaquants.drop(columns=['protocol'])
-    rchen = rchen.rename(columns={'all_time': 'rchen8_all_time_borrow_volume', 'past_month': 'rchen8_past_month_borrow_volume', 'nftCollateralContract': 'collection_address'})
-    metaquants = metaquants.rename(columns={'all_time_amt_usd': 'MQ_all_time_borrow_volume', 'past_month_amt_usd': 'MQ_past_month_borrow_volume'})
+    metaquants = metaquants.rename(columns={'all_time_amt_usd': 'MQ_all_time_borrow_volume', 'past_month_amt_usd': f'MQ_{data_range_str}_borrow_volume'})
+
+    rchen['past_month'] = rchen['past_month'].fillna(0)
+    rchen['past_month'] = rchen['past_month'].replace('', 0.0).astype(float)
+    rchen = rchen.rename(columns={'all_time': 'rchen8_all_time_borrow_volume', 'past_month': f'rchen8_{data_range_str}_borrow_volume', 'nftCollateralContract': 'collection_address'})
 
     df = pd.merge(left=metaquants, right=rchen, on='collection_address', how='left')
     print(df.columns)
-    df = df[['name', 'collection_address', 'MQ_all_time_borrow_volume', 'rchen8_all_time_borrow_volume', 'MQ_past_month_borrow_volume', 'rchen8_past_month_borrow_volume']]
+    df = df[['name', 'collection_address', 'MQ_all_time_borrow_volume', 'rchen8_all_time_borrow_volume', f'MQ_{data_range_str}_borrow_volume', f'rchen8_{data_range_str}_borrow_volume']]
     print(df)
-    df.to_csv(f'{data_dir}MQ_rchen8_one_month_and_all_time_nftfi_borrow_volume_per_collection.csv', index=False)
+
+    df.to_csv(f'{data_dir}MQ_rchen8_one_month_and_all_time_nftfi_borrow_volume_per_collection_{data_range_str}.csv', index=False)
+
     return df
 
 

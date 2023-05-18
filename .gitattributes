@@ -8,3 +8,6 @@ analytics_bot_langchain/data/metaquants/nft_finance_p2p.csv filter=lfs diff=lfs 
 analytics_bot_langchain/data/metaquants/nft_finance_p2pool.csv filter=lfs diff=lfs merge=lfs -text
 analytics_bot_langchain/data/metaquants/rchen8_collection_loan_volume.csv filter=lfs diff=lfs merge=lfs -text
 analytics_bot_langchain/data/metaquants/MQ_rchen8_one_month_and_all_time_nftfi_borrow_volume_per_collection.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/metaquants/MQ_rchen8_one_month_and_all_time_nftfi_borrow_volume_per_collection_april_2023.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/metaquants/rchen8_collection_loan_volume_april2023.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/metaquants/MQ_one_month_and_all_time_nftfi_borrow_volume_per_collection_april_2023.csv filter=lfs diff=lfs merge=lfs -text
