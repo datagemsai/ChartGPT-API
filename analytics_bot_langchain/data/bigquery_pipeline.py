@@ -40,6 +40,7 @@ class Datatype(Enum):
     nftfi = "nftfi"
     ordinals = "ordinals"
     metaquants = "metaquants"
+    nftfi_loan_data = "nftfi_loan_data"
 
 
 nft_finance_protocols_addresses = {
@@ -69,7 +70,7 @@ def format_bigquery_column_names(df):
     return df
 
 
-def clean_nftfi_loan_dataframe(df) -> pd.DataFrame:
+def clean_nftfi_loan_dataframe_old(df, csv_file_directory) -> pd.DataFrame:
     # Convert date from Google datetime to Pandas datetime
     # df["date"] = df["date"].astype('datetime64[s]')
     df["date"] = pd.to_datetime(df['date'], unit='d', origin='1899-12-30')
@@ -96,6 +97,46 @@ def clean_nftfi_loan_dataframe(df) -> pd.DataFrame:
 
     # Drop last column as it is unnamed
     df = df.drop('', axis=1, errors='ignore')
+    return df
+
+
+def clean_nftfi_loan_dataframe(df, csv_file_directory) -> pd.DataFrame:
+    # Convert date from Google datetime to Pandas datetime
+    # df["date"] = df["date"].astype('datetime64[s]')
+    # df["date"] = pd.to_datetime(df['date'], unit='d', origin='1899-12-30')
+    df = format_bigquery_column_names(df=df)
+    pd.to_datetime(df['date'], format="%Y-%m-%d %H:%M:%S%z")
+
+    # Set precision of Pandas datetime to avoid BigQuery precision error
+    df["loan_start_time"] = df["loan_start_time"].astype('datetime64[s]')
+    df["loan_due_time"] = df["loan_due_time"].astype('datetime64[s]')
+
+    # Remove invalid values
+    # mask = df == "#DIV/0! (Function DIVIDE parameter 2 cannot be zero.)"
+    # df[mask] = np.nan
+    # df["apr"] = df["apr"].apply(lambda x: x if isinstance(x, float) else np.nan)
+    df.replace(r"#DIV/0!", np.nan, regex=True, inplace=True)
+    df.replace(r"#N/A", "", regex=True, inplace=True)
+
+    # Clip NFT collateral ID as it has a string value, an integer, that is larger than Python int64 type
+    df["nft_collateral_id"] = df["nft_collateral_id"].astype(float).astype(np.int64)
+    # df["platform_fee"] = df["platform_fee"].astype(float)
+
+    # Drop repaid and liquidation date as they have invalid values
+    # df.drop(["repaid_date", "liquidation_date"], axis=1, inplace=True)
+    # df["repaid_date"] = df["repaid_date"].astype('datetime64[s]')
+    # df["liquidation_date"] = df["liquidation_date"].astype('datetime64[s]')
+
+    # Divide loanPrincipalAmount and maximumRepaymentAmount by ETH <> WEI i.e. 1^18
+    df['loan_principal_amount'] = df['loan_principal_amount'].astype(np.float64)
+    df['maximum_repayment_amount'] = df['maximum_repayment_amount'].astype(np.float64)
+    df['loan_principal_amount'] /= 10 ** 18
+    df['maximum_repayment_amount'] /= 10 ** 18
+
+    # Drop last column as it is unnamed
+    df = df.drop('', axis=1, errors='ignore')
+
+    df.to_csv(f'{csv_file_directory}nftfi_loan_data_cleaned.csv', index=False)
     return df
 
 
@@ -290,12 +331,11 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
                 q = df["apr"].quantile(0.99)
                 df = df[df["apr"] < q]
 
-        if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
-            clean_nftfi_loan_dataframe(df)
-
         df = clean_nans(df=df)
+        if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
+            clean_nftfi_loan_dataframe(df, csv_file_directory)
+            # df = locale_to_float_dataframe(df)  # Convert locale strings to float
 
-        df = locale_to_float_dataframe(df)  # Convert locale strings to float
         dataframes[file_name] = df
     return dataframes
 
