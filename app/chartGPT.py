@@ -151,23 +151,6 @@ submit_button = st.button("Submit")
 
 st.markdown("### 3. Get an answer")
 
-# TODO Add coming soon features
-# file = ...
-# _ = st.download_button(
-#     label="Download data (coming soon!)",
-#     data=file,
-#     # file_name="flower.png",
-#     mime="text/csv",
-#     disabled=True,
-# )
-# _ = st.download_button(
-#     label="Download chart (coming soon!)",
-#     data=file,
-#     # file_name="flower.png",
-#     mime="image/png",
-#     disabled=True,
-# )
-
 # If the button is clicked or the user presses enter
 if submit_button:
     question = sample_question or custom_question
@@ -201,29 +184,3 @@ if submit_button:
                 )
 else:
     st.markdown("...")
-
-# if 'answers' not in st.session_state:
-#     st.session_state['answers'] = {}
-
-# if submit_button:
-#     st.session_state.answers[copy(current_question)] = False
-
-# st.write(st.session_state)
-
-# for question, answer in st.session_state.answers.items():
-#     with st.expander(label=question, expanded=(not answer)):
-#         # If the button is clicked or the user presses enter
-#         if not answer:
-#             with st.spinner('Thinking...'):
-#                 try:
-#                     # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-#                     agent = analytics_bot_langchain.get_agent(dataset_ids=dataset_ids)
-#                     st.session_state.answers[question] = agent.run(input=question)
-#                     st.success('Analytics complete!')
-#                     st.balloons()
-#                     st.write(st.session_state)
-#                 except Exception as e:
-#                     # For example, catch LangChain OutputParserException:
-#                     st.error("Analytics failed." + "\n\n" + str(e))
-#                     traceback.print_stack()
-#                     st.write(st.session_state)
