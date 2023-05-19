@@ -137,6 +137,21 @@ def clean_nftfi_loan_dataframe(df, csv_file_directory) -> pd.DataFrame:
     df['repaid'] = df['repaid'].astype(np.bool)
 
     # df.to_csv(f'{csv_file_directory}nftfi_loan_data_cleaned.csv', index=False)
+
+    # enrich dataset with collection name, blockchain
+    collection_names_df = pd.read_csv('analytics_bot_langchain/data/nft_address_name_symbol/nft_address_name_symbol.csv')
+    collection_names_df = collection_names_df.rename(columns={'contract_address': 'nft_collateral_contract'})
+    collection_names_df['nft_collateral_contract'] = collection_names_df['nft_collateral_contract'].astype(str)
+    collection_names_df = collection_names_df.drop(columns=['symbol', 'standard'])
+    df['nft_collateral_contract'] = df['nft_collateral_contract'].astype(str)
+
+    small_df = df.head()
+    small_collection_names_df = collection_names_df.head()
+
+    df_existing_cols = df.columns
+    df = pd.merge(left=df, right=collection_names_df, on='nft_collateral_contract', how='left')
+    new_columns_order = ['date', 'blockchain', 'name'] + list(df_existing_cols[1:])
+    df = df[new_columns_order]
     return df
 
 
@@ -218,7 +233,7 @@ def drop_if_entirely_nans(df: pd.DataFrame) -> pd.DataFrame:
     # Iterate through the columns and check if the entire column contains NaN values
     for column in df.columns:
         if df[column].isna().all():
-            print(f"Column {column} contains only NaN values.")
+            print(f"Column [{column}] contains only NaN values, dropping.")
 
             # Drop the column containing only NaN values
             df.drop(column, axis=1, inplace=True)
@@ -554,27 +569,30 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField("p2p_p2pool", bigquery.enums.SqlTypeNames.STRING),
         ]
     elif table_name == 'nftfi_loan_data':
-        return [
-            bigquery.SchemaField("date", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("loan_no", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("loan_start_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("loan_due_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("repaid", bigquery.enums.SqlTypeNames.BOOLEAN),
-            bigquery.SchemaField("no_of_days", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("liquidated", bigquery.enums.SqlTypeNames.BOOLEAN),
-            bigquery.SchemaField("loan_principal_amount", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("maximum_repayment_amount", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("interest", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("lender", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("borrower", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("nft_collateral_contract", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("nft_collateral_id", bigquery.enums.SqlTypeNames.INTEGER),
-            bigquery.SchemaField("active", bigquery.enums.SqlTypeNames.BOOLEAN),
-            bigquery.SchemaField("apr", bigquery.enums.SqlTypeNames.FLOAT),
-            bigquery.SchemaField("loan_erc20denomination", bigquery.enums.SqlTypeNames.STRING),
-            bigquery.SchemaField("loan_repaid_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
-            bigquery.SchemaField("loan_liquidation_time", bigquery.enums.SqlTypeNames.TIMESTAMP)
-        ]
+        pass
+    return [
+        bigquery.SchemaField("date", bigquery.enums.SqlTypeNames.TIMESTAMP),
+        bigquery.SchemaField("blockchain", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("name", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("loan_no", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("loan_start_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+        bigquery.SchemaField("loan_due_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+        bigquery.SchemaField("repaid", bigquery.enums.SqlTypeNames.BOOLEAN),
+        bigquery.SchemaField("no_of_days", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("liquidated", bigquery.enums.SqlTypeNames.BOOLEAN),
+        bigquery.SchemaField("loan_principal_amount", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("maximum_repayment_amount", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("interest", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("lender", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("borrower", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("nft_collateral_contract", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("nft_collateral_id", bigquery.enums.SqlTypeNames.INTEGER),
+        bigquery.SchemaField("active", bigquery.enums.SqlTypeNames.BOOLEAN),
+        bigquery.SchemaField("apr", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("loan_erc20denomination", bigquery.enums.SqlTypeNames.STRING),
+        bigquery.SchemaField("loan_repaid_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+        bigquery.SchemaField("loan_liquidation_time", bigquery.enums.SqlTypeNames.TIMESTAMP)
+    ]
 
 
 def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, dune_query: bool, overwrite_existing_table=True):
