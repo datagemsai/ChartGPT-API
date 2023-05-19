@@ -102,41 +102,41 @@ def clean_nftfi_loan_dataframe_old(df, csv_file_directory) -> pd.DataFrame:
 
 def clean_nftfi_loan_dataframe(df, csv_file_directory) -> pd.DataFrame:
     # Convert date from Google datetime to Pandas datetime
-    # df["date"] = df["date"].astype('datetime64[s]')
-    # df["date"] = pd.to_datetime(df['date'], unit='d', origin='1899-12-30')
     df = format_bigquery_column_names(df=df)
-    pd.to_datetime(df['date'], format="%Y-%m-%d %H:%M:%S%z")
-
-    # Set precision of Pandas datetime to avoid BigQuery precision error
-    df["loan_start_time"] = df["loan_start_time"].astype('datetime64[s]')
-    df["loan_due_time"] = df["loan_due_time"].astype('datetime64[s]')
+    df['date'] = pd.to_datetime(df['date'], format="%Y-%m-%d %H:%M:%S%z")
+    df['loan_start_time'] = pd.to_datetime(df['loan_start_time'], format="%Y-%m-%d %H:%M:%S%z")
+    df['loan_due_time'] = pd.to_datetime(df['loan_due_time'], format="%Y-%m-%d %H:%M:%S%z")
+    df['loan_repaid_time'] = pd.to_datetime(df['loan_repaid_time'], format="%Y-%m-%d %H:%M:%S%z")
+    df['loan_liquidation_time'] = pd.to_datetime(df['loan_liquidation_time'], format="%Y-%m-%d %H:%M:%S%z")
 
     # Remove invalid values
-    # mask = df == "#DIV/0! (Function DIVIDE parameter 2 cannot be zero.)"
-    # df[mask] = np.nan
-    # df["apr"] = df["apr"].apply(lambda x: x if isinstance(x, float) else np.nan)
     df.replace(r"#DIV/0!", np.nan, regex=True, inplace=True)
     df.replace(r"#N/A", "", regex=True, inplace=True)
 
     # Clip NFT collateral ID as it has a string value, an integer, that is larger than Python int64 type
     df["nft_collateral_id"] = df["nft_collateral_id"].astype(float).astype(np.int64)
-    # df["platform_fee"] = df["platform_fee"].astype(float)
-
-    # Drop repaid and liquidation date as they have invalid values
-    # df.drop(["repaid_date", "liquidation_date"], axis=1, inplace=True)
-    # df["repaid_date"] = df["repaid_date"].astype('datetime64[s]')
-    # df["liquidation_date"] = df["liquidation_date"].astype('datetime64[s]')
 
     # Divide loanPrincipalAmount and maximumRepaymentAmount by ETH <> WEI i.e. 1^18
-    df['loan_principal_amount'] = df['loan_principal_amount'].astype(np.float64)
-    df['maximum_repayment_amount'] = df['maximum_repayment_amount'].astype(np.float64)
-    df['loan_principal_amount'] /= 10 ** 18
-    df['maximum_repayment_amount'] /= 10 ** 18
+    columns_to_clean = ['interest', 'loan_principal_amount', 'maximum_repayment_amount', 'maximum_repayment_amount', 'apr']
+    for col in columns_to_clean:
+        df[col] = df[col].astype(np.float64)
+        df[col] /= 10 ** 18
+    df['no_of_days'] = df['no_of_days'].astype(np.float64)
 
     # Drop last column as it is unnamed
     df = df.drop('', axis=1, errors='ignore')
 
-    df.to_csv(f'{csv_file_directory}nftfi_loan_data_cleaned.csv', index=False)
+    # set BOOL columns to bool type
+    cols = ['repaid', 'liquidated', 'active']
+    df['repaid'] = df['repaid'].fillna(False)
+    df['repaid'] = df['repaid'].replace('', False)
+    for col in cols:
+        # df[col] = df[col].astype('boolean')
+        df[col] = df[col].map({'True': True, 'False': False})
+        df[col] = df[col].astype(np.bool)
+    df['repaid'] = df['repaid'].astype(np.bool)
+
+    # df.to_csv(f'{csv_file_directory}nftfi_loan_data_cleaned.csv', index=False)
     return df
 
 
@@ -333,7 +333,7 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
 
         df = clean_nans(df=df)
         if "nftfi_loan_data" in file_name:  # format_bigquery_column_names(df)
-            clean_nftfi_loan_dataframe(df, csv_file_directory)
+            df = clean_nftfi_loan_dataframe(df, csv_file_directory)
             # df = locale_to_float_dataframe(df)  # Convert locale strings to float
 
         dataframes[file_name] = df
@@ -365,7 +365,7 @@ def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  data
     ])
     client = bigquery.Client(credentials=credentials)
 
-    dataframes = merge_dataframes(dataframes=dataframes, df1_name='nft_finance_p2p', df2_name='nft_finance_p2pool', new_df_name='nft_finance_p2p_p2pool', on=None)
+    # dataframes = merge_dataframes(dataframes=dataframes, df1_name='nft_finance_p2p', df2_name='nft_finance_p2pool', new_df_name='nft_finance_p2p_p2pool', on=None)
     for df_name, df in dataframes.items():
 
         df_name = df_name.replace(':', '_')
@@ -553,6 +553,28 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
             bigquery.SchemaField("block_number", bigquery.enums.SqlTypeNames.INTEGER),
             bigquery.SchemaField("p2p_p2pool", bigquery.enums.SqlTypeNames.STRING),
         ]
+    elif table_name == 'nftfi_loan_data':
+        return [
+            bigquery.SchemaField("date", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("loan_no", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("loan_start_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("loan_due_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("repaid", bigquery.enums.SqlTypeNames.BOOLEAN),
+            bigquery.SchemaField("no_of_days", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("liquidated", bigquery.enums.SqlTypeNames.BOOLEAN),
+            bigquery.SchemaField("loan_principal_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("maximum_repayment_amount", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("interest", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("lender", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("borrower", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("nft_collateral_contract", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("nft_collateral_id", bigquery.enums.SqlTypeNames.INTEGER),
+            bigquery.SchemaField("active", bigquery.enums.SqlTypeNames.BOOLEAN),
+            bigquery.SchemaField("apr", bigquery.enums.SqlTypeNames.FLOAT),
+            bigquery.SchemaField("loan_erc20denomination", bigquery.enums.SqlTypeNames.STRING),
+            bigquery.SchemaField("loan_repaid_time", bigquery.enums.SqlTypeNames.TIMESTAMP),
+            bigquery.SchemaField("loan_liquidation_time", bigquery.enums.SqlTypeNames.TIMESTAMP)
+        ]
 
 
 def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, dune_query: bool, overwrite_existing_table=True):
@@ -565,6 +587,8 @@ def clean_csv_files_and_save_to_bigquery(table_name: str, datatype: Datatype, du
     elif datatype == Datatype.ordinals:
         dataset_id = table_name
     elif datatype == Datatype.metaquants:
+        dataset_id = table_name
+    elif datatype == Datatype.nftfi_loan_data:
         dataset_id = table_name
     else:
         raise Exception(f"Unrecognized datatype {datatype}, cannot match it with BQ dataset")
@@ -582,8 +606,9 @@ def run():
         # "ordinals_marketplace_volume": 2148199,
         # "ordinals_marketplace_unique_users": 2148742,
         # TODO 2023-05-17: upgrade to accomodate for non-Dune tables
-        "nft_finance_p2p": 0,
+        # "nft_finance_p2p": 0,
         # "nft_finance_p2pool": 0,
+        'nftfi_loan_data': 0,
     }
     tables_datatype = {
         # "nft_lending_aggregated_borrow": Datatype.nftfi,
@@ -594,8 +619,9 @@ def run():
         # "decentralized_exchange_trades": Datatype.decentralized_exchange_trades,
         # "ordinals_marketplace_volume": Datatype.ordinals,
         # "ordinals_marketplace_unique_users": Datatype.ordinals,
-        "nft_finance_p2p": Datatype.metaquants,
+        # "nft_finance_p2p": Datatype.metaquants,
         # "nft_finance_p2pool": Datatype.metaquants,
+        'nftfi_loan_data': Datatype.nftfi_loan_data,
     }
 
     def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, datatype: Datatype, dune_query: bool):
