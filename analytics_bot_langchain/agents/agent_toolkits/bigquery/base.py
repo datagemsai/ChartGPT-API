@@ -12,6 +12,7 @@ from analytics_bot_langchain.tools.python.tool import PythonAstREPLTool
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_tables_summary, get_example_query
 from analytics_bot_langchain.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
+from langchain.schema import BaseMemory
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ def create_bigquery_agent(
     max_execution_time: Optional[float] = None,
     early_stopping_method: str = "force",
     agent_executor_kwargs: Optional[Dict[str, Any]] = None,
+    memory: Optional[BaseMemory] = None,
     **kwargs: Any,
 ) -> AgentExecutor:
     tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
@@ -61,6 +63,8 @@ def create_bigquery_agent(
 
     if input_variables is None:
         input_variables = ["tables_summary", "example_query", "input", "agent_scratchpad"]
+        if memory is not None:
+            input_variables.append("chat_history")
 
     prompt = CustomAgent.create_prompt(
         tools,
@@ -76,13 +80,11 @@ def create_bigquery_agent(
     llm_chain = LLMChain(
         llm=llm,
         prompt=partial_prompt,
-        callback_manager=callback_manager,
     )
     tool_names = [tool.name for tool in tools]
     agent = CustomAgent(
         llm_chain=llm_chain,
         allowed_tools=tool_names,
-        callback_manager=callback_manager,
         **kwargs,
     )
     return AgentExecutor.from_agent_and_tools(
@@ -95,5 +97,6 @@ def create_bigquery_agent(
         early_stopping_method=early_stopping_method,
         callback_manager=callback_manager,
         output_parser=CustomOutputParser,
+        memory=memory,
         **(agent_executor_kwargs or {}),
     )
