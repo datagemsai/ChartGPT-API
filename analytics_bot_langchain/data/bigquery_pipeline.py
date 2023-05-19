@@ -150,6 +150,34 @@ def clean_nftfi_loan_dataframe(df, csv_file_directory) -> pd.DataFrame:
     df = pd.merge(left=df, right=collection_names_df, on='nft_collateral_contract', how='left')
     new_columns_order = ['date', 'blockchain', 'collection_name'] + list(df_existing_cols[1:])
     df = df[new_columns_order]
+
+    # Enrich dataset with ETHUSD rate i.e. ETHPrice, then fill USDValue for USDValue from loanERC20Denomination == weth_address
+    weth_address = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'.lower()
+    price_df = pd.read_csv('analytics_bot_langchain/data/ethusd/eth_usd_input_data.csv')
+    price_df = price_df.rename(columns={'datetime': 'date'})
+    price_df['date'] = pd.to_datetime(price_df['date'], format='%Y-%m-%d %H:%M:%S%z')
+    price_df = price_df.drop(columns=['open', 'low', 'volume'])
+    df = pd.merge_asof(df, price_df, on='date', direction='backward')
+    df['eth_price'] = df['close']
+    df = df.drop(columns=['close'])
+    df['loan_erc20denomination'] = df['loan_erc20denomination'].astype(str).str.lower().str.strip()
+    df.loc[df['loan_erc20denomination'] == weth_address, 'usd_value'] = df.loc[df['loan_erc20denomination'] == weth_address]['loan_principal_amount'] * df.loc[df['loan_erc20denomination'] == weth_address]['eth_price']
+    # now map missing usd_value, e.g. for stablecoin-denominated loans
+    usdc_address = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  # https://etherscan.io/token/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+    usdt_address = '0xdAC17F958D2ee523a2206206994597C13D831ec7'  # https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7
+    dai_address = '0x6B175474E89094C44Da98b954EedeAC495271d0F'  # https://etherscan.io/token/0x6b175474e89094c44da98b954eedeac495271d0f
+    stablecoin_addresses = [usdc_address, usdt_address, dai_address]
+    for stablecoin_address in stablecoin_addresses:
+        stablecoin_address = stablecoin_address.lower()
+        df.loc[df['loan_erc20denomination'] == stablecoin_address, 'usd_value'] = df.loc[df['loan_erc20denomination'] == stablecoin_address]['loan_principal_amount']
+
+    # reorder columns
+    col_order = [
+        "date", "blockchain", "collection_name", "loan_no", "loan_start_time", "loan_due_time", "repaid", "no_of_days", "liquidated", "loan_principal_amount",
+        "maximum_repayment_amount", "eth_price", "usd_value", "interest", "lender", "borrower", "nft_collateral_contract", "nft_collateral_id", "active", "apr",
+        "loan_erc20denomination", "loan_repaid_time", "loan_liquidation_time"
+    ]
+    df = df[col_order]
     return df
 
 
@@ -580,6 +608,8 @@ def get_schema(table_name='nft_lending_aggregated_borrow'):
         bigquery.SchemaField("liquidated", bigquery.enums.SqlTypeNames.BOOLEAN),
         bigquery.SchemaField("loan_principal_amount", bigquery.enums.SqlTypeNames.FLOAT),
         bigquery.SchemaField("maximum_repayment_amount", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("eth_price", bigquery.enums.SqlTypeNames.FLOAT),
+        bigquery.SchemaField("usd_value", bigquery.enums.SqlTypeNames.FLOAT),
         bigquery.SchemaField("interest", bigquery.enums.SqlTypeNames.FLOAT),
         bigquery.SchemaField("lender", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField("borrower", bigquery.enums.SqlTypeNames.STRING),

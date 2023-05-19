@@ -74,6 +74,18 @@ datasets = [
             "Tell me more about Azuki and Artblocks",
             "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
         ],
+    ),
+    Dataset(
+        name="NFT Lending data by NFTfi",
+        id="nftfi_loan_data",
+        description="",
+        sample_questions=[
+            "Perform EDA",
+            "Give the 1%, 25%, 50%, 75%, 99% percentiles of APR per collection name for the top20 collections by loan count, group the remainder collections as Others. Make sure the APR percentiles are unique per NFT collection",
+            "Give me three visualizations",
+            "Tell me more about Azuki and Artblocks",
+            "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
+        ],
     )
 
 ]
