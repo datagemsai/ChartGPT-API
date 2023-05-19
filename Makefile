@@ -17,3 +17,8 @@ test_sample_questions:
 
 gcloud_deploy:
 	gcloud app deploy
+
+# Server and API
+
+start_api:
+	. venv/bin/activate; python -m app.api
