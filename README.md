@@ -47,3 +47,16 @@ The Google Service Account used for the production app should be given the follo
 For developer access to BigQuery, where they are required to create and delete datasets, the Service Account should additionally have the following permissions:
 * BigQuery User
 * BigQuery Data Editor
+
+## Google App Engine
+
+### Cloud SQL
+
+```bash
+gcloud auth login
+gcloud auth application-default login
+gcloud services enable sqladmin.googleapis.com
+# Get cloud-sql-proxy from source for relevant operating system
+chmod +x cloud-sql-proxy
+./cloud-sql-proxy $CONNECTION_NAME
+```
