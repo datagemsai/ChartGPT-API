@@ -2,7 +2,7 @@
 pandas
 streamlit==1.21.0
 watchdog
-langchain==0.0.148
+langchain==0.0.173
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
 openai
 # wolframalpha
@@ -34,3 +34,8 @@ sqlalchemy-bigquery[bqstorage]
 # faiss-cpu
 deeplake
 networkx
+pg8000
+discord
+pulumi
+pulumi_gcp
+gitignore_parser
