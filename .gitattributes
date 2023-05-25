@@ -14,3 +14,7 @@ analytics_bot_langchain/data/metaquants/MQ_one_month_and_all_time_nftfi_borrow_v
 analytics_bot_langchain/data/metaquants/MQ_NFTFI_rchen8_one_month_and_all_time_nftfi_borrow_volume_per_collection_april_2023.csv filter=lfs diff=lfs merge=lfs -text
 analytics_bot_langchain/data/metaquants/NFTFI_daily_borrow_volume.csv filter=lfs diff=lfs merge=lfs -text
 analytics_bot_langchain/data/metaquants/NFTFI_one_month_and_all_time_nftfi_borrow_volume_per_collection_april_2023.csv filter=lfs diff=lfs merge=lfs -text
+data/metaquants_loans.csv filter=lfs diff=lfs merge=lfs -text
+data/metaquants_nft_finance_p2p.csv filter=lfs diff=lfs merge=lfs -text
+data/metaquants_nft_finance_p2pool.csv filter=lfs diff=lfs merge=lfs -text
+data/nftfi_loans.csv filter=lfs diff=lfs merge=lfs -text
