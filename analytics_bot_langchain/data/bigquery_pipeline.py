@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 import os
 import glob
 import pandas as pd
@@ -308,6 +308,8 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
             )
         )
 
+        print(f"{table_name} number of rows: {df.shape[0]}")
+
         df = drop_if_entirely_nans(df=df)
         df = set_datatype(df=df)
         # TODO 2023-05-17: go OOP and overload this method for each datatype
@@ -384,10 +386,12 @@ def clean_local_csv_files(datatype: Datatype, table_name: str, dune_query: bool)
 def merge_dataframes(dataframes: Dict,
                      df1_name: str = 'ordinals_marketplace_volume',
                      df2_name: str = 'ordinals_marketplace_unique_users',
-                     on: List = ['day', 'marketplace'],
+                     on: Optional[List] = ['day', 'marketplace'],
                      new_df_name: str = 'ordinals_marketplace'):
     df1 = dataframes[df1_name]
     df2 = dataframes[df2_name]
+    df1_len = df1.shape[0]
+    df2_len = df2.shape[0]
     if on is not None:
         merged_df = df1.merge(df2, on=on)
     else:
@@ -396,6 +400,8 @@ def merge_dataframes(dataframes: Dict,
         merged_df = pd.concat([df1, df2], sort=False)
     merged_df.sort_values('block_timestamp', ascending=False)
     dataframes = {new_df_name: merged_df}
+    print(f"Sanity check: df1 len {df1_len}, df2 len {df2_len}, merged df len {merged_df.shape[0]}, does it match?")
+    print(f"Sanity check: df1 len + df2 len {df1_len + df2_len} = {merged_df.shape[0]}? {(df1_len + df2_len) == merged_df.shape[0]}")
     return dataframes
 
 
@@ -406,7 +412,7 @@ def save_to_bigquery(dataframes: Dict, schema: List[bigquery.SchemaField],  data
     ])
     client = bigquery.Client(credentials=credentials)
 
-    # dataframes = merge_dataframes(dataframes=dataframes, df1_name='nft_finance_p2p', df2_name='nft_finance_p2pool', new_df_name='nft_finance_p2p_p2pool', on=None)
+    dataframes = merge_dataframes(dataframes=dataframes, df1_name='nft_finance_p2p', df2_name='nft_finance_p2pool', new_df_name='nft_finance_p2p_p2pool', on=None)
     for df_name, df in dataframes.items():
 
         df_name = df_name.replace(':', '_')
@@ -652,9 +658,9 @@ def run():
         # "ordinals_marketplace_volume": 2148199,
         # "ordinals_marketplace_unique_users": 2148742,
         # TODO 2023-05-17: upgrade to accomodate for non-Dune tables
-        # "nft_finance_p2p": 0,
-        # "nft_finance_p2pool": 0,
-        'nftfi_loan_data': 0,
+        "nft_finance_p2p": 0,
+        "nft_finance_p2pool": 0,
+        # 'nftfi_loan_data': 0,
     }
     tables_datatype = {
         # "nft_lending_aggregated_borrow": Datatype.nftfi,
@@ -665,9 +671,9 @@ def run():
         # "decentralized_exchange_trades": Datatype.decentralized_exchange_trades,
         # "ordinals_marketplace_volume": Datatype.ordinals,
         # "ordinals_marketplace_unique_users": Datatype.ordinals,
-        # "nft_finance_p2p": Datatype.metaquants,
-        # "nft_finance_p2pool": Datatype.metaquants,
-        'nftfi_loan_data': Datatype.nftfi_loan_data,
+        "nft_finance_p2p": Datatype.metaquants,
+        "nft_finance_p2pool": Datatype.metaquants,
+        # 'nftfi_loan_data': Datatype.nftfi_loan_data,
     }
 
     def query_dune_api_and_save_dataset_to_bq(table_name: str, query_id: int, datatype: Datatype, dune_query: bool):

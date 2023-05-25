@@ -80,6 +80,7 @@ def run(filename='nft_finance_p2p.csv', url='https://api.metaquants.xyz/v1/finan
 
     # Save the aggregated DataFrame to a .csv file
     all_data.to_csv(f'{directory_path}/{filename}', index=False)
+    print(f"Saved {directory_path}/{filename} with {all_data.shape[0]} lines!")
 
 
 def run_for_all():

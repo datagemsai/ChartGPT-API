@@ -8,6 +8,7 @@ import pandas
 # exit(0)
 from analytics_bot_langchain.data.bigquery_pipeline import run, clean_local_csv_files, Datatype
 
+metaquants.run()
 # run()
 run()
 # clean_local_csv_files(Datatype.nftfi_loan_data, table_name='nftfi_loan_data', dune_query=False)
