@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 
 import pandas as pd
 from IPython import get_ipython
+import dotenv
+dotenv.load_dotenv()
 
 ipython = get_ipython()
 

@@ -36,7 +36,7 @@ allowed_builtins = {
 }
 
 insecure_functions = {
-    "open",
+    # "open",
     "exec",
     "eval",
     "compile",
@@ -48,6 +48,11 @@ insecure_functions = {
 }
 
 allowed_imports = {
+    "time",  # TODO 2023-05-28: move to separate secure_ast
+    "json",
+    "open",
+    "os",
+    "requests",
     "dataclass",
     "pandas",
     "streamlit",

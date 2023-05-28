@@ -15,6 +15,17 @@ class Dataset:
 
 datasets = [
     Dataset(
+        name="NFT Lending data by NFTfi",
+        id="nftfi_loan_data",
+        description="",
+        sample_questions=[
+            "Perform EDA",
+            "Give me three visualizations",
+            "Tell me more about Azuki and Artblocks",
+            "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
+        ],
+    ),
+    Dataset(
         name="Decentralized Exchange Trades",
         id="dex_trades",
         description="A dataset of decentralized exchange (DEX) transactions across L1 and L2 blockchains.",
@@ -74,6 +85,8 @@ datasets = [
             "Tell me more about Azuki and Artblocks",
             "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
         ],
-    )
+    ),
 
 ]
+
+
