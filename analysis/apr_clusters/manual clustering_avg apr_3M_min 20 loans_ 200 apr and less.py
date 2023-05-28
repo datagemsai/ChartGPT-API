@@ -1,4 +1,3 @@
-# 2023-05-25
 #  query = """
 #  SELECT collection_name, nft_collateral_contract as address, AVG(apr) as mean, APPROX_QUANTILES(apr, 2)[OFFSET(1)] as median, STDDEV(apr) as std, COUNT(*) as count, SUM(usd_value) as borrow_volume
 #  FROM `nftfi_loan_data.nftfi_loan_data`
