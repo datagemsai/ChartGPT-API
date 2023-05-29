@@ -55,7 +55,7 @@ def get_data(t, p, api_key, url='https://api.metaquants.xyz/v1/finance/peer-to-p
     return all_data
 
 
-def run(filename='nft_finance_p2p.csv', url='https://api.metaquants.xyz/v1/finance/peer-to-peer'):
+def run_parallel(filename='nft_finance_p2p.csv', url='https://api.metaquants.xyz/v1/finance/peer-to-peer'):
     # Load .env file
     load_dotenv()
 
@@ -63,7 +63,7 @@ def run(filename='nft_finance_p2p.csv', url='https://api.metaquants.xyz/v1/finan
     api_key = os.getenv('METAQUANTS_API_KEY')
 
     # List of types and protocols to loop through
-    types = ['borrow', 'lend']
+    types = ['borrow']
     protocols = ['arcade', 'bend', 'jpegd', 'nftfi', 'x2y2']
 
     directory_path = 'analytics_bot_langchain/data/metaquants/'
@@ -77,6 +77,34 @@ def run(filename='nft_finance_p2p.csv', url='https://api.metaquants.xyz/v1/finan
         futures = [executor.submit(get_data, t, p, api_key, url) for t in types for p in protocols]
         for future in concurrent.futures.as_completed(futures):
             all_data = pd.concat([all_data, future.result()], ignore_index=True)
+
+    # Save the aggregated DataFrame to a .csv file
+    all_data.to_csv(f'{directory_path}/{filename}', index=False)
+    print(f"Saved {directory_path}/{filename} with {all_data.shape[0]} lines!")
+
+
+def run(filename='nft_finance_p2p.csv', url='https://api.metaquants.xyz/v1/finance/peer-to-peer'):
+    # Load .env file
+    load_dotenv()
+
+    # Get API key from .env
+    api_key = os.getenv('METAQUANTS_API_KEY')
+
+    # List of types and protocols to loop through
+    types = ['borrow']
+    protocols = ['arcade', 'bend', 'jpegd', 'nftfi', 'x2y2']
+
+    directory_path = 'analytics_bot_langchain/data/metaquants/'
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
+    # Initialize an empty DataFrame to store all data
+    all_data = pd.DataFrame()
+
+    for t in types:
+        for p in protocols:
+            data = get_data(t, p, api_key, url)
+            all_data = pd.concat([all_data, data], ignore_index=True)
 
     # Save the aggregated DataFrame to a .csv file
     all_data.to_csv(f'{directory_path}/{filename}', index=False)
