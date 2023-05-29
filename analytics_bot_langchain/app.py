@@ -9,6 +9,8 @@ from analytics_bot_langchain.callback_handler import CustomCallbackHandler
 from langchain.callbacks.base import CallbackManager
 import os
 import json
+import dotenv
+dotenv.load_dotenv()
 
 
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")

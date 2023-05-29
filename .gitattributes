@@ -1,0 +1,6 @@
+analytics_bot_langchain/data/dune/nft_lending_aggregated_borrow.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/dune/nft_lending_aggregated_dash_by_daily_tx.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/dune/nft_lending_aggregated_nft_collection.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/dune/nft_lending_aggregated_repay.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/dune/nft_lending_aggregated_users.csv filter=lfs diff=lfs merge=lfs -text
+analytics_bot_langchain/data/dune/nft_lending_liquidate.csv filter=lfs diff=lfs merge=lfs -text
