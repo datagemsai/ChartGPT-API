@@ -70,24 +70,33 @@ allowed_imports = {
     # "matplotlib",
     # "matplotlib.pyplot",
     "seaborn",
-    # "scipy",
-    # "scipy.stats",
-    # "scipy.optimize",
-    # "scikit-learn",
-    # "sklearn",
-    # "sklearn.preprocessing",
-    # "sklearn.metrics",
-    # "sklearn.model_selection",
-    # "sklearn.linear_model",
-    # "sklearn.tree",
-    # "sklearn.ensemble",
-    # "sklearn.cluster",
-    # "sklearn.decomposition",
-    # "statsmodels",
-    # "statsmodels.api",
-    # "statsmodels.formula.api",
-    # "statsmodels.tsa.api",
-    # "statsmodels.stats.api",
+    "scipy",
+    "scipy.stats",
+    "scipy.optimize",
+    "scikit-learn",
+    "sklearn",
+    "sklearn.preprocessing",
+    "sklearn.metrics",
+    "sklearn.model_selection",
+    "sklearn.linear_model",
+    "sklearn.tree",
+    "sklearn.ensemble",
+    "sklearn.cluster",
+    "sklearn.cluster.KMeans",
+    "KMeans",
+    "sklearn.decomposition",
+    "statsmodels",
+    "statsmodels.api",
+    "statsmodels.formula.api",
+    "statsmodels.tsa.api",
+    "statsmodels.stats.api",
+    "StandardScaler",
+    "scipy.stats",
+    "mannwhitneyu",
+    "kruskal",
+    "f_oneway",
+    "dendrogram",
+    "linkage",
     # "tensorflow",
     # "tensorflow.keras",
     # "keras",
@@ -135,6 +144,7 @@ allowed_imports = {
     "re",
 }
 
+
 def allowed_node(node, allowed_imports):
     if isinstance(node, (ast.Import, ast.ImportFrom)):
         for alias in node.names:
@@ -146,6 +156,7 @@ def allowed_node(node, allowed_imports):
         if (node.attr.startswith('._') or node.attr.startswith('.__')) if hasattr(node, 'attr') else (node.id.startswith('._') or node.id.startswith('.__')):
             raise ValueError(f"Accessing private members is not allowed")
 
+
 def analyze_ast(node, allowed_imports, max_depth, current_depth=0):
     if current_depth >= max_depth:
         return
@@ -155,6 +166,7 @@ def analyze_ast(node, allowed_imports, max_depth, current_depth=0):
         for child in ast.iter_child_nodes(node):
             analyze_ast(child, allowed_imports, max_depth, current_depth + 1)
 
+
 def secure_exec(code, custom_globals={}, custom_locals={}, max_depth=float("inf")):
     safe_builtins = {name: getattr(builtins, name) for name in allowed_builtins}
     custom_globals["__builtins__"] = safe_builtins
@@ -163,6 +175,7 @@ def secure_exec(code, custom_globals={}, custom_locals={}, max_depth=float("inf"
     analyze_ast(tree, allowed_imports, max_depth)
 
     exec(compile(tree, "<ast>", "exec"), custom_globals, custom_locals)
+
 
 def secure_eval(expr, custom_globals={}, custom_locals={}, max_depth=float("inf")):
     safe_builtins = {name: getattr(builtins, name) for name in allowed_builtins}

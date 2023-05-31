@@ -63,5 +63,17 @@ datasets = [
             "Tell me more about Azuki and Artblocks",
             "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
         ],
+    ),
+    Dataset(
+        name="NFT Lending data by Metaquants",
+        id="nft_finance_p2p_p2pool",
+        description="",
+        sample_questions=[
+            "Perform EDA",
+            "Give me three visualizations",
+            "Tell me more about Azuki and Artblocks",
+            "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
+        ],
     )
+
 ]
