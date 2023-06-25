@@ -12,30 +12,30 @@ Standard ***REMOVED*** Python environment using dependencies from [requirements.
 
 ### Secrets and Environment Variables
 
-Make a copy of [.streamlit/secrets.toml.example](.streamlit/secrets.toml.example) to [.streamlit/secrets.toml](.streamlit/secrets.toml) and fill in the relevant variables.
+For production, secrets and environment variables are set in a `secrets.yaml` file during deployment.
 
-[.streamlit/secrets.toml](.streamlit/secrets.toml) should not be committed to git and is included in the [.gitignore](.gitignore).
+For local development, secrets and environment variables are loaded using the Python `python-dotenv` package from a `.env` file.
+
+Make a copy of [.env.example](.env.example) to [.env](.env) and fill in the relevant variables from Keeper.
+
+[.env](.env) should not be committed to git and is included in the [.gitignore](.gitignore) file.
 
 #### Google Auth
 
-Wherever Google Auth expects the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to be set to authenticate, we should load the service account info from Streamlit's secrets. We do this to avoid duplicating secrets. In future we may need to make a refactor to this workflow depending on which service we settle on for deployment of applications.
+For production, Google Cloud Platform will authenticate using the application's default service account.
 
-```python
-import streamlit as st
-from google.oauth2 import service_account
-
-credentials = service_account.Credentials.from_service_account_info(st.secrets["GCP_SERVICE_ACCOUNT"])
-client = bigquery.Client(credentials=credentials)
-```
+For local development:
+1. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install): e.g. `sudo snap install google-cloud-cli`
+2. Set up Google [Application Default Credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc): `gcloud auth application-default login`
 
 ### Streamlit
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire. :heart:
+Edit `app/ChartGPT.py` to customize this app to your heart's desire. :heart:
 
-Run Streamlit app locally using `streamlit run streamlit_app.py` - open in a browser and edit the code live.
+Run Streamlit app locally using `make run` - open in a browser and edit the code live.
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+If you have any questions, check out the Streamlit [documentation](https://docs.streamlit.io) and [community
+forum](https://discuss.streamlit.io).
 
 ## Google BigQuery
 
