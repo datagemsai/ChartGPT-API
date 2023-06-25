@@ -1,5 +1,6 @@
 from copy import copy
 from dataclasses import dataclass
+from enum import Enum
 import streamlit as st
 from PIL import Image
 import os
@@ -11,8 +12,23 @@ from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
 from app.config.default import Dataset
 from langchain.schema import OutputParserException
 from google.cloud.bigquery import Client
+import firebase_admin
+from firebase_admin import firestore
+import json
+import datetime
 import app
 
+
+# Initialise Firebase app
+if not firebase_admin._apps:
+    try:
+        cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT'])) 
+        _ = firebase_admin.initialize_app(cred)
+    except ValueError as e:
+        _ = firebase_admin.get_app(name='[DEFAULT]')
+
+db = firestore.client()
+db_queries = db.collection('queries')
 
 # Display app name
 PAGE_NAME = "ChartGPT"
@@ -168,14 +184,32 @@ st.markdown("### 3. Get an answer")
 #     disabled=True,
 # )
 
+class QueryStatus(Enum):
+    Submitted = 1
+    Succeeded = 2
+    Failed = 3
+
 # If the button is clicked or the user presses enter
 if submit_button:
+    # Create new Firestore document with unique ID:
+    # query_ref = db_queries.document()
+    # Create new Firestore document with timestamp ID:
+    query_ref = db_queries.document(str(datetime.datetime.now()))
     question = sample_question or custom_question
+    query_ref.set({'query': question, 'dataset_id': dataset.id, 'status': QueryStatus.Submitted.name})
     with st.spinner('Thinking...'):
         try:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
             agent = chartgpt.get_agent(dataset_ids=[dataset.id])
-            agent.run(input=question)
+            response = agent(question)
+            final_output = response['output']
+            intermediate_steps = response['intermediate_steps']
+            query_ref.update({
+                'status': QueryStatus.Succeeded.name,
+                'final_output': final_output,
+                'number_of_steps': len(intermediate_steps),
+                'steps': [str(step) for step in intermediate_steps],
+            })
             st.success(
                 f"""
                 Analysis complete!
@@ -186,12 +220,14 @@ if submit_button:
             )
             st.balloons()
         except OutputParserException as e:
+            query_ref.update({'status': QueryStatus.Failed.name, 'failure': str(e)})
             st.error(
                 "Analysis failed."
                 + "\n\n" + str(e)
                 + "\n\n" + "[We welcome any feedback or bug reports.](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)"
             )
         except Exception as e:
+            query_ref.update({'status': QueryStatus.Failed.name, 'failure': str(e)})
             if app.DEBUG:
                 raise e
             else:

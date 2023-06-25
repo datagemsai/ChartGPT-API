@@ -34,3 +34,5 @@ sqlalchemy-bigquery[bqstorage]
 # faiss-cpu
 deeplake
 networkx
+firebase
+firebase-admin
