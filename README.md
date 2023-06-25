@@ -12,24 +12,23 @@ Standard ***REMOVED*** Python environment using dependencies from [requirements.
 
 ### Secrets and Environment Variables
 
-Make a copy of [.streamlit/secrets.toml.example](.streamlit/secrets.toml.example) to [.streamlit/secrets.toml](.streamlit/secrets.toml) and fill in the relevant variables.
+For production, secrets and environment variables are set in a `secrets.yaml` file during deployment.
 
-[.streamlit/secrets.toml](.streamlit/secrets.toml) should not be committed to git and is included in the [.gitignore](.gitignore).
+For local development, secrets and environment variables are loaded using the Python `python-dotenv` package from a `.env` file.
+
+Make a copy of [.env.example](.env.example) to [.env](.env) and fill in the relevant variables from Keeper.
+
+[.env](.env) should not be committed to git and is included in the [.gitignore](.gitignore) file.
 
 #### Google Auth
+
+##### Google Cloud Platform Deployment
+
+For production, Google Cloud Platform will authenticate using the application's default service account.
 
 For local development:
 1. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install): e.g. `sudo snap install google-cloud-cli`
 2. Set up Google [Application Default Credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc): `gcloud auth application-default login`
-3. Wherever Google Auth expects the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to be set to authenticate, we should load the service account info from Streamlit's secrets. We do this to avoid duplicating secrets. In future we may need to make a refactor to this workflow depending on which service we settle on for deployment of applications.
-
-```python
-import streamlit as st
-from google.oauth2 import service_account
-
-credentials = service_account.Credentials.from_service_account_info(st.secrets["GCP_SERVICE_ACCOUNT"])
-client = bigquery.Client(credentials=credentials)
-```
 
 ### Streamlit
 
