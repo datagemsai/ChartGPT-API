@@ -16,9 +16,15 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9]
-
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: key.json
     steps:
     - uses: actions/checkout@v3
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+      version: '270.0.0'
+      service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+    - run: echo -n ${{ secrets.GCP_SERVICE_ACCOUNT }} | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
