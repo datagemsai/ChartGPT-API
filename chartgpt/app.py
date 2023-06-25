@@ -42,4 +42,5 @@ def get_agent(dataset_ids: Optional[List] = None):
         max_iterations=10,
         max_execution_time=120,  # seconds
         early_stopping_method="generate",
+        return_intermediate_steps=True,
     )
