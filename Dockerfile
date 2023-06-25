@@ -13,7 +13,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY app ./app
-COPY analytics_bot_langchain ./analytics_bot_langchain
+COPY chartgpt ./chartgpt
 COPY .streamlit ./.streamlit/
 COPY media ./media
 

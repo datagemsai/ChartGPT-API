@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import traceback
 from app.config.content import ai_data_scientist_description
-import analytics_bot_langchain
+import chartgpt
 
 
 # Display app name
@@ -51,7 +51,7 @@ if submit_button:
     with st.spinner('Thinking...'):
         try:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-            agent = analytics_bot_langchain.get_agent(dataset_ids=dataset_ids)
+            agent = chartgpt.get_agent(dataset_ids=dataset_ids)
             agent.run(input=question)
             st.success('Analytics complete!')
             st.balloons()

@@ -2,7 +2,7 @@ import ast
 import inspect
 import pytest
 from dataclasses import dataclass
-from analytics_bot_langchain.tools.python.secure_ast import secure_eval, secure_exec
+from chartgpt.tools.python.secure_ast import secure_eval, secure_exec
 
 @dataclass
 class Test:
