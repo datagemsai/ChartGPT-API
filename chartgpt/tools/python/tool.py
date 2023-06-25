@@ -6,7 +6,7 @@ from io import StringIO
 from typing import Dict, Optional
 from collections.abc import Callable
 from pydantic import Field, root_validator
-from analytics_bot_langchain.tools.python.secure_ast import secure_eval, secure_exec
+from chartgpt.tools.python.secure_ast import secure_eval, secure_exec
 import streamlit as st
 from langchain.tools.base import BaseTool
 import logging

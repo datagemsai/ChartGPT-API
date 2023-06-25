@@ -3,7 +3,7 @@ import re
 from typing import Union
 import streamlit as st
 from langchain.agents.agent import AgentOutputParser
-from analytics_bot_langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
+from chartgpt.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 from langchain.schema import AgentAction, AgentFinish, OutputParserException
 
 import logging

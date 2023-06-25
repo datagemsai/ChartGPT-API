@@ -5,9 +5,9 @@ from PIL import Image
 import os
 import traceback
 from app.config.content import chartgpt_description
-import analytics_bot_langchain
-from analytics_bot_langchain.app import client
-from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
+import chartgpt
+from chartgpt.app import client
+from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
 from app.config.default import Dataset
 from langchain.schema import OutputParserException
 from google.cloud.bigquery import Client
@@ -174,7 +174,7 @@ if submit_button:
     with st.spinner('Thinking...'):
         try:
             # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-            agent = analytics_bot_langchain.get_agent(dataset_ids=[dataset.id])
+            agent = chartgpt.get_agent(dataset_ids=[dataset.id])
             agent.run(input=question)
             st.success(
                 f"""
@@ -217,7 +217,7 @@ else:
 #             with st.spinner('Thinking...'):
 #                 try:
 #                     # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-#                     agent = analytics_bot_langchain.get_agent(dataset_ids=dataset_ids)
+#                     agent = chartgpt.get_agent(dataset_ids=dataset_ids)
 #                     st.session_state.answers[question] = agent.run(input=question)
 #                     st.success('Analytics complete!')
 #                     st.balloons()

@@ -1,8 +1,7 @@
 # ChartGPT
 [![Build Status](https://github.com/CADLabs/ChartGPT/actions/workflows/python.yml/badge.svg)](https://github.com/CADLabs/ChartGPT/actions/workflows/python.yml)
 
-- [(Deprecated) analytics_bot/](analytics_bot/): Code based on https://www.patterns.app/blog/2023/02/07/chartbot-sql-analyst-gpt using OpenAI's davinci LLM directly via the API.
-- [analytics_bot_langchain/](analytics_bot_langchain/): LangChain-based BigQuery analytics agent "toolkit" using OpenAI's GPT-3.5-turbo LLM, see [notebooks/bigquery_agent_toolkit.ipynb](notebooks/bigquery_agent_toolkit.ipynb) for a demo. This code has been structured to match the software architecture of LangChain as much as possible, to remain compatible and be able to make PRs back to public repo.
+A LangChain-based BigQuery analytics agent "toolkit" using OpenAI's GPT-3.5-turbo LLM, see [notebooks/bigquery_agent_toolkit.ipynb](notebooks/bigquery_agent_toolkit.ipynb) for a demo. This code has been structured to match the software architecture of LangChain as much as possible, to remain compatible and be able to make PRs back to public repo.
 
 ## Development
 
@@ -27,6 +26,7 @@ For production, Google Cloud Platform will authenticate using the application's 
 For local development:
 1. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install): e.g. `sudo snap install google-cloud-cli`
 2. Set up Google [Application Default Credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc): `gcloud auth application-default login`
+3. Set default GCP project (for now we'll cautiously use the production project until we have a staging environment with datasets): `gcloud config set project psychic-medley-383515`
 
 ### Streamlit
 

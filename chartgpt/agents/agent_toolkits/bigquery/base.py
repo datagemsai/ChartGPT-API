@@ -4,14 +4,14 @@ import re
 import logging
 
 from langchain.agents.agent import AgentExecutor
-from analytics_bot_langchain.agents.mrkl.base import CustomAgent
+from chartgpt.agents.mrkl.base import CustomAgent
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
-from analytics_bot_langchain.tools.python.tool import PythonAstREPLTool
-from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_tables_summary, get_example_query
-from analytics_bot_langchain.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
-from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
+from chartgpt.tools.python.tool import PythonAstREPLTool
+from chartgpt.agents.agent_toolkits.bigquery.utils import get_tables_summary, get_example_query
+from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
+from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 
 
 logger = logging.getLogger(__name__)
