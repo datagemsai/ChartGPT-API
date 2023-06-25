@@ -1,11 +1,11 @@
 from typing import List, Optional
 from google.cloud import bigquery
-from analytics_bot_langchain.agents.agent_toolkits.bigquery.utils import get_dataset_ids
+from chartgpt.agents.agent_toolkits.bigquery.utils import get_dataset_ids
 from langchain.chat_models import ChatOpenAI
-from analytics_bot_langchain.agents.agent_toolkits import create_bigquery_agent
+from chartgpt.agents.agent_toolkits import create_bigquery_agent
 from google.oauth2 import service_account
 import streamlit as st
-from analytics_bot_langchain.callback_handler import CustomCallbackHandler
+from chartgpt.callback_handler import CustomCallbackHandler
 from langchain.callbacks.base import CallbackManager
 import os
 import json
