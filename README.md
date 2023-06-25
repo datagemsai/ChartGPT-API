@@ -22,8 +22,6 @@ Make a copy of [.env.example](.env.example) to [.env](.env) and fill in the rele
 
 #### Google Auth
 
-##### Google Cloud Platform Deployment
-
 For production, Google Cloud Platform will authenticate using the application's default service account.
 
 For local development:
