@@ -19,13 +19,14 @@ jobs:
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
     steps:
-    - uses: actions/checkout@v3
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
-        service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-    - run: echo -n ${{ secrets.GCP_SERVICE_ACCOUNT }} | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
+      run: echo -n ${{ secrets.GCP_SERVICE_ACCOUNT }} | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
