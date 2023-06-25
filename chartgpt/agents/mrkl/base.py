@@ -6,13 +6,13 @@ from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
 from langchain.agents.agent import AgentOutputParser
 from pydantic import root_validator
-from analytics_bot_langchain.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
+from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from langchain.schema import (
     AgentAction,
     BaseMessage
 )
-from analytics_bot_langchain.agents.mrkl.output_parser import CustomOutputParser
-from analytics_bot_langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
+from chartgpt.agents.mrkl.output_parser import CustomOutputParser
+from chartgpt.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 import logging
 from langchain.agents.mrkl.base import ZeroShotAgent
 
