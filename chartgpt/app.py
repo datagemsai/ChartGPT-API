@@ -6,7 +6,8 @@ from chartgpt.agents.agent_toolkits import create_bigquery_agent
 from google.oauth2 import service_account
 import streamlit as st
 from chartgpt.callback_handler import CustomCallbackHandler
-from langchain.callbacks.base import CallbackManager
+from langchain.callbacks.manager import CallbackManager
+from langchain.memory import ConversationBufferMemory
 import os
 import json
 
@@ -34,13 +35,15 @@ def get_agent(dataset_ids: Optional[List] = None):
         invalid_dataset_ids = set(dataset_ids) - set(available_dataset_ids)
         assert not invalid_dataset_ids, f"Dataset IDs {invalid_dataset_ids} not available"
     return create_bigquery_agent(
-        ChatOpenAI(model=OPENAI_MODEL, temperature=0, request_timeout=180),
+        ChatOpenAI(model_name=OPENAI_MODEL, temperature=0, request_timeout=180),
         bigquery_client=client,
         dataset_ids=dataset_ids,
-        verbose=True,
+        # https://github.com/hwchase17/langchain/issues/6083
+        verbose=False,
         callback_manager=callback_manager,
         max_iterations=10,
         max_execution_time=120,  # seconds
         early_stopping_method="generate",
         return_intermediate_steps=True,
+        memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True, input_key='input', output_key="output")
     )

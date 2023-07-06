@@ -30,7 +30,6 @@ class CustomOutputParser(AgentOutputParser):
             code = (
                 code
                 .strip()
-                .strip('"')
                 .removeprefix("```python")
                 .strip()
                 .removesuffix("```")
@@ -42,7 +41,8 @@ class CustomOutputParser(AgentOutputParser):
                 .removesuffix("Action Input:")
                 .strip()
             )
-            st.markdown(thought)
+            st.chat_message("assistant").write(thought)
+            st.session_state.messages.append({"role": "assistant", "content": thought})
             return AgentAction(tool="python_repl_ast", tool_input=code, log=llm_output)
         elif FAILURE_ACTION in llm_output:
             raise OutputParserException(llm_output)
@@ -52,13 +52,15 @@ class CustomOutputParser(AgentOutputParser):
                 log=llm_output
             )
         elif THOUGHT in llm_output:
+            st.chat_message("assistant").write(llm_output)
+            st.session_state.messages.append({"role": "assistant", "content": llm_output})
             return AgentAction(tool="python_repl_ast", tool_input="", log=llm_output)
         else:
             # raise OutputParserException(f"Could not parse LLM output: `{llm_output}`")
-            # return AgentAction(tool="python_repl_ast", tool_input=inspect.cleandoc('''
-            # display("""{llm_output}""")
-            # '''.format(llm_output=llm_output.replace('"', "\'"))), log=llm_output)
-            return AgentFinish(
-                return_values={"output": llm_output.split(FINAL_ANSWER_ACTION)[-1].strip()},
-                log=llm_output
-            )
+            st.chat_message("assistant").write(llm_output)
+            st.session_state.messages.append({"role": "assistant", "content": llm_output})
+            return AgentAction(tool="python_repl_ast", tool_input="", log=llm_output)
+            # return AgentFinish(
+            #     return_values={"output": llm_output.split(FINAL_ANSWER_ACTION)[-1].strip()},
+            #     log=llm_output
+            # )
