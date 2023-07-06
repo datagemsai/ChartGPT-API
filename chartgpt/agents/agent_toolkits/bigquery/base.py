@@ -46,7 +46,7 @@ def create_bigquery_agent(
         import pandas as pd
 
         pd.set_option('display.max_columns', None)
-        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_rows', 20)
 
         def display(*args):
             import streamlit as st

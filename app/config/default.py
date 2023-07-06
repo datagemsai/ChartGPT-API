@@ -1,16 +1,4 @@
-from dataclasses import dataclass
-from typing import List
-
-
-@dataclass
-class Dataset:
-    name: str
-    id: str
-    description: str
-    sample_questions: List[str]
-
-    def __repr__(self):
-        return self.name
+from app.config import Dataset
 
 
 datasets = [
