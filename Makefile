@@ -14,6 +14,3 @@ run:
 
 test_sample_questions:
 	. venv/bin/activate; pytest -n 8 tests/test_sample_questions.py
-
-gcloud_deploy:
-	gcloud app deploy
