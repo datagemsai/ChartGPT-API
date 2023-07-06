@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 import inspect
 import re
-import logging
 
 from langchain.agents.agent import AgentExecutor
 from chartgpt.agents.mrkl.base import CustomAgent
@@ -12,9 +11,8 @@ from chartgpt.tools.python.tool import PythonAstREPLTool
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_tables_summary, get_example_query
 from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from chartgpt.agents.mrkl.output_parser import CustomOutputParser
-
-
-logger = logging.getLogger(__name__)
+from langchain.schema import BaseMemory
+from app import logger
 
 
 def create_bigquery_agent(
@@ -31,6 +29,7 @@ def create_bigquery_agent(
     max_execution_time: Optional[float] = None,
     early_stopping_method: str = "force",
     agent_executor_kwargs: Optional[Dict[str, Any]] = None,
+    memory: Optional[BaseMemory] = None,
     **kwargs: Any,
 ) -> AgentExecutor:
     tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
@@ -45,6 +44,9 @@ def create_bigquery_agent(
         import plotly.express as px
         import plotly.graph_objects as go
         import pandas as pd
+
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.max_rows', None)
 
         def display(*args):
             import streamlit as st
@@ -61,6 +63,8 @@ def create_bigquery_agent(
 
     if input_variables is None:
         input_variables = ["tables_summary", "example_query", "input", "agent_scratchpad"]
+    if memory is not None:
+        input_variables.append("chat_history")
 
     prompt = CustomAgent.create_prompt(
         tools,
@@ -73,16 +77,15 @@ def create_bigquery_agent(
         tables_summary=tables_summary_escaped,
         example_query=example_query,
     )
+    logger.info(partial_prompt.json())
     llm_chain = LLMChain(
         llm=llm,
         prompt=partial_prompt,
-        callback_manager=callback_manager,
     )
     tool_names = [tool.name for tool in tools]
     agent = CustomAgent(
         llm_chain=llm_chain,
         allowed_tools=tool_names,
-        callback_manager=callback_manager,
         **kwargs,
     )
     return AgentExecutor.from_agent_and_tools(
@@ -95,5 +98,6 @@ def create_bigquery_agent(
         early_stopping_method=early_stopping_method,
         callback_manager=callback_manager,
         output_parser=CustomOutputParser,
+        memory=memory,
         **(agent_executor_kwargs or {}),
     )

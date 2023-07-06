@@ -11,7 +11,9 @@ from io import StringIO
 import logging
 
 
+# Configure logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Load environment variables from .env
 load_dotenv()
@@ -20,6 +22,12 @@ os.environ.update(st.secrets)
 
 DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
 if DEBUG: logger.info("Application in debug mode, disable for production")
+
+if DEBUG:
+    fh = logging.FileHandler('logs/debug.log')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    logger.addHandler(fh)
 
 DISPLAY_USER_UPDATES = (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true')
 if DISPLAY_USER_UPDATES: logger.info("User updates will be displayed")
@@ -89,7 +97,7 @@ def st_show(self):
     # if figure_id not in st.session_state:
     st.plotly_chart(self, use_container_width=True)
     # st.session_state[figure_id] = 1
-    return "Plotly chart created successfully"
+    return "Plotly chart created and displayed successfully"
 Figure.show = st_show
 pio.show = st_show
 Figure.__repr__ = st_show

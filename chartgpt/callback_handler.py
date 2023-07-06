@@ -3,16 +3,15 @@ import streamlit as st
 from langchain.callbacks.base import BaseCallbackHandler
 from typing import Any, Dict, List, Optional, Union
 from langchain.schema import AgentAction, AgentFinish, LLMResult
-import logging
+from app import logger
 
-logger = logging.getLogger(__name__)
 
 class CustomCallbackHandler(BaseCallbackHandler):
     def on_llm_start(
         self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> None:
         """Print out the prompts."""
-        class_name = serialized["name"]
+        class_name = serialized["id"]
         logger.info(f"on_llm_start: {class_name}")
 
     def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
@@ -33,7 +32,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
         self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> None:
         """Print out that we are entering a chain."""
-        class_name = serialized["name"]
+        class_name = serialized["id"]
         logger.info(f"on_chain_start: {class_name}")
 
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
@@ -63,10 +62,13 @@ class CustomCallbackHandler(BaseCallbackHandler):
         new_lines = action.tool_input.count('\n')
         should_display = new_lines > 1 or not "display" in action.tool_input
         if should_display:
-            st.markdown(inspect.cleandoc(f"""
+            output = inspect.cleandoc(f"""
             ```python
             {action.tool_input}
-            """))
+            """)
+            # st.markdown(output)
+            st.chat_message("assistant").markdown(output)
+            st.session_state.messages.append({"role": "assistant", "content": output})
 
     def on_tool_end(
         self,
@@ -99,4 +101,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run on agent end."""
         logger.info(f"on_agent_finish: {finish}")
-        st.markdown(finish.return_values["output"])
+        output = finish.return_values["output"]
+        # st.markdown(output)
+        st.chat_message("assistant").write(output)
+        st.session_state.messages.append({"role": "assistant", "content": output})
