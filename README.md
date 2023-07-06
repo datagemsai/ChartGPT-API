@@ -55,3 +55,13 @@ For developer access to BigQuery, where they are required to create and delete d
 Cloud Firestore is used for storing analytics about queries and responses.
 
 In a new GCP projects, you'll need to enable the Cloud Firestore API and create a new database using "Native Mode".
+
+## App Engine Deployment
+
+### Production
+
+Region: Frankfurt `europe-west3`
+
+```bash
+gcloud app deploy --project=chartgpt-production --region=europe-west3 app_production.yaml
+```
