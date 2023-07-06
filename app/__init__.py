@@ -95,7 +95,9 @@ def st_show(self):
     import streamlit as st
     # figure_id = id(self)
     # if figure_id not in st.session_state:
-    st.plotly_chart(self, use_container_width=True)
+    with st.chat_message("assistant"):
+        st.plotly_chart(self, use_container_width=True)
+        st.session_state.messages.append({"role": "assistant", "content": self, "type": "chart"})
     # st.session_state[figure_id] = 1
     return "Plotly chart created and displayed successfully"
 Figure.show = st_show
