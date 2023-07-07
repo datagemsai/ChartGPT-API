@@ -11,15 +11,25 @@ from io import StringIO
 import logging
 
 
+# Configure logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Load environment variables from .env
 load_dotenv()
 # If set, Streamlit secrets take preference over environment variables
 os.environ.update(st.secrets)
 
+ENV = os.environ.get("ENV", "LOCAL")
+
 DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
 if DEBUG: logger.info("Application in debug mode, disable for production")
+
+if DEBUG:
+    fh = logging.FileHandler('logs/debug.log')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    logger.addHandler(fh)
 
 DISPLAY_USER_UPDATES = (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true')
 if DISPLAY_USER_UPDATES: logger.info("User updates will be displayed")
@@ -87,9 +97,11 @@ def st_show(self):
     import streamlit as st
     # figure_id = id(self)
     # if figure_id not in st.session_state:
-    st.plotly_chart(self, use_container_width=True)
+    with st.chat_message("assistant"):
+        st.plotly_chart(self, use_container_width=True)
+        st.session_state.messages.append({"role": "assistant", "content": self, "type": "chart"})
     # st.session_state[figure_id] = 1
-    return "Plotly chart created successfully"
+    return "Plotly chart created and displayed successfully"
 Figure.show = st_show
 pio.show = st_show
 Figure.__repr__ = st_show
