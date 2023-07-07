@@ -10,6 +10,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.memory import ConversationBufferMemory
 import os
 import json
+import app
 
 
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
@@ -21,7 +22,7 @@ scopes = [
     "https://www.googleapis.com/auth/bigquery",
 ]
 
-if os.environ.get("GCP_SERVICE_ACCOUNT", False):
+if app.ENV == "LOCAL":
     credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)).with_scopes(scopes)
     client = bigquery.Client(credentials=credentials)
 else:
