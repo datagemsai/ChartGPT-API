@@ -37,13 +37,31 @@ Run Streamlit app locally using `make run` - open in a browser and edit the code
 If you have any questions, check out the Streamlit [documentation](https://docs.streamlit.io) and [community
 forum](https://discuss.streamlit.io).
 
-## Google BigQuery
+## Google IAM
 
 The Google Service Account used for the production app should be given the following roles:
 * BigQuery Data Viewer
 * BigQuery Job User
 * BigQuery Read Session User
+* Cloud Datastore User
+* Firebase Admin SDK Administrator Service Agent
 
 For developer access to BigQuery, where they are required to create and delete datasets, the Service Account should additionally have the following permissions:
 * BigQuery User
 * BigQuery Data Editor
+
+## Google Cloud Firestore
+
+Cloud Firestore is used for storing analytics about queries and responses.
+
+In a new GCP projects, you'll need to enable the Cloud Firestore API and create a new database using "Native Mode".
+
+## App Engine Deployment
+
+### Production
+
+Region: Frankfurt `europe-west3`
+
+```bash
+gcloud app deploy --project=chartgpt-production --region=europe-west3 app_production.yaml
+```
