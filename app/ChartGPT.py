@@ -25,8 +25,11 @@ import app
 # Initialise Firebase app
 if not firebase_admin._apps:
     try:
-        cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT'])) 
-        _ = firebase_admin.initialize_app(cred)
+        if app.ENV == "LOCAL":
+            cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT']))
+            _ = firebase_admin.initialize_app(cred)
+        else:
+            _ = firebase_admin.initialize_app()
     except ValueError as e:
         _ = firebase_admin.get_app(name='[DEFAULT]')
 

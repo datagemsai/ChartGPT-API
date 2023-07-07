@@ -20,6 +20,8 @@ load_dotenv()
 # If set, Streamlit secrets take preference over environment variables
 os.environ.update(st.secrets)
 
+ENV = os.environ.get("ENV", "LOCAL")
+
 DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
 if DEBUG: logger.info("Application in debug mode, disable for production")
 
