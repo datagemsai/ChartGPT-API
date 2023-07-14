@@ -1,12 +1,8 @@
-from copy import copy
 from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import Optional
 import streamlit as st
 from PIL import Image
-import os
-import traceback
 import chartgpt
 from chartgpt.app import client
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
@@ -14,9 +10,7 @@ from app.config import Dataset
 from langchain.schema import OutputParserException
 from langchain.callbacks.base import BaseCallbackHandler
 from google.cloud.bigquery import Client
-import firebase_admin
 from firebase_admin import firestore
-import json
 import datetime
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
@@ -24,21 +18,13 @@ from langchain.callbacks import get_openai_callback
 
 import app
 from app.components.sidebar import Sidebar
+from app.components.notices import Notices
+
 
 # Initialise Streamlit components
 sidebar = Sidebar()
 
-# Initialise Firebase app
-if not firebase_admin._apps:
-    try:
-        if app.ENV == "LOCAL":
-            cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT']))
-            _ = firebase_admin.initialize_app(cred)
-        else:
-            _ = firebase_admin.initialize_app()
-    except ValueError as e:
-        _ = firebase_admin.get_app(name='[DEFAULT]')
-
+# Initialise Google Cloud Firestore
 db = firestore.client()
 db_queries = db.collection('queries')
 
@@ -71,38 +57,8 @@ styl = f"""
 """
 st.markdown(styl, unsafe_allow_html=True)
 
-if app.DISPLAY_USER_UPDATES:
-    st.info("""
-    This is an **early access** version of ChartGPT.
-    We're still working on improving the model's performance, finding bugs, and adding more features and datasets.
-
-    Have any feedback or bug reports? [Let us know!](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)
-    """, icon="🚨")
-
-    st.warning("""
-    **Update: 10 May 2023, 15:00 CET**
-
-    Due to limits on OpenAI's API, we are now using GPT-3.5 instead of GPT-4. We are actively resolving this with OpenAI support.
-    In the meantime you may experience inconsistent or less reliable results.
-    """)
-
-if app.MAINTENANCE_MODE:
-    st.warning("""
-    **Offline for maintenance**
-
-    This app is undergoing maintenance right now.
-    Please check back later.
-
-    In the meantime, [check us out on Product Hunt](https://www.producthunt.com/products/chartgpt)!
-    """)
-    ph_1 = Image.open('media/product_hunt_1.jpeg')
-    ph_2 = Image.open('media/product_hunt_2.jpeg')
-    ph_3 = Image.open('media/product_hunt_3.jpeg')
-    st.image(ph_1)
-    st.image(ph_2)
-    st.image(ph_3)
-    st.stop()
-
+# Show notices
+Notices()
 
 st.markdown("### 1. Select a dataset 📊")
 
@@ -224,17 +180,15 @@ for message in st.session_state["messages"]:
 
 
 class StreamHandler(BaseCallbackHandler):
-    def __init__(self, initial_text=""):
-        self.text = initial_text
-
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         if not "text" in st.session_state:
             st.session_state["text"] = ""
         st.session_state["text"] += token
         # Using regex, find ``` followed by a word and add a newline after ``` unless the word is "python"
-        self.text = re.sub(r"```(?=\w)(?!python)", "```\n", self.text)
-        # Using regex, find and remove `Action Input:`
-        self.text = re.sub(r"Action Input:", "", self.text)
+        st.session_state["text"] = re.sub(r"```(?=\w)(?!python)", "```\n\n", st.session_state["text"])
+        # Using regex, find and remove `Action Input:` etc.
+        st.session_state["text"] = re.sub(r"Action Input:\s*", "", st.session_state["text"], flags=re.IGNORECASE)
+        st.session_state["text"] = re.sub(r"Analysis Complete:\s*", "", st.session_state["text"], flags=re.IGNORECASE)
         st.session_state["empty_container"].markdown(st.session_state["text"])
 
 
@@ -259,7 +213,8 @@ if question:
         'timestamp_start': timestamp_start,
         'query': question,
         'dataset_id': dataset.id,
-        'status': QueryStatus.SUBMITTED.name
+        'status': QueryStatus.SUBMITTED.name,
+        'model_temperature': sidebar.model_temperature,
     })
 
     # Display user message in chat message container

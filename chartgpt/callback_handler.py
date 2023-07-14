@@ -65,6 +65,7 @@ class CustomCallbackHandler(BaseCallbackHandler):
             output = inspect.cleandoc(f"""
             ```python
             {action.tool_input}
+            ```
             """)
             st.session_state["messages"].append({"role": "assistant", "content": output})
 

@@ -49,8 +49,8 @@ Do not try import or use other libraries.
 
 # Data Analysis Guidelines
 - If asked a geographical question, try use a Plotly map.
-- Always check what unique values are in a column before querying it e.g. `SELECT DISTINCT column_name FROM table_name`.
 - When performing EDA, always try check correlation and create statistical plots.
+- Always use `LOWER` when comparing strings to ensure case insensitivity: e.g. `LOWER(column_name) = LOWER('value')`
 
 Begin!
 
@@ -58,3 +58,4 @@ Chat History: {chat_history}
 
 Question: {input}
 Thought: {agent_scratchpad}"""
+# - Always check what unique values are in a column before querying it e.g. `SELECT DISTINCT column_name FROM table_name`.
