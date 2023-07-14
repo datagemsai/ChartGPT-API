@@ -4,12 +4,18 @@ from typing import Dict, List, Tuple, Union, Optional
 from google.cloud import bigquery
 import pandas as pd
 
+from app.config import Dataset
+
 
 class StreamlitDict(dict):
     def __repr__(self):
         import streamlit as st
         df_id = id(self)
         if not df_id in st.session_state:
+            st.session_state["container"].dataframe(self)
+            st.session_state["text"] = "\n\n"
+            st.session_state["empty_container"] = st.session_state["container"].empty()
+            st.session_state[df_id] = 1
             st.write(self)
             st.session_state[df_id] = 1
         return dict.__repr__(self)
@@ -26,51 +32,46 @@ def get_table_ids(client: bigquery.Client) -> List[str]:
 
 def get_tables_summary(
         client: bigquery.Client,
-        dataset_ids: Optional[List] = None,
+        datasets: List[Dataset],
         include_types = False
 ) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
-    if not dataset_ids:
-        dataset_ids = get_dataset_ids(client=client)
-
+    # Generate tables_summary for all tables in datasets
     tables_summary = StreamlitDict()
-    for dataset_id in dataset_ids:
-        for table_item in client.list_tables(dataset_id):
-            table_id = table_item.table_id
+    for dataset in datasets:
+        dataset_id = dataset.id
+        tables_summary[dataset_id] = {}
+        for table_id in dataset.tables:
             table_ref = client.dataset(dataset_id).table(table_id)
             table = client.get_table(table_ref)
-            if dataset_id not in tables_summary:
-                tables_summary[dataset_id] = {}
             tables_summary[dataset_id][table_id] = [
                 (schema_field.name, schema_field.field_type) if include_types else schema_field.name
                 for schema_field in table.schema
             ]
     return tables_summary
 
+
 def get_example_query(
-    client: bigquery.Client,
-    dataset_ids: Optional[List] = None,
+    datasets: List[Dataset],
 ) -> str:
-    if not dataset_ids:
-        dataset_ids = get_dataset_ids(client=client)
+    # Generate example_query for all tables in datasets
     example_query = ""
-    for dataset_id in dataset_ids:
-        for table_item in client.list_tables(dataset_id):
-            table_id = table_item.table_id
+    for dataset in datasets:
+        dataset_id = dataset.id
+        for table_id in dataset.tables:
             example_query += inspect.cleandoc(f"""
             SELECT * FROM `{dataset_id}.{table_id}` LIMIT 100
             """)
     return example_query
 
+
 def get_sample_dataframes(
     client: bigquery.Client,
-    dataset_id: str,
+    dataset: Dataset,
 ) -> Dict[str, pd.DataFrame]:
+    # Generate sample_dfs for all tables in dataset
     sample_dfs = {}
-    for table_item in client.list_tables(dataset_id):
-        table_id = table_item.table_id
-
-        query = f"SELECT * FROM `{client.project}.{dataset_id}.{table_id}` LIMIT 100"
+    for table_id in dataset.tables:
+        query = f"SELECT * FROM `{client.project}.{dataset.id}.{table_id}` LIMIT 100"
         df = client.query(query).to_dataframe()
-
         sample_dfs[table_id] = df
     return sample_dfs

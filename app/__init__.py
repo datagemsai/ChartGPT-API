@@ -7,9 +7,15 @@ import pandas as pd
 from pandas.io.formats import (
     format as fmt,
 )
+import firebase_admin
 from io import StringIO
 import logging
+import json
 
+
+# Display app name
+PAGE_NAME = "ChartGPT"
+st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -22,20 +28,37 @@ os.environ.update(st.secrets)
 
 ENV = os.environ.get("ENV", "LOCAL")
 
-DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
-if DEBUG: logger.info("Application in debug mode, disable for production")
-
-if DEBUG:
+if DEBUG := (os.getenv('DEBUG', 'false').lower() == 'true'):
+    logger.warning("Application in debug mode, disable for production")
     fh = logging.FileHandler('logs/debug.log')
     fh.setLevel(logging.INFO)
     fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
     logger.addHandler(fh)
 
-DISPLAY_USER_UPDATES = (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true')
-if DISPLAY_USER_UPDATES: logger.info("User updates will be displayed")
+if DISPLAY_USER_UPDATES := (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true'):
+    logger.info("User updates will be displayed")
 
-MAINTENANCE_MODE = (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true')
-if MAINTENANCE_MODE: logger.info("Application in maintenance mode")
+if MAINTENANCE_MODE := (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true'):
+    logger.info("Application in maintenance mode")
+
+# Import sample question for project
+if os.environ["PROJECT"] == "NFTFI":
+    from app.config.nftfi import datasets
+elif os.environ["PROJECT"] == "PRODUCTION":
+    from app.config.production import datasets
+else:
+    from app.config.default import datasets
+
+# Initialise Google Cloud Firestore
+if not firebase_admin._apps:
+    try:
+        if ENV == "LOCAL":
+            cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT']))
+            _ = firebase_admin.initialize_app(cred)
+        else:
+            _ = firebase_admin.initialize_app()
+    except ValueError as e:
+        _ = firebase_admin.get_app(name='[DEFAULT]')
 
 # Set plotly as the default plotting backend for pandas
 pd.options.plotting.backend = "plotly"
@@ -45,7 +68,10 @@ def pd_display(self):
     import streamlit as st
     df_id = id(self)
     if df_id not in st.session_state:
-        st.dataframe(self)
+        st.session_state["container"].text("")
+        st.session_state["container"].dataframe(self)
+        st.session_state["text"] = "\n\n"
+        st.session_state["empty_container"] = st.session_state["container"].empty()
         st.session_state[df_id] = 1
 
     if self._info_repr():
@@ -73,7 +99,10 @@ def pandas_object_display(self):
     import streamlit as st
     df_id = id(self)
     if df_id not in st.session_state:
-        st.dataframe(self)
+        st.session_state["container"].text("")
+        st.session_state["container"].dataframe(self)
+        st.session_state["text"] = "\n\n"
+        st.session_state["empty_container"] = st.session_state["container"].empty()
         st.session_state[df_id] = 1
 
     return object.__repr__(self)
@@ -84,7 +113,10 @@ def series_display(self):
     import streamlit as st
     df_id = id(self)
     if df_id not in st.session_state:
-        st.dataframe(self)
+        st.session_state["container"].text("")
+        st.session_state["container"].dataframe(self)
+        st.session_state["text"] = "\n\n"
+        st.session_state["empty_container"] = st.session_state["container"].empty()
         st.session_state[df_id] = 1
 
     repr_params = fmt.get_series_repr_params()
@@ -95,13 +127,25 @@ pd.core.series.Series.__repr__ = lambda self: series_display(self)
 # Monkey patching of Plotly show()
 def st_show(self):
     import streamlit as st
-    # figure_id = id(self)
-    # if figure_id not in st.session_state:
-    with st.chat_message("assistant"):
-        st.plotly_chart(self, use_container_width=True)
-        st.session_state.messages.append({"role": "assistant", "content": self, "type": "chart"})
-    # st.session_state[figure_id] = 1
+
+    figure_id = id(self)
+    if figure_id not in st.session_state:
+        st.session_state["container"].plotly_chart(self, use_container_width=True)
+        st.session_state["text"] = "\n\n"
+        st.session_state["empty_container"] = st.session_state["container"].empty()
+        st.session_state["messages"].append({"role": "assistant", "content": self, "type": "chart"})
+        st.session_state[figure_id] = 1
+        try:
+            pio.templates.default = "plotly"
+            self.update_layout(template=pio.templates.default)
+            # TODO Enable for Discord bot
+            # self.write_image(f'app/outputs/{figure_id}.png')
+        except ValueError as e:
+            logger.error(e)
+    # return plotly.io.to_image(self, format="png")
+    # return plotly.io.to_json(self)
     return "Plotly chart created and displayed successfully"
+
 Figure.show = st_show
 pio.show = st_show
 Figure.__repr__ = st_show

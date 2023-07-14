@@ -133,4 +133,5 @@ secrets/*
 docs/*
 .idea/*
 secrets.yaml
+app_secrets_production.yaml
 outputs/*

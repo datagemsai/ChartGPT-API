@@ -65,10 +65,9 @@ class CustomCallbackHandler(BaseCallbackHandler):
             output = inspect.cleandoc(f"""
             ```python
             {action.tool_input}
+            ```
             """)
-            # st.markdown(output)
-            st.chat_message("assistant").markdown(output)
-            st.session_state.messages.append({"role": "assistant", "content": output})
+            st.session_state["messages"].append({"role": "assistant", "content": output})
 
     def on_tool_end(
         self,
@@ -102,6 +101,4 @@ class CustomCallbackHandler(BaseCallbackHandler):
         """Run on agent end."""
         logger.info(f"on_agent_finish: {finish}")
         output = finish.return_values["output"]
-        # st.markdown(output)
-        st.chat_message("assistant").write(output)
-        st.session_state.messages.append({"role": "assistant", "content": output})
+        st.session_state["messages"].append({"role": "assistant", "content": output})

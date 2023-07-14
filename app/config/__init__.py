@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 
 @dataclass
@@ -8,27 +8,10 @@ class Dataset:
     id: str
     description: str
     sample_questions: List[str]
+    tables: List[str] = field(default_factory=lambda: [])
 
     def __repr__(self):
         return self.name
-
-@dataclass
-class Table:
-    name: str
-    description: str
-    sample_questions: List[str]
-
-    project_id: str
-    dataset_id: str
-    table_id: str
-
-    @property
-    def dataset_uid(self) -> str:
-        return self.project_id + "." + self.dataset_id
-
-    @property
-    def table_uid(self) -> str:
-        return self.project_id + "." + self.dataset_id + "." + self.table_id
-
-    def __repr__(self):
-        return self.name
+ 
+    def __eq__(self, other) -> bool:
+        return self.id == other.id
