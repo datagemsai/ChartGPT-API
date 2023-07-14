@@ -60,8 +60,20 @@ In a new GCP projects, you'll need to enable the Cloud Firestore API and create 
 
 ### Production
 
-Region: Frankfurt `europe-west3`
+Default region: Frankfurt `europe-west3`
 
 ```bash
-gcloud app deploy --project=chartgpt-production --region=europe-west3 app_production.yaml
+gcloud config set app/cloud_build_timeout 1600
+gcloud app deploy --project=chartgpt-production app_production.yaml
+```
+
+## Cloud SQL
+
+```bash
+gcloud auth login
+gcloud auth application-default login
+gcloud services enable sqladmin.googleapis.com
+# Get cloud-sql-proxy from source for relevant operating system
+chmod +x cloud-sql-proxy
+./cloud-sql-proxy $CONNECTION_NAME
 ```

@@ -3,6 +3,7 @@ import inspect
 import re
 
 from langchain.agents.agent import AgentExecutor
+from app.config import Dataset
 from chartgpt.agents.mrkl.base import CustomAgent
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
@@ -18,7 +19,7 @@ from app import logger
 def create_bigquery_agent(
     llm: BaseLLM,
     bigquery_client: Any,
-    dataset_ids: Optional[List] = None,
+    datasets: List[Dataset],
     callback_manager: Optional[BaseCallbackManager] = None,
     prefix: str = PREFIX,
     suffix: str = SUFFIX,
@@ -30,30 +31,34 @@ def create_bigquery_agent(
     early_stopping_method: str = "force",
     agent_executor_kwargs: Optional[Dict[str, Any]] = None,
     memory: Optional[BaseMemory] = None,
+    secure_execution: bool = True,
     **kwargs: Any,
 ) -> AgentExecutor:
-    tables_summary = get_tables_summary(client=bigquery_client, dataset_ids=dataset_ids)
-    example_query = get_example_query(client=bigquery_client, dataset_ids=dataset_ids)
-    python_tool = PythonAstREPLTool(locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client})
+    tables_summary = get_tables_summary(client=bigquery_client, datasets=datasets)
+    example_query = get_example_query(datasets=datasets)
+    python_tool = PythonAstREPLTool(
+        secure_execution=secure_execution,
+        locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client}
+    )
 
     def query_post_processing(query: str) -> str:
         query = query.replace("print(", "display(")
         imports = inspect.cleandoc("""
-        # Add custom imports and config here for agent
         import streamlit as st
         import plotly.express as px
         import plotly.graph_objects as go
         import pandas as pd
+        import numpy as np
 
         pd.set_option('display.max_columns', None)
-        pd.set_option('display.max_rows', 20)
+        pd.set_option('display.max_rows', 5)
 
         def display(*args):
             import streamlit as st
             st.write(*args)
             return args
         """)
-        query = imports + "\n" + query
+        query = imports + "\n\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
         return query
