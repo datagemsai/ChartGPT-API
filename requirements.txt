@@ -1,20 +1,42 @@
-# altair
-pandas
-streamlit==1.21.0
-watchdog
-langchain==0.0.173
+# LLMs
+langchain==0.0.223
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
 openai
-# wolframalpha
-python-dotenv
-# google-search-results
+guardrails-ai
+
+# Streamlit
+streamlit==1.24.0
+streamlit-elements==0.1.0
+
+# Google Cloud Platform
 google-cloud-bigquery[pandas]
 google-api-python-client==2.70.0
 google-auth-httplib2
 google-auth-oauthlib
-ipykernel
-# matplotlib
+firebase
+firebase-admin
+
+# Data science
 plotly
+pandas
+scipy
+sklearn
+numpy
+statsmodels
+
+# Discord bot
+discord
+kaleido
+
+# Mischeallaneous
+
+# altair
+watchdog
+
+# wolframalpha
+python-dotenv
+# google-search-results
+ipykernel
 # jupyterlab
 pytest
 pytest-xdist
@@ -35,7 +57,6 @@ sqlalchemy-bigquery[bqstorage]
 deeplake
 networkx
 pg8000
-discord
 pulumi
 pulumi_gcp
 gitignore_parser

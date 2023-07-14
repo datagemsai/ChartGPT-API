@@ -1,7 +1,7 @@
 from flask import Flask, request
 from flask import send_file
 
-import analytics_bot_langchain
+import chartgpt
 
 
 app = Flask(__name__)
@@ -11,14 +11,14 @@ def query():
     dataset_ids = request.args.get('dataset_ids', None)
     format = request.args.get('format', 'json')
     if format == 'json':
-        agent = analytics_bot_langchain.get_agent(dataset_ids=dataset_ids)
+        agent = chartgpt.get_agent(dataset_ids=dataset_ids)
         question = request.args.get('question', default='Perform EDA')
         response = agent(question)
         intermediate_steps = response['intermediate_steps']
         first_result = intermediate_steps[0][-1]
         return first_result
     else:
-        agent = analytics_bot_langchain.get_agent(dataset_ids=dataset_ids)
+        agent = chartgpt.get_agent(dataset_ids=dataset_ids)
         question = request.args.get('question', default='Perform EDA')
         response = agent(question)
         intermediate_steps = response['intermediate_steps']

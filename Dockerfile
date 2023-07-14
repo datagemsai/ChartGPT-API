@@ -13,7 +13,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY app ./app
-COPY analytics_bot_langchain ./analytics_bot_langchain
+COPY chartgpt ./chartgpt
 COPY .streamlit ./.streamlit/
 COPY media ./media
 
@@ -23,4 +23,4 @@ HEALTHCHECK CMD curl --fail http://localhost:$PORT/_stcore/health
 # Multi-page application, after renaming `app/_pages/` to `app/pages/`:
 # CMD ["sh", "-c", "python -m streamlit run app/Intro.py --server.port=$PORT --server.address=0.0.0.0"]
 # Single-page application:
-CMD ["sh", "-c", "python -m streamlit run app/chartGPT.py --server.port=$PORT --server.address=0.0.0.0"]
+CMD ["sh", "-c", "python -m streamlit run app/ChartGPT.py --server.port=$PORT --server.address=0.0.0.0"]

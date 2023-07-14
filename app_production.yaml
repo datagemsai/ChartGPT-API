@@ -7,7 +7,7 @@ runtime: custom
 env: flex
 
 includes:
-  - secrets.yaml
+  - app_secrets_production.yaml
 
 automatic_scaling:
   min_num_instances: 1
