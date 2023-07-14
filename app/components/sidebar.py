@@ -20,6 +20,6 @@ class Sidebar:
             st.divider()
 
             self.model_temperature = st.slider("Model temperature", 0.0, 1.0, 0.0, 0.1)
-            self.model_verbose_mode = st.checkbox("Enable verbose analysis", value=False)
+            self.model_verbose_mode = st.checkbox("Enable verbose analysis", value=True)
             self.stop = st.button("Stop Analysis")
             self.clear = st.button("Clear Chat History")

@@ -112,6 +112,11 @@ class PythonAstREPLTool(BaseTool):
         except Exception as e:
             app.logger.info(e)
             return "{}: {}".format(type(e).__name__, str(e))
+        finally:
+            # Clear Streamlit output and start on new line
+            st.session_state["container"].text("")
+            st.session_state["text"] = "\n\n"
+            st.session_state["empty_container"] = st.session_state["container"].empty()
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""

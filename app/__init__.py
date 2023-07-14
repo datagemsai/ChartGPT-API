@@ -7,8 +7,10 @@ import pandas as pd
 from pandas.io.formats import (
     format as fmt,
 )
+import firebase_admin
 from io import StringIO
 import logging
+import json
 
 
 # Display app name
@@ -47,6 +49,17 @@ elif os.environ["PROJECT"] == "PRODUCTION":
 else:
     from app.config.default import datasets
 
+# Initialise Google Cloud Firestore
+if not firebase_admin._apps:
+    try:
+        if ENV == "LOCAL":
+            cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT']))
+            _ = firebase_admin.initialize_app(cred)
+        else:
+            _ = firebase_admin.initialize_app()
+    except ValueError as e:
+        _ = firebase_admin.get_app(name='[DEFAULT]')
+
 # Set plotly as the default plotting backend for pandas
 pd.options.plotting.backend = "plotly"
 
@@ -55,6 +68,7 @@ def pd_display(self):
     import streamlit as st
     df_id = id(self)
     if df_id not in st.session_state:
+        st.session_state["container"].text("")
         st.session_state["container"].dataframe(self)
         st.session_state["text"] = "\n\n"
         st.session_state["empty_container"] = st.session_state["container"].empty()
@@ -85,6 +99,7 @@ def pandas_object_display(self):
     import streamlit as st
     df_id = id(self)
     if df_id not in st.session_state:
+        st.session_state["container"].text("")
         st.session_state["container"].dataframe(self)
         st.session_state["text"] = "\n\n"
         st.session_state["empty_container"] = st.session_state["container"].empty()
@@ -98,6 +113,7 @@ def series_display(self):
     import streamlit as st
     df_id = id(self)
     if df_id not in st.session_state:
+        st.session_state["container"].text("")
         st.session_state["container"].dataframe(self)
         st.session_state["text"] = "\n\n"
         st.session_state["empty_container"] = st.session_state["container"].empty()
