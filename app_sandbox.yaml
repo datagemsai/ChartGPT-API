@@ -4,19 +4,23 @@ service: default
 runtime: custom
 env: flex
 
+# runtime: python311
+# env: standard
+# entrypoint: streamlit run app/ChartGPT.py --server.port=$PORT --server.address=0.0.0.0
+
 includes:
-  - app_secrets_production.yaml
+  - app_secrets_sandbox.yaml
 
 automatic_scaling:
   min_num_instances: 1
-  max_num_instances: 4
+  max_num_instances: 1
   cool_down_period_sec: 120
   cpu_utilization:
     target_utilization: 0.6
 
 resources:
-  cpu: 4
-  memory_gb: 8
+  cpu: 1
+  memory_gb: 4
   disk_size_gb: 10
 
 # readiness_check:

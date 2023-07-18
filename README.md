@@ -63,6 +63,7 @@ In a new GCP projects, you'll need to enable the Cloud Firestore API and create 
 Default region: Frankfurt `europe-west3`
 
 ```bash
+gcloud config set project chartgpt-production
 gcloud config set app/cloud_build_timeout 1600
 gcloud app deploy --project=chartgpt-production app_production.yaml
 ```

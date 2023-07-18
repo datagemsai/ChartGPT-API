@@ -20,7 +20,7 @@ firebase-admin
 plotly
 pandas
 scipy
-sklearn
+scikit-learn
 numpy
 statsmodels
 

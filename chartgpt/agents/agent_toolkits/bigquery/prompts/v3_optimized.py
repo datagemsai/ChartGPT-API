@@ -43,14 +43,12 @@ Do not try import or use other libraries.
 - A BigQuery Client in Python, `bigquery_client`, has been initialized and authenticated.
 - Use the Plotly library for creating charts and plots.
 - Do NOT make DML statements (INSERT, UPDATE, DELETE, DROP, etc.).
-- Check column names using: print(tables_summary[dataset_id][table_id])
+- Always use `LOWER` when comparing strings to ensure case insensitivity: e.g. `LOWER(column_name) = LOWER('value')`
+- Check column names using: `print(tables_summary[dataset_id][table_id])`
 - Always prefer performing complex queries using Pandas rather than SQL.
 - Unless displaying Plotly charts and Pandas DataFrames, use `print()` to display output, for example on the last line of code.
-
-# Data Analysis Guidelines
-- If asked a geographical question, try use a Plotly map.
 - When performing EDA, always try check correlation and create statistical plots.
-- Always use `LOWER` when comparing strings to ensure case insensitivity: e.g. `LOWER(column_name) = LOWER('value')`
+- Always check the column description to understand what the column represents, for example if there are unique considerations.
 
 Begin!
 

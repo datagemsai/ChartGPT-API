@@ -195,7 +195,7 @@ class StreamHandler(BaseCallbackHandler):
 # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
 if 'agent' not in st.session_state:
     st.session_state['agent'] = agent = chartgpt.get_agent(
-        secure_execution=False,
+        secure_execution=True,
         temperature=sidebar.model_temperature,
         datasets=[dataset]
     )
