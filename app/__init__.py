@@ -11,6 +11,7 @@ import firebase_admin
 from io import StringIO
 import logging
 import json
+from importlib import import_module
 
 
 # Display app name
@@ -28,6 +29,9 @@ os.environ.update(st.secrets)
 
 ENV = os.environ.get("ENV", "LOCAL")
 
+if ENV == "LOCAL":
+    import app_secrets.gcp_service_accounts
+
 if DEBUG := (os.getenv('DEBUG', 'false').lower() == 'true'):
     logger.warning("Application in debug mode, disable for production")
     fh = logging.FileHandler('logs/debug.log')
@@ -42,12 +46,7 @@ if MAINTENANCE_MODE := (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true'
     logger.info("Application in maintenance mode")
 
 # Import sample question for project
-if os.environ["PROJECT"] == "NFTFI":
-    from app.config.nftfi import datasets
-elif os.environ["PROJECT"] == "PRODUCTION":
-    from app.config.production import datasets
-else:
-    from app.config.default import datasets
+datasets = import_module(f'app.config.{os.environ["PROJECT"].lower()}').datasets
 
 # Initialise Google Cloud Firestore
 if not firebase_admin._apps:

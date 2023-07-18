@@ -44,7 +44,14 @@ def get_tables_summary(
             table_ref = client.dataset(dataset_id).table(table_id)
             table = client.get_table(table_ref)
             tables_summary[dataset_id][table_id] = [
-                (schema_field.name, schema_field.field_type) if include_types else schema_field.name
+                (
+                    schema_field.name,
+                    schema_field.field_type,
+                    "Description: " + dataset.column_descriptions.get(schema_field.name, "")
+                ) if include_types else (
+                    schema_field.name,
+                    "Description: " + dataset.column_descriptions.get(schema_field.name, "")
+                )
                 for schema_field in table.schema
             ]
     return tables_summary

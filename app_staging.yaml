@@ -1,17 +1,15 @@
 # For deployment using: `gcloud app deploy`
 
-# `service: default` == production deployment
-# `service: staging` == staging deployment
-service: staging
+service: default
 runtime: custom
 env: flex
 
 includes:
-  - secrets.yaml
+  - app_secrets_staging.yaml
 
 automatic_scaling:
   min_num_instances: 1
-  max_num_instances: 4
+  max_num_instances: 1
   cool_down_period_sec: 120
   cpu_utilization:
     target_utilization: 0.6
