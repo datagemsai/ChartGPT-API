@@ -130,8 +130,11 @@ dmypy.json
 
 # Custom
 secrets/*
+app_secrets/*
 docs/*
 .idea/*
 secrets.yaml
 app_secrets_production.yaml
+app_secrets_staging.yaml
+app_secrets_sandbox.yaml
 outputs/*
