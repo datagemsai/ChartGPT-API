@@ -23,7 +23,12 @@ from app.components.sidebar import Sidebar
 from app.components.notices import Notices
 from app.config.content import chartgpt_description
 from app.utils import copy_url_to_clipboard, open_page
+from app.auth import check_password
 
+
+# Check basic auth
+if not check_password():
+    st.stop()
 
 # Initialise Streamlit components
 sidebar = Sidebar()

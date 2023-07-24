@@ -4,7 +4,12 @@ import plotly.io as pio
 import app
 from app.components.sidebar import Sidebar
 from app.utils import open_page, copy_url_to_clipboard
+from app.auth import check_password
 
+
+# Check basic auth
+if not check_password():
+    st.stop()
 
 # Display app name
 PAGE_NAME = "Chart Gallery"
