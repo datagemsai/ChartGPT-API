@@ -15,10 +15,14 @@ import datetime
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.callbacks import get_openai_callback
+import plotly.io as pio
 
 import app
+import app.patches
 from app.components.sidebar import Sidebar
 from app.components.notices import Notices
+from app.config.content import chartgpt_description
+from app.utils import copy_url_to_clipboard, open_page
 
 
 # Initialise Streamlit components
@@ -27,6 +31,24 @@ sidebar = Sidebar()
 # Initialise Google Cloud Firestore
 db = firestore.client()
 db_queries = db.collection('queries')
+db_charts = db.collection('charts')
+
+query_params = st.experimental_get_query_params()
+if "chart_id" in query_params:
+    st.button('← Back to ChartGPT', on_click=st.experimental_set_query_params)
+    # Get chart from Firestore
+    chart_ref = db_charts.document(query_params["chart_id"][0])
+    chart = chart_ref.get()
+    if chart.exists:
+        chart_json = chart.to_dict()["json"]
+        chart = pio.from_json(chart_json)
+        st.plotly_chart(chart, use_container_width=True)
+        st.stop()
+    else:
+        st.error("Chart not found")
+        st.stop()
+else:
+    sidebar.display_settings()
 
 st.markdown(
     """
@@ -106,14 +128,24 @@ else:
     # Get a list of all sample questions from the dataclass using list comprehension
     sample_questions_for_dataset.extend([item for sublist in [dataset.sample_questions for dataset in datasets] for item in sublist])
 
+def set_question() -> None:
+    st.session_state.question = (
+        st.session_state.chat_input
+        or st.session_state.sample_question
+    )
+
+st.chat_input("Enter a question...", key='chat_input', on_submit=set_question)
+
 sample_question = st.selectbox(
-    'Select a sample question (optional):',
-    sample_questions_for_dataset,
+    label='Select a sample question (optional):',
+    options=sample_questions_for_dataset,
+    key='sample_question',
+    on_change=set_question,
 )
 
-question = st.chat_input("Enter a question...")
-if not question and not sidebar.clear:
-    question = sample_question
+if sidebar.clear:
+    st.session_state.question = ""
+question = st.session_state.get("question", "")
 
 # Check NDA
 nda_prompt_template = f"""
@@ -174,7 +206,11 @@ if sidebar.clear:
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         if message.get("type", None) == "chart":
-            st.plotly_chart(message["content"], use_container_width=True)
+            chart = message["content"]
+            chart_id = message["chart_id"]
+            st.plotly_chart(chart, use_container_width=True)
+            # st.button('Share chart', type="primary", key=chart_id, on_click=open_page, args=(f"/?chart_id={chart_id}",))
+            st.button('Copy chart URL', type="primary", key=chart_id, on_click=copy_url_to_clipboard, args=(f"/?chart_id={chart_id}",))
         else:
             st.markdown(message["content"])
 
@@ -194,10 +230,12 @@ class StreamHandler(BaseCallbackHandler):
 
 # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
 if 'agent' not in st.session_state:
+    stream_handler = StreamHandler()
     st.session_state['agent'] = agent = chartgpt.get_agent(
         secure_execution=True,
         temperature=sidebar.model_temperature,
-        datasets=[dataset]
+        datasets=[dataset],
+        callbacks=[stream_handler],
     )
 
 
@@ -209,13 +247,15 @@ if question:
     # Create new Firestore document with timestamp ID:
     timestamp_start = str(datetime.datetime.now())
     query_ref = db_queries.document(timestamp_start)
-    query_ref.set({
+    query_metadata = {
         'timestamp_start': timestamp_start,
         'query': question,
         'dataset_id': dataset.id,
         'status': QueryStatus.SUBMITTED.name,
         'model_temperature': sidebar.model_temperature,
-    })
+    }
+    query_ref.set(query_metadata)
+    st.session_state['query_metadata'] = query_metadata
 
     # Display user message in chat message container
     st.session_state["messages"].append({"role": "user", "content": question})
@@ -237,8 +277,7 @@ if question:
                     st.session_state["text"] = ""
                     st.session_state["container"] = container
                     st.session_state["empty_container"] = st.session_state["container"].empty()
-                    stream_handler = StreamHandler()
-                    response = st.session_state.agent(question, callbacks=[stream_handler])
+                    response = st.session_state.agent(question) # callbacks=[stream_handler]
                     app.logger.info("response = %s", response)
                     app.logger.info(cb)
             else:

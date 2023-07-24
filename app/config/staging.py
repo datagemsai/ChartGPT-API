@@ -23,14 +23,11 @@ datasets = [
         },
         sample_questions=[
             "Perform EDA",
-            "Give me a description of each of the columns in the dataset",
-            "Plot the average APR for the ***REMOVED*** platform in the last 3 months",
-            "What is the top P2P protocol by lending volume?",
-            "Plot the monthly loan volume grouped by protocol",
-            "Plot a stacked bar chart of loan volume grouped by protocol since August 2022",
-            "Plot top 3 protocols on April 3rd 2023",
-            "Plot daily borrow volumes for each protocol in February 2023",
-            "Plot monthly cumulative borrow volumes for each protocol",
+            "Give me a description of each of the columns in the dataset.",
+            "Which protocol provided the lowest APRs in the past month?",
+            "Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
+            "Plot a bar chart of the USD lending volume for all protocols.",
+            "Plot a stacked area chart of the USD lending volume for all protocols.",
         ]
     ),
 ]
