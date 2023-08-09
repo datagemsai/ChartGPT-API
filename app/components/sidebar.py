@@ -5,6 +5,15 @@ import os
 
 from app.config.content import chartgpt_description
 
+def log_out() -> bool:
+    if st.session_state.get("oauth_code", None):
+        st.session_state["oauth_code"] = None
+        st.session_state["access_token"] = None
+        st.session_state["user_id"] = None
+        st.session_state["user_email"] = None
+        return True
+    else:
+        return False
 
 @dataclass
 class Sidebar:
@@ -15,10 +24,12 @@ class Sidebar:
 
     def __init__(self):
         with st.sidebar:
-            # Initialise ChartGPT header
             logo = Image.open('media/logo_chartgpt.png')
             st.image(logo)
             st.markdown(chartgpt_description)
+            st.divider()
+            st.markdown(f"User: {st.session_state['user_email']}")
+            st.button(f"Log Out", on_click=log_out)
 
     def display_settings(self):
         with st.sidebar:

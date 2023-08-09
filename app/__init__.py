@@ -22,6 +22,7 @@ load_dotenv()
 os.environ.update(st.secrets)
 
 ENV = os.environ.get("ENV", "LOCAL")
+URL = os.environ.get("URL", "http://localhost:8501")
 
 if ENV == "LOCAL":
     import app_secrets.gcp_service_accounts
@@ -55,3 +56,5 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 db_charts = db.collection('charts')
+db_users = db.collection('users')
+db_queries = db.collection('queries')
