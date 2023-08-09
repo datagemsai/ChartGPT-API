@@ -5,10 +5,11 @@ openai
 guardrails-ai
 
 # Streamlit
-streamlit==1.24.0
+streamlit==1.25.0
 streamlit-elements==0.1.0
 
 # Google Cloud Platform
+httpx_oauth==0.13.0
 google-cloud-bigquery[pandas]
 google-api-python-client==2.70.0
 google-auth-httplib2

@@ -19,24 +19,19 @@ import plotly.io as pio
 
 import app
 import app.patches
+from app import db_users, db_queries, db_charts
+from app.components.login import Login
 from app.components.sidebar import Sidebar
 from app.components.notices import Notices
 from app.config.content import chartgpt_description
 from app.utils import copy_url_to_clipboard, open_page
-from app.auth import check_password
 
 
-# Check basic auth
-if not check_password():
-    st.stop()
+# Check user authentication
+login = Login()
 
 # Initialise Streamlit components
 sidebar = Sidebar()
-
-# Initialise Google Cloud Firestore
-db = firestore.client()
-db_queries = db.collection('queries')
-db_charts = db.collection('charts')
 
 query_params = st.experimental_get_query_params()
 if "chart_id" in query_params:
@@ -63,7 +58,7 @@ st.markdown(
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-    
+
       gtag('config', 'G-5LQTQQQK06');
     </script>
     """, unsafe_allow_html=True)
@@ -251,8 +246,14 @@ if question:
     # query_ref = db_queries.document()
     # Create new Firestore document with timestamp ID:
     timestamp_start = str(datetime.datetime.now())
-    query_ref = db_queries.document(timestamp_start)
+    if user_id := st.session_state.get("user_id", None):
+        query_ref = db_users.document(user_id).collection("queries").document(timestamp_start)
+    else:
+        query_ref = db_queries.document(timestamp_start)
     query_metadata = {
+        'user_id': st.session_state.get("user_id", None),
+        'user_email': st.session_state.get("user_email", None),
+        'env': app.ENV,
         'timestamp_start': timestamp_start,
         'query': question,
         'dataset_id': dataset.id,

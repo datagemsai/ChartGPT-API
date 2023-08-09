@@ -7,7 +7,7 @@ from pandas.io.formats import (
 )
 from io import StringIO
 from app.utils import copy_url_to_clipboard, open_page
-from app import logger, db_charts
+from app import logger, db_charts, db_users, ENV
 
 
 # Set plotly as the default plotting backend for pandas
@@ -83,8 +83,14 @@ def st_show(self):
         st.session_state["container"].plotly_chart(self, use_container_width=True)
         chart_json = self.to_json()
         # Create new Firestore document with unique ID:
-        chart_ref = db_charts.document()
+        if user_id := st.session_state.get("user_id", None):
+            chart_ref = db_users.document(user_id).collection("charts").document()
+        else:
+            chart_ref = db_charts.document()
         chart_ref.set({
+            'user_id': st.session_state.get("user_id", None),
+            'user_email': st.session_state.get("user_email", None),
+            'env': ENV,
             'query_metadata': st.session_state["query_metadata"],
             'timestamp': str(datetime.datetime.now()),
             'json': chart_json,
