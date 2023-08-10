@@ -3,7 +3,7 @@ from firebase_admin import firestore
 import plotly.io as pio
 
 from app import db_users
-from app.components.login import Login
+from app.auth import Login
 from app.components.sidebar import Sidebar
 from app.utils import open_page, copy_url_to_clipboard
 from app.auth import get_user_id_and_email

@@ -15,11 +15,60 @@ from httpx_oauth.clients.google import GoogleOAuth2
 from typing import Optional, Tuple
 import json
 import app
+from app import db_users
+from app.cookies import cookies
 
 
 CLIENT_ID = os.environ['GOOGLE_OAUTH_CLIENT_ID']
 CLIENT_SECRET = os.environ['GOOGLE_OAUTH_CLIENT_SECRET']
 REDIRECT_URI = os.environ['REDIRECT_URI']
+
+
+def hydrate_session_state():
+    for key, value in cookies.items():
+        st.session_state[key] = value
+
+
+def update_auth_cookies():
+    for key in ["access_token", "user_id", "user_email"]:
+        cookies[key] = st.session_state[key]
+    cookies.save()
+
+
+def clear_auth_cookies_and_state():
+    for key in ["access_token", "user_id", "user_email"]:
+        cookies[key] = ""
+        del st.session_state[key]
+
+
+class Login:
+    def __init__(self) -> None:
+        hydrate_session_state()
+        if ((oauth_code_list := st.experimental_get_query_params().get('code', None)) or st.session_state.get('access_token', None)):
+            if oauth_code_list:
+                st.session_state["oauth_code"] = oauth_code_list[0]
+            query_params = st.experimental_get_query_params()
+            state_param = query_params.get('state', [])
+            state = json.loads(state_param[0]) if state_param else {}
+            user_id, user_email = get_user_id_and_email()
+            if user_id:
+                user_ref = db_users.document(user_id)
+                user_ref.set({
+                    'user_id': user_id,
+                    'user_email': user_email,
+                })
+                st.session_state["user_id"] = user_id
+                st.session_state["user_email"] = user_email
+                st.experimental_set_query_params(**state)
+                update_auth_cookies()
+                st.toast(f"Logged in as {user_email}.", icon='🎉')
+            else:
+                st.button("Log In with Google", on_click=login_with_google)
+                st.error("Authorisation failed.")
+                st.stop()
+        else:
+            st.button("Log In with Google", on_click=login_with_google)
+            st.stop()
 
 
 def basic_auth():
@@ -92,13 +141,14 @@ def get_user_id_and_email() -> Tuple[Optional[str], Optional[str]]:
 
     oauth_client = initialize_oauth_client(oauth_user_email)
 
-    if oauth_access_token is None and oauth_code:
+    if not oauth_access_token and oauth_code:
         oauth_access_token = obtain_oauth_access_token(oauth_client, oauth_code)
+        st.session_state['access_token'] = oauth_access_token
         if oauth_access_token is None:
             app.logger.warning("Failed to obtain OAuth access token")
             return None, None
 
-    if oauth_access_token is None:
+    if not oauth_access_token:
         app.logger.warning("No OAuth access token found")
         return None, None
 
@@ -130,3 +180,7 @@ def obtain_oauth_access_token(oauth_client: GoogleOAuth2, oauth_code: str) -> Op
     except Exception as e:
         app.logger.error(f"Error while obtaining OAuth access token: {e}")
         return None
+
+
+def log_out() -> None:
+    clear_auth_cookies_and_state()
