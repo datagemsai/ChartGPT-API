@@ -7,7 +7,7 @@ guardrails-ai
 # Streamlit
 streamlit==1.25.0
 streamlit-elements==0.1.0
-streamlit_cookies_manager==0.2.0
+# streamlit_cookies_manager==0.2.0
 
 # Google Cloud Platform
 httpx_oauth==0.13.0

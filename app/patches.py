@@ -83,10 +83,7 @@ def st_show(self):
         st.session_state["container"].plotly_chart(self, use_container_width=True)
         chart_json = self.to_json()
         # Create new Firestore document with unique ID:
-        if user_id := st.session_state.get("user_id", None):
-            chart_ref = db_users.document(user_id).collection("charts").document()
-        else:
-            chart_ref = db_charts.document()
+        chart_ref = db_charts.document()
         chart_ref.set({
             'user_id': st.session_state.get("user_id", None),
             'user_email': st.session_state.get("user_email", None),

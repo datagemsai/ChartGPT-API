@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from streamlit_cookies_manager import EncryptedCookieManager
+from app.streamlit_cookies_manager.encrypted_cookie_manager import EncryptedCookieManager
 
 
 def get_cookies():
