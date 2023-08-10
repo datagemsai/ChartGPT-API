@@ -246,13 +246,9 @@ if question:
     # query_ref = db_queries.document()
     # Create new Firestore document with timestamp ID:
     timestamp_start = str(datetime.datetime.now())
-    if user_id := st.session_state.get("user_id", None):
-        query_ref = db_users.document(user_id).collection("queries").document(timestamp_start)
-    else:
-        query_ref = db_queries.document(timestamp_start)
+    query_ref = db_queries.document(timestamp_start)
     query_metadata = {
         'user_id': st.session_state.get("user_id", None),
-        'user_email': st.session_state.get("user_email", None),
         'env': app.ENV,
         'timestamp_start': timestamp_start,
         'query': question,

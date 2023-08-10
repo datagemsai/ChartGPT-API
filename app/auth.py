@@ -50,6 +50,7 @@ class Login:
             query_params = st.experimental_get_query_params()
             state_param = query_params.get('state', [])
             state = json.loads(state_param[0]) if state_param else {}
+            chart_id = state.get('chart_id', None) or query_params.get('chart_id', None)
             user_id, user_email = get_user_id_and_email()
             if user_id:
                 user_ref = db_users.document(user_id)
@@ -59,9 +60,13 @@ class Login:
                 })
                 st.session_state["user_id"] = user_id
                 st.session_state["user_email"] = user_email
-                st.experimental_set_query_params(**state)
+                if chart_id:
+                    st.experimental_set_query_params(**{"chart_id": chart_id})
+                else:
+                    st.experimental_set_query_params()
                 update_auth_cookies()
-                st.toast(f"Logged in as {user_email}.", icon='🎉')
+                if oauth_code_list:
+                    st.toast(f"Logged in as {user_email}.", icon='🎉')
             else:
                 st.button("Log In with Google", on_click=login_with_google)
                 st.error("Authorisation failed.")
