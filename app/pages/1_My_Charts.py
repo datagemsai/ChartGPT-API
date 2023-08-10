@@ -4,7 +4,7 @@ import plotly.io as pio
 
 import app
 from app.components.sidebar import Sidebar
-from app.components.login import Login
+from app.auth import Login
 from app.utils import copy_url_to_clipboard
 
 

@@ -4,16 +4,8 @@ from PIL import Image
 import os
 
 from app.config.content import chartgpt_description
+from app.auth import log_out
 
-def log_out() -> bool:
-    if st.session_state.get("oauth_code", None):
-        st.session_state["oauth_code"] = None
-        st.session_state["access_token"] = None
-        st.session_state["user_id"] = None
-        st.session_state["user_email"] = None
-        return True
-    else:
-        return False
 
 @dataclass
 class Sidebar:

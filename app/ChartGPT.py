@@ -20,7 +20,7 @@ import plotly.io as pio
 import app
 import app.patches
 from app import db_users, db_queries, db_charts
-from app.components.login import Login
+from app.auth import Login
 from app.components.sidebar import Sidebar
 from app.components.notices import Notices
 from app.config.content import chartgpt_description
