@@ -51,7 +51,7 @@ class Login:
             state_param = query_params.get('state', [])
             state = json.loads(state_param[0]) if state_param else {}
             chart_id = state.get('chart_id', None) or query_params.get('chart_id', None)
-            user_id, user_email = get_user_id_and_email()
+            user_id, user_email = get_user_id_and_email(st.session_state.get('access_token', None))
             if user_id:
                 user_ref = db_users.document(user_id)
                 user_ref.set({
@@ -70,6 +70,7 @@ class Login:
             else:
                 st.button("Log In with Google", on_click=login_with_google)
                 st.error("Authorisation failed.")
+                clear_auth_cookies_and_state()
                 st.stop()
         else:
             st.button("Log In with Google", on_click=login_with_google)
@@ -139,10 +140,12 @@ def login_with_google():
     html(script)
 
 
-def get_user_id_and_email() -> Tuple[Optional[str], Optional[str]]:
-    oauth_user_email = st.session_state.get('user_email', None)
-    oauth_access_token = st.session_state.get('access_token', None)
-    oauth_code = st.session_state.get('oauth_code', None)
+@st.cache_resource(ttl="1h", show_spinner=False)
+def get_user_id_and_email(
+    oauth_access_token: Optional[str] = None
+) -> Tuple[Optional[str], Optional[str]]:
+    oauth_user_email: Optional[str] = st.session_state.get('user_email', None)
+    oauth_code: Optional[str] = st.session_state.get('oauth_code', None),
 
     oauth_client = initialize_oauth_client(oauth_user_email)
 
