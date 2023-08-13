@@ -2,7 +2,10 @@
 langchain==0.0.223
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
 openai
-guardrails-ai
+
+# Guardrails
+guardrails-ai==0.1.8
+faiss-cpu
 
 # Streamlit
 streamlit==1.25.0

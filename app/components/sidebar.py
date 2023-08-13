@@ -11,10 +11,10 @@ from app.auth import get_user_id_and_email, log_out
 
 @dataclass
 class Sidebar:
-    model_temperature: float
-    model_verbose_mode: bool
     stop: bool
     clear: bool
+    model_temperature: float = float(os.environ.get("DEFAULT_MODEL_TEMPERATURE", 0.0))
+    model_verbose_mode: bool = True
 
     def __init__(self):
         with st.sidebar:
@@ -25,7 +25,7 @@ class Sidebar:
             st.divider()
 
             # User Profile
-            user_id, user_email = get_user_id_and_email(st.session_state.get('access_token', None))
+            user_id, user_email = get_user_id_and_email()
 
             user_query_count = app.db_queries.where(
                 filter=FieldFilter("user_id", "==", user_id)
@@ -53,11 +53,16 @@ class Sidebar:
             st.divider()
 
             st.markdown("### Advanced Settings")
-            self.model_temperature = st.slider(
+            advanced_settings = st.form("advanced_settings")
+            self.model_temperature = advanced_settings.slider(
                 label="Model temperature",
                 min_value=0.0,
                 max_value=1.0,
                 value=float(os.environ.get("DEFAULT_MODEL_TEMPERATURE", 0.0)),
                 step=0.1,
             )
-            self.model_verbose_mode = st.checkbox("Enable verbose analysis", value=True)
+            self.model_verbose_mode = advanced_settings.checkbox("Enable verbose analysis", value=True)
+            submitted = advanced_settings.form_submit_button("Update settings")
+            if submitted:
+                # Clear prior query
+                st.session_state.question = ""
