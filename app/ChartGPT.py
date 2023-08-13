@@ -51,19 +51,6 @@ def main():
     else:
         sidebar.display_settings()
 
-    st.markdown(
-        """
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQTQQQK06"></script>
-        <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-5LQTQQQK06');
-        </script>
-        """, unsafe_allow_html=True)
-
     padding_top = 2
     padding_left = padding_right = 1
     padding_bottom = 10
