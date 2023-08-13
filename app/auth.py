@@ -17,6 +17,7 @@ import json
 import app
 from app import db_users
 from app.cookies import cookies
+from sentry_sdk import set_user
 
 
 CLIENT_ID = os.environ['GOOGLE_OAUTH_CLIENT_ID']
@@ -77,7 +78,9 @@ class Login:
             user_id, user_email = get_user_id_and_email()
             closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
             closed_beta_email_addresses = [doc.id for doc in closed_beta_email_addresses_result]
+            set_user({"id": "anonymous", "email": "anonymous"})
             if user_id and user_email:
+                set_user({"id": user_id, "email": user_email})
                 if user_email in closed_beta_email_addresses:
                     user_ref = db_users.document(user_id)
                     user_ref.set({
