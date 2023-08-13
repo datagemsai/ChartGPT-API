@@ -36,9 +36,32 @@ def update_auth_cookies():
 
 
 def clear_auth_cookies_and_state():
+    html("""
+    <script language="javascript">
+        (function () {
+            var cookies = document.cookie.split("; ");
+            for (var c = 0; c < cookies.length; c++) {
+                var d = window.location.hostname.split(".");
+                while (d.length > 0) {
+                    var cookieBase = encodeURIComponent(cookies[c].split(";")[0].split("=")[0]) + '=; expires=Thu, 01-Jan-1970 00:00:01 GMT; domain=' + d.join('.') + ' ;path=';
+                    var p = location.pathname.split('/');
+                    document.cookie = cookieBase + '/';
+                    while (p.length > 0) {
+                        document.cookie = cookieBase + p.join('/');
+                        p.pop();
+                    };
+                    d.shift();
+                }
+            }
+        })();
+    </script>
+    """)
     for key in ["access_token", "user_id", "user_email"]:
-        cookies[key] = ""
-        del st.session_state[key]
+        if key in cookies:
+            cookies[key] = ""
+            del cookies[key]
+        if key in st.session_state:
+            del st.session_state[key]
 
 
 class Login:
@@ -51,29 +74,53 @@ class Login:
             state_param = query_params.get('state', [])
             state = json.loads(state_param[0]) if state_param else {}
             chart_id = state.get('chart_id', None) or query_params.get('chart_id', None)
-            user_id, user_email = get_user_id_and_email(st.session_state.get('access_token', None))
-            if user_id:
-                user_ref = db_users.document(user_id)
-                user_ref.set({
-                    'user_id': user_id,
-                    'user_email': user_email,
-                })
-                st.session_state["user_id"] = user_id
-                st.session_state["user_email"] = user_email
-                if chart_id:
-                    st.experimental_set_query_params(**{"chart_id": chart_id})
+            user_id, user_email = get_user_id_and_email()
+            closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
+            closed_beta_email_addresses = [doc.id for doc in closed_beta_email_addresses_result]
+            if user_id and user_email:
+                if user_email in closed_beta_email_addresses:
+                    user_ref = db_users.document(user_id)
+                    user_ref.set({
+                        'user_id': user_id,
+                        'user_email': user_email,
+                    })
+                    st.session_state["user_id"] = user_id
+                    st.session_state["user_email"] = user_email
+                    if chart_id:
+                        st.experimental_set_query_params(**{"chart_id": chart_id})
+                    else:
+                        st.experimental_set_query_params()
+                    update_auth_cookies()
+                    if oauth_code_list:
+                        st.toast(f"Logged in as {user_email}.", icon='🎉')
                 else:
+                    st.button("Log In with Google", on_click=login_with_google, key="login_1")
+                    with st.form("sign_up_form"):
+                        st.markdown("### Please sign up for the ChartGPT closed beta")
+                        st.markdown("We'll contact you when the next round of users is onboarded.")
+                        st.text_input("Email address", value=user_email, key="email")
+                        def submit_form():
+                            st.button("Log In with Google", on_click=login_with_google, key="login_2")
+                            email = st.session_state["email"]
+                            if email:
+                                app.db.collection('closed_beta_email_addresses_waitlist').document(email).set({})
+                                st.success("Thanks for signing up! We'll be in touch soon.")
+                            else:
+                                st.error("Please enter a valid email address.")
+                        st.form_submit_button("Sign Up", on_click=submit_form)
+                    clear_auth_cookies_and_state()
                     st.experimental_set_query_params()
-                update_auth_cookies()
-                if oauth_code_list:
-                    st.toast(f"Logged in as {user_email}.", icon='🎉')
+                    st.stop()
             else:
-                st.button("Log In with Google", on_click=login_with_google)
+                st.button("Log In with Google", on_click=login_with_google, key="login_3")
                 st.error("Authorisation failed.")
                 clear_auth_cookies_and_state()
+                st.experimental_set_query_params()
                 st.stop()
         else:
-            st.button("Log In with Google", on_click=login_with_google)
+            st.button("Log In with Google", on_click=login_with_google, key="login_4")
+            clear_auth_cookies_and_state()
+            st.experimental_set_query_params()
             st.stop()
 
 
@@ -140,12 +187,10 @@ def login_with_google():
     html(script)
 
 
-@st.cache_resource(ttl="1h", show_spinner=False)
-def get_user_id_and_email(
-    oauth_access_token: Optional[str] = None
-) -> Tuple[Optional[str], Optional[str]]:
+def get_user_id_and_email() -> Tuple[Optional[str], Optional[str]]:
     oauth_user_email: Optional[str] = st.session_state.get('user_email', None)
-    oauth_code: Optional[str] = st.session_state.get('oauth_code', None),
+    oauth_code: Optional[str] = st.session_state.get('oauth_code', None)
+    oauth_access_token: Optional[str] = st.session_state.get('access_token', None)
 
     oauth_client = initialize_oauth_client(oauth_user_email)
 
@@ -173,6 +218,7 @@ def get_user_id_and_email(
         return None, None
 
 
+@st.cache_resource(ttl="1h", show_spinner=False)
 def initialize_oauth_client(oauth_user_email: Optional[str]) -> GoogleOAuth2:
     if oauth_user_email:
         return GoogleOAuth2(oauth_user_email, CLIENT_SECRET)
