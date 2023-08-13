@@ -9,7 +9,6 @@ from firebase_admin import firestore
 import sentry_sdk
 import sys
 from sentry_sdk import capture_exception
-from sentry_sdk import set_user
 from sentry_sdk import set_tag
 
 
@@ -30,10 +29,6 @@ script_runner = sys.modules["streamlit.runtime.scriptrunner.script_runner"]
 handle_uncaught_app_exception = script_runner.handle_uncaught_app_exception
 def exception_handler(e):
     set_tag("environment", ENV)
-    set_user({
-        "id": st.session_state.get("user_id", "anonymous"),
-        "email": st.session_state.get("user_email", "anonymous")
-    })
     capture_exception(e)
     handle_uncaught_app_exception(e)
 script_runner.handle_uncaught_app_exception = exception_handler
@@ -47,6 +42,10 @@ sentry_sdk.init(
   traces_sample_rate=1.0
 )
 
+# Display app name
+PAGE_NAME = "ChartGPT"
+st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
+
 st.markdown(
 """
 <!-- Google tag (gtag.js) -->
@@ -59,10 +58,6 @@ st.markdown(
     gtag('config', 'G-5LQTQQQK06');
 </script>
 """, unsafe_allow_html=True)
-
-# Display app name
-PAGE_NAME = "ChartGPT"
-st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
 
 if ENV == "LOCAL":
     import app_secrets.gcp_service_accounts
