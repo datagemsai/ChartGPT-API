@@ -100,7 +100,6 @@ class Login:
                         st.markdown("We'll contact you when the next round of users is onboarded.")
                         st.text_input("Email address", value=user_email, key="email")
                         def submit_form():
-                            st.button("Log In with Google", on_click=login_with_google, key="login_2")
                             email = st.session_state["email"]
                             if email:
                                 app.db.collection('closed_beta_email_addresses_waitlist').document(email).set({})
@@ -112,13 +111,13 @@ class Login:
                     st.experimental_set_query_params()
                     st.stop()
             else:
-                st.button("Log In with Google", on_click=login_with_google, key="login_3")
+                st.button("Log In with Google", on_click=login_with_google, key="login_2")
                 st.error("Authorisation failed.")
                 clear_auth_cookies_and_state()
                 st.experimental_set_query_params()
                 st.stop()
         else:
-            st.button("Log In with Google", on_click=login_with_google, key="login_4")
+            st.button("Log In with Google", on_click=login_with_google, key="login_3")
             clear_auth_cookies_and_state()
             st.experimental_set_query_params()
             st.stop()

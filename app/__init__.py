@@ -47,6 +47,19 @@ sentry_sdk.init(
   traces_sample_rate=1.0
 )
 
+st.markdown(
+"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQTQQQK06"></script>
+<script crossorigin='anonymous'>
+    parent.window.dataLayer = parent.window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-5LQTQQQK06');
+</script>
+""", unsafe_allow_html=True)
+
 # Display app name
 PAGE_NAME = "ChartGPT"
 st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
