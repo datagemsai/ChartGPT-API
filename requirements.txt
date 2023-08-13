@@ -65,3 +65,4 @@ pg8000
 pulumi
 pulumi_gcp
 gitignore_parser
+sentry_sdk
