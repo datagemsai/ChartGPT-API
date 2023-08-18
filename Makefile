@@ -18,7 +18,7 @@ start_app:
 	. venv/bin/activate; python -m streamlit run app/ChartGPT.py
 
 start_api:
-	. venv/bin/activate; python -m app.api
+	. venv/bin/activate; python -m api.app
 
 start_discord_bot:
 	. venv/bin/activate; python -m app.discord_bot

@@ -1,0 +1,122 @@
+openapi: "3.0.0"
+
+info:
+  version: "0.1.0"
+  title: "ChartGPT API"
+  description: "The ChartGPT API is a REST API that generates charts and SQL queries based on natural language questions."
+
+servers:
+  - url: "https://api.chartgpt.cadlabs.org"
+
+paths:
+  /chart:
+    post:
+      summary: "Generate a Plotly chart from a question"
+      description: "This endpoint takes a question and returns a Plotly figure in either JSON or PNG format, depending on the `type` parameter."
+      operationId: api.chart.generate_chart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  description: "The question based on which the chart will be generated."
+                  example: "Plot the average APR for the NFTfi protocol in the past 6 months."
+                type:
+                  type: string
+                  enum: ["json", "png"]
+                  description: "The format in which the chart should be returned. Accepted values are `json` or `png`."
+                  default: "json"
+      responses:
+        '200':
+          description: "Successful response"
+          content:
+            application/json:
+              schema:
+                # $ref: '#/components/schemas/PlotlyFigureJSON'
+                type: object
+                properties:
+                  query:
+                    type: string
+                    description: "The generated SQL query."
+                  code:
+                    type: string
+                    description: "The generated Python code."
+                  chart:
+                    type: string
+                    description: "The generated Plotly chart JSON string."
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: "Bad request"
+        '401':
+          $ref: "#/components/responses/UnauthorizedError"
+        '500':
+          description: "Internal server error"
+
+  /sql:
+    post:
+      summary: "Generate an SQL query from a question"
+      description: "This endpoint takes a question and returns an SQL query."
+      operationId: api.sql.generate_sql
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  description: "The question based on which the SQL query will be generated."
+                  example: "Which NFTFi protocol provided the lowest APRs in the past month?"
+      responses:
+        '200':
+          description: "Successful response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                    description: "The generated SQL query."
+        '400':
+          description: "Bad request"
+        '401':
+          $ref: "#/components/responses/UnauthorizedError"
+        '500':
+          description: "Internal server error"
+
+# 1) Define the key name and location
+components:
+  securitySchemes:
+    ApiKeyAuth:        # arbitrary name for the security scheme
+      type: apiKey
+      in: header       # can be "header", "query" or "cookie"
+      name: X-API-KEY  # name of the header, query parameter or cookie
+      x-apikeyInfoFunc: api.auth.apikey_auth
+  responses:
+    UnauthorizedError:
+      description: API key is missing or invalid
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+
+# 2) Apply the API key globally to all operations
+security:
+  - ApiKeyAuth: []     # use the same name as under securitySchemes
+
+# components:
+#   schemas:
+#     PlotlyFigureJSON:
+#       type: object
+#       description: "Plotly figure represented as a JSON object."
+#       properties:
+#         # Add properties according to the Plotly figure schema here

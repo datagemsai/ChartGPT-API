@@ -23,9 +23,9 @@ load_dotenv(".env")
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-# GPT_MODEL = "gpt-3.5-turbo"
-GPT_MODEL = "gpt-4"
-GPT_TEMPERATURE = 0.7
+SQL_GPT_MODEL = "gpt-4"
+PYTHON_GPT_MODEL = "gpt-3.5-turbo"
+GPT_TEMPERATURE = 0.0
 
 credentials = service_account.Credentials.from_service_account_info(
     json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)
@@ -52,7 +52,7 @@ def get_tables_summary(
     return tables_summary
 
 
-tables_summary = get_tables_summary(client=client, datasets=datasets)
+tables_summary = get_tables_summary(client=client, datasets=datasets, include_types=True)
 
 
 def validate_sql_query(query: str) -> List[str]:
@@ -103,7 +103,7 @@ functions = [
 
 def get_initial_sql_query(messages) -> str:
     response = openai.ChatCompletion.create(
-            model=GPT_MODEL,
+            model=SQL_GPT_MODEL,
             messages=messages,
             functions=functions,
             # function_call="auto",  # auto is default, but we'll be explicit
@@ -172,7 +172,7 @@ def generate_valid_sql_query(query: str, messages, attempts=0, max_attempts=10) 
         )  # extend conversation with function response
 
         corrected_response = openai.ChatCompletion.create(
-            model=GPT_MODEL,
+            model=PYTHON_GPT_MODEL,
             messages=messages,
             functions=functions,
             # function_call="auto",  # auto is default, but we'll be explicit
@@ -206,16 +206,23 @@ def execute_sql_query(query: str) -> pd.DataFrame:
 def get_valid_sql_query(user_query: str) -> str:
     messages = [
         {"role": "system", "content": f"""
-            You are a data analyst and GoogleSQL expert.
-            When given an analytics question you must construct a GoogleSQL query to get the data to answer the question.
-            You will in a subsequent step write Python code to analyze the data and plot the results.
-
+            You are a data analyst and GoogleSQL expert. Answer the user's analytics question, using the following procedure:
+            (1) First, analyse and understand the data available by looking at the BigQuery database schema.
+            (2) Second, write a GoogleSQL query to get the data that you'll need to answer the question, following the SQL Instructions below.
+            (3) Third, write Python code to analyze the data and plot the results using Pandas and Plotly.
+            
             # SQL Instructions
             - Always drop NULL values from the results: e.g. `WHERE column_name IS NOT NULL`
             - Do NOT make DML statements (INSERT, UPDATE, DELETE, DROP, etc.).
             - Always use `LOWER` when comparing strings to ensure case insensitivity: e.g. `LOWER(column_name) = LOWER('value')`
-            - SQL should be written using the following database schema (ensure the column names are correct):
+            
+            # BigQuery Database Schema
+            SQL should be written using the following database schema, ensuring the column names are correct:
+            
             {str(tables_summary)}
+
+            # Begin
+            Complete steps (1) and (2).
         """},
         {"role": "user", "content": "Analytics question: " + user_query},
     ]
@@ -288,7 +295,7 @@ def execute_python_code(code: str, imports=None, local_variables=None) -> Python
 
 def get_initial_python_code(messages) -> str:
     response = openai.ChatCompletion.create(
-            model=GPT_MODEL,
+            model=PYTHON_GPT_MODEL,
             messages=messages,
             functions=functions,
             # function_call="auto",  # auto is default, but we'll be explicit
@@ -322,7 +329,13 @@ def generate_valid_python_code(code: str, messages, imports=None, local_variable
                     "role": "user",
                     "content": f"""
                     There was an error in the Python code. Please correct the following errors and try again:
-                    {result.error}
+                    
+                    ## Code attempt {attempts}
+                    ```python
+                    {code}
+                    ```
+
+                    Error: {result.error}
                     """,
                 }
             )  # extend conversation with function response
@@ -363,6 +376,7 @@ def generate_valid_python_code(code: str, messages, imports=None, local_variable
 
 imports = """
 import pandas as pd
+import plotly
 import plotly.express as px
 import numpy as np
 """
@@ -376,21 +390,38 @@ def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Op
     df = execute_sql_query(query=valid_sql_query)
     messages = [
         {"role": "system", "content": f"""
-            You are an expert data analyst.
-            When given an analytics question you must write Python code using Pandas to answer the question and plot the results using Plotly.
+            You are a data analyst and GoogleSQL expert. Answer the user's analytics question, using the following procedure:
+            (1) First, analyse and understand the data available in the Pandas DataFrame `df` by looking at the GoogleSQL Query.
+            (2) Second, complete the function `answer_user_query(df: pd.DataFrame)` by writing Python code to analyze the Pandas DataFrame `df`, following the Python Instructions below.
+            (3) Third, plot the results using Plotly code within the function `answer_user_query(df: pd.DataFrame)`.
          
-            You have access to a Pandas DataFrame named `df` with the following data structure:
-         
-            {df}
+            # GoogleSQL Query
+            {valid_sql_query}
 
-            Do not attempt to create your own sample data or Pandas DataFrame!
+            # Pandas DataFrame
+            {df.dtypes}
 
             # Python Instructions
             - Unless displaying Plotly charts and Pandas DataFrames, use `print()` to display output, for example on the last line of code.
-            - Always create a Plotly figure, assign it to a variable named `fig` and use `fig.show()` to display it.
-            - You have access to the following libraries:\n {str(imports)}
+
+            Complete the following code to answer the analytics question:
+            ```python
+            # Imports
+            {imports}
+
+            # Function
+            def answer_user_query(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+                ...
+                return fig
+            
+            # Answer
+            fig = answer_user_query(df.copy())
+            fig.show()
+            ```
+
+            # Analytics Question
         """},
-        {"role": "user", "content": "Analytics question: " + user_query},
+        {"role": "user", "content": user_query},
     ]
     initial_python_code = get_initial_python_code(messages)
     print(f"Initial Python code:\n{initial_python_code}")
