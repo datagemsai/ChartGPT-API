@@ -6,8 +6,9 @@ import logging
 import json
 from importlib import import_module
 from firebase_admin import firestore
-import sentry_sdk
 import sys
+
+import sentry_sdk
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
 
@@ -18,29 +19,54 @@ load_dotenv()
 os.environ.update(st.secrets)
 
 ENV = os.environ.get("ENV", "LOCAL")
+PROJECT = os.environ.get("PROJECT", None)
 URL = os.environ.get("URL", "http://localhost:8501")
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+if ENV == "LOCAL":
+    import app_secrets.gcp_service_accounts
+
+if DEBUG := (os.getenv('DEBUG', 'false').lower() == 'true'):
+    logger.warning("Application in debug mode, disable for production")
+    fh = logging.FileHandler('logs/debug.log')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    logger.addHandler(fh)
+
+if DISPLAY_USER_UPDATES := (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true'):
+    logger.info("User updates will be displayed")
+
+if MAINTENANCE_MODE := (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true'):
+    logger.info("Application in maintenance mode")
+
 error_util = sys.modules["streamlit.error_util"]
 script_runner = sys.modules["streamlit.runtime.scriptrunner.script_runner"]
 handle_uncaught_app_exception = script_runner.handle_uncaught_app_exception
 def exception_handler(e):
     set_tag("environment", ENV)
+    set_tag("project", PROJECT)
     capture_exception(e)
     handle_uncaught_app_exception(e)
 script_runner.handle_uncaught_app_exception = exception_handler
 
-sentry_sdk.init(
-  dsn="https://76086ca93fddeba3df0b1a5512d41ae7@o4505696591544320.ingest.sentry.io/4505696597114880",
+if ENV != "LOCAL":
+    sentry_sdk.init(
+        dsn="https://76086ca93fddeba3df0b1a5512d41ae7@o4505696591544320.ingest.sentry.io/4505696597114880",
 
-  # Set traces_sample_rate to 1.0 to capture 100%
-  # of transactions for performance monitoring.
-  # We recommend adjusting this value in production.
-  traces_sample_rate=1.0
-)
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0,
+
+        # To set a uniform sample rate
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        # We recommend adjusting this value in production
+        profiles_sample_rate=1.0,
+    )
 
 # Display app name
 PAGE_NAME = "ChartGPT"
@@ -58,22 +84,6 @@ st.markdown(
     gtag('config', 'G-5LQTQQQK06');
 </script>
 """, unsafe_allow_html=True)
-
-if ENV == "LOCAL":
-    import app_secrets.gcp_service_accounts
-
-if DEBUG := (os.getenv('DEBUG', 'false').lower() == 'true'):
-    logger.warning("Application in debug mode, disable for production")
-    fh = logging.FileHandler('logs/debug.log')
-    fh.setLevel(logging.INFO)
-    fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-    logger.addHandler(fh)
-
-if DISPLAY_USER_UPDATES := (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true'):
-    logger.info("User updates will be displayed")
-
-if MAINTENANCE_MODE := (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true'):
-    logger.info("Application in maintenance mode")
 
 # Import sample question for project
 datasets = import_module(f'app.config.{os.environ["PROJECT"].lower()}').datasets
