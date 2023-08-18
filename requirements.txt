@@ -1,7 +1,7 @@
 # LLMs
 langchain==0.0.223
 # git+https://github.com/hwchase17/langchain.git@master#egg=langchain
-openai
+openai~=0.27.8
 
 # Guardrails
 guardrails-ai==0.1.8
@@ -22,15 +22,15 @@ firebase
 firebase-admin
 
 # Data science
-plotly
-pandas
+plotly~=5.16.0
+pandas~=2.0.3
 scipy
 scikit-learn
-numpy
+numpy~=1.25.2
 statsmodels
 
 # Discord bot
-discord
+discord~=2.3.2
 kaleido
 
 # Mischeallaneous
@@ -39,11 +39,11 @@ kaleido
 watchdog
 
 # wolframalpha
-python-dotenv
+python-dotenv~=1.0.0
 # google-search-results
 ipykernel
 # jupyterlab
-pytest
+pytest~=7.4.0
 pytest-xdist
 # notebook
 # ipywidgets
@@ -55,14 +55,32 @@ unstructured
 # chromadb
 lxml
 tiktoken
-flask_sqlalchemy
-sqlalchemy-bigquery[bqstorage]
 # pinecone-client
 # faiss-cpu
 deeplake
 networkx
 pg8000
-pulumi
+pulumi~=3.78.1
 pulumi_gcp
 gitignore_parser
 sentry_sdk
+flask_sqlalchemy
+sqlalchemy-bigquery[bqstorage]
+sqlalchemy>=2.0.13
+nbformat
+sqlparse~=0.4.4
+google_cloud_api_keys
+
+connexion~=2.14.1
+Flask~=2.2.5
+urllib3~=1.26.16
+frozendict~=2.3.8
+certifi~=2023.7.22
+python-dateutil~=2.7.5
+setuptools~=67.3.2
+Pillow~=9.5.0
+requests~=2.31.0
+cryptography~=41.0.3
+pydantic~=1.10.12
+ipython~=8.14.0
+beautifulsoup4~=4.12.2
