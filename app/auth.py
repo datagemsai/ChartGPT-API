@@ -8,7 +8,6 @@ from typing import Optional
 import streamlit as st
 from streamlit.components.v1 import html
 import os
-from numpy import void
 import asyncio
 # See https://frankie567.github.io/httpx-oauth/oauth2/
 from httpx_oauth.clients.google import GoogleOAuth2
@@ -18,6 +17,7 @@ import app
 from app import db_users
 from app.cookies import cookies
 from sentry_sdk import set_user
+from app.config.content import chartgpt_description
 
 
 CLIENT_ID = os.environ['GOOGLE_OAUTH_CLIENT_ID']
@@ -83,7 +83,7 @@ class Login:
                 set_user({"id": user_id, "email": user_email})
                 if user_email in closed_beta_email_addresses:
                     user_ref = db_users.document(user_id)
-                    user_ref.set({
+                    user_ref.update({
                         'user_id': user_id,
                         'user_email': user_email,
                     })
@@ -97,33 +97,49 @@ class Login:
                     if oauth_code_list:
                         st.toast(f"Logged in as {user_email}.", icon='🎉')
                 else:
-                    st.button("Log In with Google", on_click=login_with_google, key="login_1")
-                    with st.form("sign_up_form"):
-                        st.markdown("### Please sign up for the ChartGPT closed beta")
-                        st.markdown("We'll contact you when the next round of users is onboarded.")
-                        st.text_input("Email address", value=user_email, key="email")
-                        def submit_form():
-                            email = st.session_state["email"]
-                            if email:
-                                app.db.collection('closed_beta_email_addresses_waitlist').document(email).set({})
-                                st.success("Thanks for signing up! We'll be in touch soon.")
-                            else:
-                                st.error("Please enter a valid email address.")
-                        st.form_submit_button("Sign Up", on_click=submit_form)
+                    self.display_log_in_header()
+                    st.info(f"{user_email} does not have access to the ChartGPT Marketplace closed beta. Please join the waitlist.")
+                    self.show_sign_up_form(user_email=user_email)
                     clear_auth_cookies_and_state()
                     st.experimental_set_query_params()
                     st.stop()
             else:
-                st.button("Log In with Google", on_click=login_with_google, key="login_2")
+                self.display_log_in_header()
                 st.error("Authorisation failed.")
+                self.show_sign_up_form(user_email=user_email)
                 clear_auth_cookies_and_state()
                 st.experimental_set_query_params()
                 st.stop()
         else:
-            st.button("Log In with Google", on_click=login_with_google, key="login_3")
+            self.display_log_in_header()
+            join_waitlist = st.button("Join the Waitlist")
+            if join_waitlist:
+                self.show_sign_up_form()
             clear_auth_cookies_and_state()
             st.experimental_set_query_params()
             st.stop()
+
+    def display_log_in_header(self):
+        st.markdown("## Welcome to the ChartGPT Marketplace!")
+        st.markdown(chartgpt_description)
+        st.button("Log In with Google", on_click=login_with_google, key="login", type="primary")
+
+    def show_sign_up_form(self, user_email=""):
+        with st.form("sign_up_form"):
+            st.markdown("### Join the waitlist")
+            st.markdown("We'll contact you when the next round of users is onboarded.")
+            st.text_input("Google account email address", value=user_email, key="email")
+            def submit_form():
+                email = st.session_state["email"]
+                if email:
+                    app.db.collection('closed_beta_email_addresses_waitlist').document(email).set({})
+                    st.success("Thanks for signing up! We'll be in touch soon.")
+                else:
+                    st.error("Please enter a valid email address.")
+                clear_auth_cookies_and_state()
+                st.experimental_set_query_params()
+                st.stop()
+            st.form_submit_button("Sign Up", on_click=submit_form)
 
 
 def basic_auth():
