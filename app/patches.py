@@ -6,8 +6,8 @@ from pandas.io.formats import (
     format as fmt,
 )
 from io import StringIO
-from app.utils import copy_url_to_clipboard, open_page
-from app import logger, db_charts, db_users, ENV
+from app.utils import copy_url_to_clipboard
+from app import logger, db_charts, ENV
 
 
 # Set plotly as the default plotting backend for pandas
