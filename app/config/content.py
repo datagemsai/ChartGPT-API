@@ -7,8 +7,12 @@ Effortlessly code in our radCAD framework with the help of radCAD Assistant. Thi
 ai_token_engineer_description = """
 Elevate your token engineering expertise with AI Token Engineer. This advanced assistant will guide you through complex tasks and augment your work to enhance your productivity.
 """
-chartgpt_description = """
+chartgpt_description_v1 = """
 Master the art of data-driven insights with ChartGPT, your dependable resource for generating charts and answering data-centric questions.
 
 Let the bot be your personal data assistant, guiding you through your data exploration.
+"""
+chartgpt_description = """
+Dive deep into our data marketplace, powered by advanced AI-driven conversations.
+Choose a dataset, chat, and visualize data insights like never before.
 """
