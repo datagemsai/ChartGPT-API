@@ -3,11 +3,11 @@ import json
 import time
 import sqlparse
 import streamlit as st
-import openapi_client
-from openapi_client.apis.tags import default_api
+# import openapi_client
+# from openapi_client.apis.tags import default_api
 from app.auth import Login
 from chartgpt.app import client
-from api.auth import create_api_key, delete_api_key, get_api_keys
+# from api.auth import create_api_key, delete_api_key, get_api_keys
 
 
 # Clear prior query
