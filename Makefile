@@ -23,14 +23,56 @@ start_api:
 start_discord_bot:
 	. venv/bin/activate; python -m app.discord_bot
 
+# GCloud setup
+
+gcloud_setup_staging:
+	gcloud auth login
+	gcloud config set project chartgpt-staging
+	gcloud config set run/region europe-west4
+	gcloud config set app/cloud_build_timeout 1600
+	gcloud artifacts repositories create chartgpt-staging --repository-format=docker \      
+		--location=europe-west3 --description="ChartGPT Staging"
+
+gcloud_setup_production:
+	gcloud auth login
+	gcloud config set project chartgpt-production
+	gcloud config set run/region europe-west4
+	gcloud config set app/cloud_build_timeout 1600
+	gcloud artifacts repositories create chartgpt-production --repository-format=docker \      
+		--location=europe-west3 --description="ChartGPT Production"
+
+project_staging:
+	gcloud config set project chartgpt-staging
+
+project_production:
+	gcloud config set project chartgpt-production
+
+# Build
+
+build_app_staging: project_staging
+	gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml
+
+build_app_production: project_production
+	gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml
+
+build_caddy_staging: project_staging
+	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml
+
+build_caddy_production: project_production
+	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml
+
 # Deployment
 
+terraform_deploy_staging: project_staging
+	terraform -chdir=infrastructure workspace select staging
+	terraform -chdir=infrastructure apply --auto-approve -var-file="variables/staging.tfvars"
+
+terraform_deploy_production: project_production
+	terraform -chdir=infrastructure workspace select production
+	terraform -chdir=infrastructure apply --auto-approve -var-file="variables/production.tfvars"
+
 deploy_app_production:
-	gcloud config set project chartgpt-production
-	gcloud config set app/cloud_build_timeout 1600
 	gcloud app deploy --project=chartgpt-production app_production.yaml
 
 deploy_app_staging:
-	gcloud config set project chartgpt-staging
-	gcloud config set app/cloud_build_timeout 1600
 	gcloud app deploy --project=chartgpt-staging app_staging.yaml

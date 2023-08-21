@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'europe-west3-docker.pkg.dev/chartgpt-production/chartgpt-production/chartgpt-app:latest', '.' ]
+images:
+- 'europe-west3-docker.pkg.dev/chartgpt-production/chartgpt-production/chartgpt-app:latest'
