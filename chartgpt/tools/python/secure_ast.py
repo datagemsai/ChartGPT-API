@@ -62,6 +62,7 @@ allowed_imports = {
     "Figure",
     "make_subplots",
     "datetime",
+    "timedelta",
     # GPT suggested:
     "google.cloud.bigquery",
     "numpy",
@@ -124,7 +125,6 @@ allowed_imports = {
     "holoviews",
     "altair",
     "time",
-    "datetime",
     "pyarrow",
     "dask",
     "dask.dataframe",
