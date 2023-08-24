@@ -74,12 +74,19 @@ functions = [
         "parameters": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string",
+                    "description": """
+                        The step-by-step description of the GoogleSQL query and Python code you will create
+                        and how it will be used to answer the user's analytics question.
+                    """,
+                },
                 "query": {
                     "type": "string",
                     "description": "The GoogleSQL query to validate",
                 },
             },
-            "required": ["query"],
+            "required": ["description", "query"],
         },
     },
     {
@@ -90,25 +97,31 @@ functions = [
         "parameters": {
             "type": "object",
             "properties": {
+                "docstring": {
+                    "type": "string",
+                    "description": """
+                        The docstring for the Python code describing step-by-step how it will be used to answer the user's analytics question.
+                    """,
+                },
                 "code": {
                     "type": "string",
                     "description": "The Python code to execute",
                 },
             },
-            "required": ["code"],
+            "required": ["docstring", "code"],
         },
     },
 ]
 
 
-def get_initial_sql_query(messages) -> str:
+def get_initial_sql_query(messages) -> Tuple[str, str]:
     response = openai.ChatCompletion.create(
-            model=SQL_GPT_MODEL,
-            messages=messages,
-            functions=functions,
-            # function_call="auto",  # auto is default, but we'll be explicit
-            function_call={"name": "validate_sql_query"},
-            temperature=GPT_TEMPERATURE,
+        model=SQL_GPT_MODEL,
+        messages=messages,
+        functions=functions,
+        # function_call="auto",  # auto is default, but we'll be explicit
+        function_call={"name": "validate_sql_query"},
+        temperature=GPT_TEMPERATURE,
     )
     response_message = response["choices"][0]["message"]
     messages.append(response_message)  # extend conversation with assistant's reply
@@ -116,8 +129,9 @@ def get_initial_sql_query(messages) -> str:
         str(response_message["function_call"]["arguments"]),
         strict=False
     )
+    description = function_args.get("description")
     query = function_args.get("query")
-    return query
+    return description, query
 
 
 
@@ -188,6 +202,7 @@ def generate_valid_sql_query(query: str, messages, attempts=0, max_attempts=10) 
             str(corrected_response_message["function_call"]["arguments"]),
             strict=False
         )
+        _description = function_args.get("description")
         query = function_args.get("query")
         
         return generate_valid_sql_query(query=query, messages=messages, attempts=attempts)
@@ -203,12 +218,12 @@ def execute_sql_query(query: str) -> pd.DataFrame:
     return df
 
 
-def get_valid_sql_query(user_query: str) -> str:
+def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
     messages = [
         {"role": "system", "content": f"""
-            You are a data analyst and GoogleSQL expert. Answer the user's analytics question, using the following procedure:
+            You are a data analyst - an expert in the use of GoogleSQL, Pandas, and Plotly. Answer the user's analytics question and visualise the results, using the following procedure:
             (1) First, analyse and understand the data available by looking at the BigQuery database schema.
-            (2) Second, write a GoogleSQL query to get the data that you'll need to answer the question, following the SQL Instructions below.
+            (2) Second, plan step-by-step and write a valid GoogleSQL query to get the data that you'll need to answer the question and visualise the results.
             (3) Third, write Python code to analyze the data and plot the results using Pandas and Plotly.
             
             # SQL Instructions
@@ -227,13 +242,14 @@ def get_valid_sql_query(user_query: str) -> str:
         {"role": "user", "content": "Analytics question: " + user_query},
     ]
     
-    initial_sql_query = get_initial_sql_query(messages)
+    initial_sql_query_description, initial_sql_query = get_initial_sql_query(messages)
+    print(f"Initial SQL query description:\n{initial_sql_query_description}")
     print(f"Initial SQL query:\n{initial_sql_query}")
     
     valid_sql_query = generate_valid_sql_query(query=initial_sql_query, messages=messages)
     print(f"Valid SQL query:\n{valid_sql_query}")
 
-    return valid_sql_query
+    return initial_sql_query_description, valid_sql_query
 
 
 def execute_python_imports(imports: str) -> dict:
@@ -255,7 +271,15 @@ class PythonExecutionResult:
     error: str
 
 
-def execute_python_code(code: str, imports=None, local_variables=None) -> PythonExecutionResult:
+@dataclass
+class QueryResult:
+    description: str
+    query: str
+    code: str
+    chart: str
+
+
+def execute_python_code(code: str, docstring: str, imports=None, local_variables=None) -> PythonExecutionResult:
     """Takes a Python code string, executes it, and returns an instance of PythonExecutionResult"""
     result = ""
     io = ""
@@ -295,12 +319,12 @@ def execute_python_code(code: str, imports=None, local_variables=None) -> Python
 
 def get_initial_python_code(messages) -> str:
     response = openai.ChatCompletion.create(
-            model=PYTHON_GPT_MODEL,
-            messages=messages,
-            functions=functions,
-            # function_call="auto",  # auto is default, but we'll be explicit
-            function_call={"name": "execute_python_code"},
-            temperature=GPT_TEMPERATURE,
+        model=PYTHON_GPT_MODEL,
+        messages=messages,
+        functions=functions,
+        # function_call="auto",  # auto is default, but we'll be explicit
+        function_call={"name": "execute_python_code"},
+        temperature=GPT_TEMPERATURE,
     )
     response_message = response["choices"][0]["message"]
     messages.append(response_message)  # extend conversation with assistant's reply
@@ -308,12 +332,18 @@ def get_initial_python_code(messages) -> str:
         str(response_message["function_call"]["arguments"]),
         strict=False
     )
+    docstring = function_args.get("docstring")
     code = function_args.get("code")
-    return code
+    return docstring, code
 
 
-def generate_valid_python_code(code: str, messages, imports=None, local_variables=None, attempts=0, max_attempts=10) -> str:
-    result: PythonExecutionResult = execute_python_code(code=code, imports=imports, local_variables=local_variables)
+def generate_valid_python_code(code: str, docstring="", messages=[], imports=None, local_variables=None, attempts=0, max_attempts=10) -> str:
+    result: PythonExecutionResult = execute_python_code(
+        code=code,
+        docstring=docstring,
+        imports=imports,
+        local_variables=local_variables
+    )
     print(f"Code:\n{code}")
     print(f"Error in code: {result.error}")
 
@@ -367,9 +397,17 @@ def generate_valid_python_code(code: str, messages, imports=None, local_variable
             str(corrected_response_message["function_call"]["arguments"]),
             strict=False
         )
+        docstring = function_args.get("docstring")
         code = function_args.get("code")
         
-        return generate_valid_python_code(code=code, messages=messages, imports=imports, local_variables=local_variables, attempts=attempts)
+        return generate_valid_python_code(
+            code=code,
+            docstring=docstring,
+            messages=messages,
+            imports=imports,
+            local_variables=local_variables,
+            attempts=attempts
+        )
     else:
         return code
 
@@ -382,21 +420,25 @@ import numpy as np
 """
 
 
-def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
+def answer_user_query(user_query: str) -> QueryResult:
     # Returns
-    valid_sql_query = get_valid_sql_query(user_query=user_query)
+    sql_query_description, valid_sql_query = get_valid_sql_query(user_query=user_query)
     figure_json_string = ""
 
     df = execute_sql_query(query=valid_sql_query)
     messages = [
         {"role": "system", "content": f"""
-            You are a data analyst and GoogleSQL expert. Answer the user's analytics question, using the following procedure:
+            You are a data analyst - an expert in the use of GoogleSQL, Pandas, and Plotly. Answer the user's analytics question and visualise the results, using the following procedure:
             (1) First, analyse and understand the data available in the Pandas DataFrame `df` by looking at the GoogleSQL Query.
-            (2) Second, complete the function `answer_user_query(df: pd.DataFrame)` by writing Python code to analyze the Pandas DataFrame `df`, following the Python Instructions below.
+            (2) Second, complete the function `answer_user_query(df: pd.DataFrame)` by writing Python code to analyze the Pandas DataFrame `df`.
             (3) Third, plot the results using Plotly code within the function `answer_user_query(df: pd.DataFrame)`.
          
             # GoogleSQL Query
+            {sql_query_description}
+
+            ```sql
             {valid_sql_query}
+            ```
 
             # Pandas DataFrame
             {df.dtypes}
@@ -411,6 +453,9 @@ def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Op
 
             # Function
             def answer_user_query(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+                '''
+                <Google style Python docstring>
+                '''
                 ...
                 return fig
             
@@ -423,7 +468,8 @@ def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Op
         """},
         {"role": "user", "content": user_query},
     ]
-    initial_python_code = get_initial_python_code(messages)
+    docstring, initial_python_code = get_initial_python_code(messages)
+    print(f"Initial Python code docstring:\n{docstring}")
     print(f"Initial Python code:\n{initial_python_code}")
 
     # Set the rendering backend to a non-displaying format
@@ -439,6 +485,7 @@ def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Op
 
     valid_python_code = generate_valid_python_code(
         code=initial_python_code,
+        docstring=docstring,
         messages=messages,
         imports=imports,
         local_variables={"df": df.copy()}
@@ -451,6 +498,7 @@ def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Op
 
     result: PythonExecutionResult = execute_python_code(
         code=valid_python_code,
+        docstring=docstring,
         imports=imports,
         local_variables={"df": df}
     )
@@ -464,9 +512,19 @@ def answer_user_query(user_query: str) -> tuple[Optional[str], Optional[str], Op
     if figure:
         figure_json_string = figure.to_json()
         # figure_json = json.loads(figure_json_string, strict=False)
-        return valid_sql_query, valid_python_code, figure_json_string
+        return QueryResult(
+            description=sql_query_description,
+            query=valid_sql_query,
+            code=valid_python_code,
+            chart=figure_json_string
+        )
     else:
-        return valid_sql_query, valid_python_code, None
+        return QueryResult(
+            description=sql_query_description,
+            query=valid_sql_query,
+            code=valid_python_code,
+            chart=None,
+        )
 
 # answer_user_query("Give me a description of each of the columns in the dataset")
 # answer_user_query("Which protocol provided the lowest APRs in the past month?")
