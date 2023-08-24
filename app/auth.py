@@ -18,6 +18,7 @@ from app import db_users
 from app.cookies import cookies
 from sentry_sdk import set_user
 from app.config.content import chartgpt_description
+from app.users import UserCredits
 
 
 CLIENT_ID = os.environ['GOOGLE_OAUTH_CLIENT_ID']
@@ -68,7 +69,12 @@ def clear_auth_cookies_and_state():
 class Login:
     def __init__(self) -> None:
         hydrate_session_state()
-        if ((oauth_code_list := st.experimental_get_query_params().get('code', None)) or st.session_state.get('access_token', None)):
+        oauth_code_list = None
+        access_token = None
+        if (
+            (oauth_code_list := st.experimental_get_query_params().get('code', None))
+            or (access_token := st.session_state.get('access_token', None))
+        ):
             if oauth_code_list:
                 st.session_state["oauth_code"] = oauth_code_list[0]
             query_params = st.experimental_get_query_params()
@@ -82,13 +88,25 @@ class Login:
             if user_id and user_email:
                 set_user({"id": user_id, "email": user_email})
                 if user_email in closed_beta_email_addresses:
+                    # Save user details in Firestore
                     user_ref = db_users.document(user_id)
                     user_ref.update({
                         'user_id': user_id,
                         'user_email': user_email,
                     })
+
+                    # Create user credits if they don't exist
+                    if not (user_credits := UserCredits.collection.get(key=f"user_credits/{user_id}")):
+                        user_credits = UserCredits()
+                        user_credits.user_id = user_id
+                        user_credits.free_credits = 20
+                        user_credits.save()
+
+                    # Save user details in session state
                     st.session_state["user_id"] = user_id
                     st.session_state["user_email"] = user_email
+                    st.session_state["user_free_credits"] = user_credits.free_credits
+
                     if chart_id:
                         st.experimental_set_query_params(**{"chart_id": chart_id})
                     else:
@@ -105,8 +123,12 @@ class Login:
                     st.stop()
             else:
                 self.display_log_in_header()
-                st.error("Authorisation failed.")
-                self.show_sign_up_form(user_email=user_email)
+                # If access token exists, then session has expired
+                if access_token:
+                    st.info("Your session has expired. Please log in again.")
+                else:
+                    st.error("Authorisation failed.")
+                # self.show_sign_up_form(user_email=user_email)
                 clear_auth_cookies_and_state()
                 st.experimental_set_query_params()
                 st.stop()
@@ -117,8 +139,18 @@ class Login:
                 self.show_sign_up_form()
             clear_auth_cookies_and_state()
             st.experimental_set_query_params()
-            st.stop()
+            st.stop()    
 
+    def check_user_credits(self):
+        # Check user credit usage
+        user_query_count = st.session_state["user_query_count"]
+        user_free_credits = st.session_state["user_free_credits"]
+        free_trial_usage = min(1.0, user_query_count / user_free_credits)
+        free_trial_credits_depleted = free_trial_usage >= 1.0
+        if free_trial_credits_depleted:
+            st.info("Thank you for using ChartGPT! All your free trial queries have been used. We'll get in touch when more are available.")
+            st.stop()
+    
     def display_log_in_header(self):
         st.markdown("## Welcome to the ChartGPT Marketplace!")
         st.markdown(chartgpt_description)

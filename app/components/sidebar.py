@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 import streamlit as st
-from PIL import Image
 import os
 from google.cloud.firestore_v1.base_query import FieldFilter
+from PIL import Image
 
 import app
 from app.config.content import chartgpt_description
 from app.auth import get_user_id_and_email, log_out
+from app.users import get_user_queries, plot_daily_queries
 
 
 @dataclass
@@ -21,8 +22,7 @@ class Sidebar:
             # Header
             logo = Image.open('media/logo_chartgpt.png')
             st.image(logo)
-            st.markdown(chartgpt_description)
-            st.divider()
+            # st.divider()
 
             # User Profile
             user_id, user_email = get_user_id_and_email()
@@ -30,19 +30,28 @@ class Sidebar:
             user_query_count = app.db_queries.where(
                 filter=FieldFilter("user_id", "==", user_id)
             ).count().get()[0][0].value
+            st.session_state["user_query_count"] = user_query_count
 
-            user_insight_count = app.db_charts.where(
+            user_chart_count = app.db_charts.where(
                 filter=FieldFilter("user_id", "==", user_id)
             ).count().get()[0][0].value
+            st.session_state["user_chart_count"] = user_chart_count
 
             st.markdown(f"""
             ### User Profile
             Google account: {user_email}\n
-            Number of queries: {user_query_count}\n
-            Number of charts generated: {user_insight_count}
+            Total queries performed: {user_query_count}\n
+            Total charts generated: {user_chart_count}
             """)
 
             st.button(f"Log Out", on_click=log_out)
+
+            st.divider()
+
+            st.markdown("### Usage")
+            user_free_credits = st.session_state["user_free_credits"]
+            free_trial_usage = min(1.0, user_query_count / user_free_credits)
+            st.progress(free_trial_usage, text=f"Free trial usage: {user_query_count} / {int(user_free_credits)} queries")
 
     def display_settings(self):
         with st.sidebar:
@@ -62,7 +71,7 @@ class Sidebar:
                 step=0.1,
             )
             self.model_verbose_mode = advanced_settings.checkbox("Enable verbose analysis", value=True)
-            submitted = advanced_settings.form_submit_button("Update settings")
+            submitted = advanced_settings.form_submit_button("Update Settings")
             if submitted:
                 # Clear prior query
                 st.session_state.question = ""

@@ -25,12 +25,6 @@ from app.utils import copy_url_to_clipboard
 
 
 def main():
-    # Check user authentication
-    Login()
-
-    # Initialise Streamlit components
-    sidebar = Sidebar()
-
     query_params = st.experimental_get_query_params()
     if "chart_id" in query_params:
         st.button("← Back to ChartGPT", on_click=st.experimental_set_query_params)
@@ -45,8 +39,13 @@ def main():
         else:
             st.error("Chart not found")
             st.stop()
-    else:
-        sidebar.display_settings()
+
+    # Check user authentication
+    login = Login()
+
+    # Initialise Streamlit components
+    sidebar = Sidebar()
+    sidebar.display_settings()
 
     padding_top = 2
     padding_left = padding_right = 1
@@ -66,6 +65,9 @@ def main():
 
     # Show notices
     Notices()
+
+    # Check user credits
+    login.check_user_credits()
 
     st.markdown("### 1. Select a dataset 📊")
 
@@ -207,7 +209,7 @@ def main():
 
     class StreamHandler(BaseCallbackHandler):
         def on_llm_new_token(self, token: str, **kwargs) -> None:
-            if not "text" in st.session_state:
+            if "text" not in st.session_state:
                 st.session_state["text"] = ""
             st.session_state["text"] += token
             # Using regex, find ``` followed by a word and add a newline after ``` unless the word is "python"
