@@ -45,7 +45,7 @@ resource "google_cloud_run_v2_service" "chartgpt_app_service" {
     }
 
     containers {
-      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app:latest"
+      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app"
 
       resources {
         limits = {
@@ -105,7 +105,7 @@ resource "google_cloud_run_v2_service" "caddy_service" {
     }
 
     containers {
-      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy:latest"
+      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy"
       volume_mounts {
         name       = "caddy_data"
         mount_path = "/data"
@@ -115,15 +115,19 @@ resource "google_cloud_run_v2_service" "caddy_service" {
         mount_path = "/config"
       }
       env {
-        name = "deployment"
+        name  = "version"
+        value = local.secrets.VERSION
+      }
+      env {
+        name  = "deployment"
         value = var.deployment
       }
       env {
-        name = "base_domain"
+        name  = "base_domain"
         value = var.base_domain
       }
       env {
-        name = "cloudflare_api_token"
+        name  = "cloudflare_api_token"
         value = local.secrets.CLOUDFLARE_API_TOKEN
       }
     }
@@ -147,7 +151,7 @@ resource "google_cloud_run_v2_service" "caddy_service" {
 resource "google_cloud_run_domain_mapping" "caddy_service" {
   project  = var.project_id
   location = var.region
-  name     = "${var.base_domain}"
+  name     = var.base_domain
 
   metadata {
     namespace = var.project_id

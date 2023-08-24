@@ -14,12 +14,14 @@ streamlit-elements==0.1.0
 
 # Google Cloud Platform
 httpx_oauth==0.13.0
-google-cloud-bigquery[pandas]
+google-cloud-firestore==2.11.1
+google-cloud-bigquery[pandas]==3.11.1
 google-api-python-client==2.70.0
 google-auth-httplib2
 google-auth-oauthlib
 firebase
 firebase-admin
+fireo
 
 # Data science
 plotly~=5.16.0
@@ -73,3 +75,4 @@ google_cloud_api_keys
 
 connexion
 Flask
+api/clients/python_client/
