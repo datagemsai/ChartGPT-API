@@ -43,13 +43,16 @@ gcloud_setup_production:
 
 project_staging:
 	gcloud config set project chartgpt-staging
+	terraform -chdir=infrastructure workspace select staging
 
 project_production:
 	gcloud config set project chartgpt-production
+	terraform -chdir=infrastructure workspace select production
 
 # Build
 
 build_app_staging: project_staging
+	# --substitutions=IMAGE_TAG='latest'
 	gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml
 
 build_app_production: project_production
@@ -60,6 +63,18 @@ build_caddy_staging: project_staging
 
 build_caddy_production: project_production
 	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml
+
+# Planning
+
+terraform_plan_staging: project_staging
+	terraform -chdir=infrastructure fmt  # formatting
+	terraform -chdir=infrastructure init # initializing terraform plugins
+	terraform -chdir=infrastructure plan # checking the plan 
+
+terraform_plan_production: project_production
+	terraform -chdir=infrastructure fmt  # formatting
+	terraform -chdir=infrastructure init # initializing terraform plugins
+	terraform -chdir=infrastructure plan # checking the plan 
 
 # Deployment
 
