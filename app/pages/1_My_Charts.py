@@ -7,7 +7,10 @@ import app
 from app.components.sidebar import Sidebar
 from app.auth import Login
 from app.utils import copy_url_to_clipboard
+from app.components.notices import Notices
 
+# Show notices
+Notices()
 
 # Clear prior query
 st.session_state.question = ""

@@ -22,9 +22,13 @@ from app.auth import Login
 from app.components.sidebar import Sidebar
 from app.components.notices import Notices
 from app.utils import copy_url_to_clipboard
+import app.settings
 
 
 def main():
+    # Show notices
+    Notices()
+
     query_params = st.experimental_get_query_params()
     if "chart_id" in query_params:
         st.button("← Back to ChartGPT", on_click=st.experimental_set_query_params)
@@ -62,9 +66,6 @@ def main():
     </style>
     """
     st.markdown(styl, unsafe_allow_html=True)
-
-    # Show notices
-    Notices()
 
     # Check user credits
     login.check_user_credits()

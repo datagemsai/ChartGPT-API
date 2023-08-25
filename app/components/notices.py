@@ -1,6 +1,7 @@
 import app
 import streamlit as st
 from PIL import Image
+import app.settings
 
 
 class Notices:
@@ -20,19 +21,13 @@ class Notices:
             In the meantime you may experience inconsistent or less reliable results.
             """)
 
-        if app.MAINTENANCE_MODE:
+        if app.settings.check_maintenance_mode():
             st.warning("""
             **Offline for maintenance**
 
             This app is undergoing maintenance right now.
             Please check back later.
 
-            In the meantime, [check us out on Product Hunt](https://www.producthunt.com/products/chartgpt)!
+            In the meantime, [check out our landing page](https://chartgpt.***REMOVED***)!
             """)
-            ph_1 = Image.open('media/product_hunt_1.jpeg')
-            ph_2 = Image.open('media/product_hunt_2.jpeg')
-            ph_3 = Image.open('media/product_hunt_3.jpeg')
-            st.image(ph_1)
-            st.image(ph_2)
-            st.image(ph_3)
             st.stop()

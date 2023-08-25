@@ -39,10 +39,6 @@ if DEBUG := (os.getenv('DEBUG', 'false').lower() == 'true'):
 if DISPLAY_USER_UPDATES := (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true'):
     logger.info("User updates will be displayed")
 
-if MAINTENANCE_MODE := (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true'):
-    logger.info("Application in maintenance mode")
-
-
 script_runner = sys.modules["streamlit.runtime.scriptrunner.script_runner"]
 handle_uncaught_app_exception = script_runner.handle_uncaught_app_exception
 
@@ -77,22 +73,6 @@ if ENV != "LOCAL":
 PAGE_NAME = "ChartGPT"
 st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
 
-st.markdown(
-"""
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQTQQQK06"></script>
-<script crossorigin='anonymous'>
-    parent.window.dataLayer = parent.window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-5LQTQQQK06');
-</script>
-""", unsafe_allow_html=True)
-
-# Import sample question for project
-datasets = import_module(f'app.config.{os.environ["PROJECT"].lower()}').datasets
-
 # Initialise Google Cloud Firestore
 if not firebase_admin._apps:
     try:
@@ -108,3 +88,19 @@ db = firestore.client()
 db_charts = db.collection('charts')
 db_users = db.collection('users')
 db_queries = db.collection('queries')
+
+st.markdown(
+"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQTQQQK06"></script>
+<script crossorigin='anonymous'>
+    parent.window.dataLayer = parent.window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-5LQTQQQK06');
+</script>
+""", unsafe_allow_html=True)
+
+# Import sample question for project
+datasets = import_module(f'app.config.{os.environ["PROJECT"].lower()}').datasets
