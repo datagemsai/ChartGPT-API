@@ -5,6 +5,7 @@ import plotly.express as px
 from app.auth import Login
 
 from app.users import get_users, get_user_queries, get_user_charts
+from app.charts import get_chart
 
 # Check user authentication
 login = Login()
@@ -72,3 +73,14 @@ st.plotly_chart(fig)
 st.markdown("## User Charts")
 for chart in get_user_charts(user_id):
     st.plotly_chart(json.loads(chart["json"]))
+
+# Get details for a specific chart
+st.markdown("## Chart Details")
+chart_id = st.text_input("Chart ID", value="")
+if chart_id:
+    chart = get_chart(chart_id)
+    if chart:
+        st.plotly_chart(json.loads(chart["json"]))
+        st.json(chart)
+    else:
+        st.info("Chart not found.")

@@ -276,7 +276,6 @@ def get_user_id_and_email() -> Tuple[Optional[str], Optional[str]]:
         return None, None
 
 
-@st.cache_resource(ttl="1h", show_spinner=False)
 def initialize_oauth_client(oauth_user_email: Optional[str]) -> GoogleOAuth2:
     if oauth_user_email:
         return GoogleOAuth2(oauth_user_email, CLIENT_SECRET)
