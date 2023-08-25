@@ -6,6 +6,10 @@ from app.auth import Login
 
 from app.users import get_users, get_user_queries, get_user_charts
 from app.charts import get_chart
+from app.components.notices import Notices
+
+# Show notices
+Notices()
 
 # Check user authentication
 login = Login()

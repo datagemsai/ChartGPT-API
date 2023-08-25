@@ -8,7 +8,10 @@ from openapi_client.apis.tags import default_api
 from app.auth import Login
 from chartgpt.app import client
 from api.auth import create_api_key, delete_api_key, get_api_keys
+from app.components.notices import Notices
 
+# Show notices
+Notices()
 
 # Clear prior query
 st.session_state.question = ""
