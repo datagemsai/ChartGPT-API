@@ -69,12 +69,12 @@ build_caddy_production: project_production
 terraform_plan_staging: project_staging
 	terraform -chdir=infrastructure fmt  # formatting
 	terraform -chdir=infrastructure init # initializing terraform plugins
-	terraform -chdir=infrastructure plan # checking the plan 
+	terraform -chdir=infrastructure plan -var-file="variables/staging.tfvars" # checking the plan 
 
 terraform_plan_production: project_production
 	terraform -chdir=infrastructure fmt  # formatting
 	terraform -chdir=infrastructure init # initializing terraform plugins
-	terraform -chdir=infrastructure plan # checking the plan 
+	terraform -chdir=infrastructure plan -var-file="variables/production.tfvars"  # checking the plan 
 
 # Deployment
 

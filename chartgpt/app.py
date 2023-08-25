@@ -29,7 +29,6 @@ else:
     # If deployed using App Engine, use default App Engine credentials
     client = bigquery.Client()
 
-# @st.cache_resource
 def get_agent(
         secure_execution: bool = True,
         temperature: float = 0.0,
