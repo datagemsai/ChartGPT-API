@@ -41,7 +41,7 @@ level = "info"
 # Controls whether uncaught app exceptions and deprecation warnings are displayed in the browser. By default, this is set to True and Streamlit displays app exceptions and associated tracebacks, and deprecation warnings, in the browser.
 # If set to False, an exception or deprecation warning will result in a generic message being shown in the browser, and exceptions, tracebacks, and deprecation warnings will be printed to the console only.
 # Default: true
-# showErrorDetails = true
+showErrorDetails = false
 
 
 [runner]

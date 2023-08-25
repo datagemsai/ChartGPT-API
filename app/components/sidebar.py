@@ -50,8 +50,9 @@ class Sidebar:
 
             st.markdown("### Usage")
             user_free_credits = st.session_state["user_free_credits"]
-            free_trial_usage = min(1.0, user_query_count / user_free_credits)
-            st.progress(free_trial_usage, text=f"Free trial usage: {user_query_count} / {int(user_free_credits)} queries")
+            used_free_credits = min(user_query_count, user_free_credits)
+            free_trial_usage = min(1.0, used_free_credits / user_free_credits)
+            st.progress(free_trial_usage, text=f"Free trial usage: {used_free_credits} / {int(user_free_credits)} queries")
 
     def display_settings(self):
         with st.sidebar:

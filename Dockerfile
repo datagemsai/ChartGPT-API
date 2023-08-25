@@ -1,4 +1,4 @@
-FROM python:3.9.14-slim
+FROM python:3.11.4-slim
 
 WORKDIR /app
 
@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     git \
     && rm -rf /var/lib/apt/lists/*
+
+COPY api ./api
 
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt

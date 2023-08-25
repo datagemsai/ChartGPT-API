@@ -50,19 +50,19 @@ project_production:
 	terraform -chdir=infrastructure workspace select production
 
 # Build
+GIT_HASH = $(shell git rev-parse --short HEAD)
 
 build_app_staging: project_staging
-	# --substitutions=IMAGE_TAG='latest'
-	gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml
+	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_app_production: project_production
-	gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml
+	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_caddy_staging: project_staging
-	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml
+	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_caddy_production: project_production
-	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml
+	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 # Planning
 

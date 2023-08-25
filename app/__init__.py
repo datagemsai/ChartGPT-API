@@ -42,14 +42,19 @@ if DISPLAY_USER_UPDATES := (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() =
 if MAINTENANCE_MODE := (os.getenv('MAINTENANCE_MODE', 'false').lower() == 'true'):
     logger.info("Application in maintenance mode")
 
-error_util = sys.modules["streamlit.error_util"]
+
 script_runner = sys.modules["streamlit.runtime.scriptrunner.script_runner"]
 handle_uncaught_app_exception = script_runner.handle_uncaught_app_exception
+
 def exception_handler(e):
-    set_tag("environment", ENV)
-    set_tag("project", PROJECT)
-    capture_exception(e)
-    handle_uncaught_app_exception(e)
+    # Custom error handling
+    if os.getenv("DEBUG", "true").lower() == "true":
+        handle_uncaught_app_exception(e)
+    else:
+        set_tag("environment", ENV)
+        set_tag("project", PROJECT)
+        capture_exception(e)
+
 script_runner.handle_uncaught_app_exception = exception_handler
 
 if ENV != "LOCAL":
