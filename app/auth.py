@@ -83,17 +83,25 @@ class Login:
             chart_id = state.get('chart_id', None) or query_params.get('chart_id', None)
             user_id, user_email = get_user_id_and_email()
             closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
-            closed_beta_email_addresses = [doc.id for doc in closed_beta_email_addresses_result]
+            closed_beta_email_addresses = [doc.id.lower() for doc in closed_beta_email_addresses_result]
             set_user({"id": "anonymous", "email": "anonymous"})
             if user_id and user_email:
                 set_user({"id": user_id, "email": user_email})
-                if user_email in closed_beta_email_addresses:
+                if user_email.lower() in closed_beta_email_addresses:
                     # Save user details in Firestore
                     user_ref = db_users.document(user_id)
-                    user_ref.update({
-                        'user_id': user_id,
-                        'user_email': user_email,
-                    })
+                    if not user_ref.get().exists:
+                        # Create user if they don't exist
+                        user_ref.create({
+                            'user_id': user_id,
+                            'user_email': user_email,
+                        })
+                    else:
+                        # Update user if they exist
+                        user_ref.update({
+                            'user_id': user_id,
+                            'user_email': user_email,
+                        })
 
                     # Create user credits if they don't exist
                     if not (user_credits := UserCredits.collection.get(key=f"user_credits/{user_id}")):

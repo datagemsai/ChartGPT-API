@@ -33,6 +33,16 @@ resource "google_project_service" "run_api" {
   disable_on_destroy = true
 }
 
+data "external" "git" {
+  program = [
+    "git",
+    "log",
+    "--pretty=format:{ \"sha\": \"%h\" }",
+    "-1",
+    "HEAD"
+  ]
+}
+
 resource "google_cloud_run_v2_service" "chartgpt_app_service" {
   project  = var.project_id
   name     = "chartgpt-app"
@@ -45,7 +55,7 @@ resource "google_cloud_run_v2_service" "chartgpt_app_service" {
     }
 
     containers {
-      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app"
+      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app:${data.external.git.result.sha}"
 
       resources {
         limits = {
@@ -73,6 +83,7 @@ resource "google_cloud_run_v2_service" "chartgpt_app_service" {
   traffic {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
+    tag     = data.external.git.result.sha
   }
 
   # Waits for the Cloud Run API to be enabled
