@@ -26,7 +26,8 @@ charts = db_charts.order_by(
 for chart in charts:
     st.markdown(f"#### {chart.get('query_metadata')['query']}")
     st.markdown(f"Dataset: `{chart.get('query_metadata')['dataset_id']}`")
-    st.button('Copy chart URL', type="primary", key=chart.id, on_click=copy_url_to_clipboard, args=(f"/?chart_id={chart.id}",))
+    # TODO Re-enable sharing of charts
+    # st.button('Copy chart URL', type="primary", key=chart.id, on_click=copy_url_to_clipboard, args=(f"/?chart_id={chart.id}",))
     
     chart_json = chart.to_dict()["json"]
     fig = pio.from_json(chart_json)
