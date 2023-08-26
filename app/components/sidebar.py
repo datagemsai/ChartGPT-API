@@ -2,12 +2,8 @@ from dataclasses import dataclass
 import streamlit as st
 import os
 from google.cloud.firestore_v1.base_query import FieldFilter
-from PIL import Image
 
 import app
-from app.config.content import chartgpt_description
-from app.auth import get_user_id_and_email, log_out
-from app.users import get_user_queries, plot_daily_queries
 
 
 @dataclass
@@ -19,13 +15,9 @@ class Sidebar:
 
     def __init__(self):
         with st.sidebar:
-            # Header
-            logo = Image.open('media/logo_chartgpt.png')
-            st.image(logo)
-            # st.divider()
-
             # User Profile
-            user_id, user_email = get_user_id_and_email()
+            user_id = st.session_state["user_id"]
+            user_email = st.session_state["user_email"]
 
             user_query_count = app.db_queries.where(
                 filter=FieldFilter("user_id", "==", user_id)
@@ -43,8 +35,6 @@ class Sidebar:
             Total queries performed: {user_query_count}\n
             Total charts generated: {user_chart_count}
             """)
-
-            st.button(f"Log Out", on_click=log_out)
 
             st.divider()
 

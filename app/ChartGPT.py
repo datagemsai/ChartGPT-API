@@ -18,35 +18,51 @@ import plotly.io as pio
 import app
 import app.patches
 from app import db_queries, db_charts
-from app.auth import Login
+from app.auth import check_user_credits, requires_auth
 from app.components.sidebar import Sidebar
 from app.components.notices import Notices
 from app.utils import copy_url_to_clipboard
 import app.settings
+# from st_pages import Page, show_pages, hide_pages
 
 
-def main():
-    # Show notices
-    Notices()
+# # add_page_title()
+# show_pages(
+#     [
+#         Page("app/ChartGPT.py", "ChartGPT"),
+#         Page("app/pages/1_My_Charts.py", "My Charts"),
+#     ]
+# )
 
-    query_params = st.experimental_get_query_params()
-    if "chart_id" in query_params:
-        st.button("← Back to ChartGPT", on_click=st.experimental_set_query_params)
-        # Get chart from Firestore
-        chart_ref = db_charts.document(query_params["chart_id"][0])
-        chart = chart_ref.get()
-        if chart.exists:
-            chart_json = chart.to_dict()["json"]
-            chart = pio.from_json(chart_json)
-            st.plotly_chart(chart, use_container_width=True)
-            st.stop()
-        else:
-            st.error("Chart not found")
-            st.stop()
+# hide_pages(
+#     [
+#         # Page("app/pages/1_My_Charts.py", "My Charts"),
+#         Page("app/pages/2_Chart_Gallery.py", "Chart Gallery"),
+#         Page("app/pages/3_API_Playground.py", "API Playground"),
+#         Page("app/pages/4_Admin_Dashboard.py", "Admin Dashboard"),
+#     ]
+# )
 
-    # Check user authentication
-    login = Login()
+# Show notices
+Notices()
 
+query_params = st.experimental_get_query_params()
+if "chart_id" in query_params:
+    st.button("← Back to ChartGPT", on_click=st.experimental_set_query_params)
+    # Get chart from Firestore
+    chart_ref = db_charts.document(query_params["chart_id"][0])
+    chart = chart_ref.get()
+    if chart.exists:
+        chart_json = chart.to_dict()["json"]
+        chart = pio.from_json(chart_json)
+        st.plotly_chart(chart, use_container_width=True)
+        st.stop()
+    else:
+        st.error("Chart not found")
+        st.stop()
+
+@requires_auth
+def main(user_id, _user_email):
     # Initialise Streamlit components
     sidebar = Sidebar()
     sidebar.display_settings()
@@ -68,7 +84,7 @@ def main():
     st.markdown(styl, unsafe_allow_html=True)
 
     # Check user credits
-    login.check_user_credits()
+    check_user_credits()
 
     st.markdown("### 1. Select a dataset 📊")
 
@@ -248,7 +264,7 @@ def main():
         timestamp_start = str(datetime.datetime.now())
         query_ref = db_queries.document(timestamp_start)
         query_metadata = {
-            "user_id": st.session_state.get("user_id", None),
+            "user_id": user_id,
             "env": app.ENV,
             "timestamp_start": timestamp_start,
             "query": question,
@@ -349,7 +365,6 @@ def main():
                         + "\n\n"
                         + "[We welcome any feedback or bug reports.](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)"
                     )
-
 
 if __name__ == "__main__":
     main()

@@ -1,8 +1,11 @@
-from app import db, logger
+from app import ENV, db, logger
 
 
 def check_maintenance_mode():
     """Get maintenance_mode flag from Firestore, or set if it doesn't exist"""
+    if ENV == "LOCAL":
+        return False
+    
     maintenance_mode_ref = db.collection('app_settings').document('maintenance_mode')
     maintenance_mode_data = maintenance_mode_ref.get().to_dict()
 

@@ -17,11 +17,32 @@ import json
 import app
 from app import db_users
 from app.cookies import cookies
-from app.cookies_v2 import clear_cookies
 from sentry_sdk import set_user
 from app.config.content import chartgpt_description
 from app.users import UserCredits
 
+
+"""
+The following code fixes the following error:
+https://discuss.streamlit.io/t/eliminate-states-of-modules-to-avoid-the-accidental-state-sharing-across-users-sessions/27803
+"""
+# import importlib
+# import app.cookies
+# importlib.reload(app.cookies)
+# from app.cookies import cookies
+
+# import extra_streamlit_components as stx
+# # @st.cache_data #(allow_output_mutation=True)
+# def get_manager():
+#     return stx.CookieManager()
+
+# cookie_manager = get_manager()
+
+# st.subheader("All Cookies:")
+# cookies = cookie_manager.get_all()
+# st.write(cookies)
+
+from app.cookies import get_cookies, set_cookies, clear_cookies, delete_cookie
 
 CLIENT_ID = os.environ['GOOGLE_OAUTH_CLIENT_ID']
 CLIENT_SECRET = os.environ['GOOGLE_OAUTH_CLIENT_SECRET']
@@ -29,25 +50,33 @@ REDIRECT_URI = os.environ['REDIRECT_URI']
 
 
 def hydrate_session_state():
+    cookies = get_cookies()
+    print("before hydrate_session_state", cookies)
     for key, value in cookies.items():
         st.session_state[key] = value
+    print("after hydrate_session_state", cookies)
 
 
 def update_auth_cookies():
+    cookies = get_cookies()
+    print("before update_auth_cookies", cookies)
     for key in ["access_token", "user_id", "user_email"]:
         cookies[key] = st.session_state[key]
-    cookies.save()
+    set_cookies(cookies)
+    cookies = get_cookies()
+    print("after update_auth_cookies", cookies)
 
 
 def clear_auth_cookies_and_state():
+    print("before clear_auth_cookies_and_state", get_cookies())
     clear_cookies()
     for key in ["access_token", "user_id", "user_email"]:
-        if key in cookies:
-            cookies[key] = ""
-            del cookies[key]
+        delete_cookie(key)
         if key in st.session_state:
             del st.session_state[key]
+    print("after clear_auth_cookies_and_state", get_cookies())
 
+from urllib.parse import urlparse, parse_qs
 import jwt
 from functools import wraps
 
@@ -72,7 +101,8 @@ def requires_auth(f=lambda *args, **kwargs: None):
         user_id = None
         user_email = None
         if not token:
-            st.error("Authorisation failed. Please visit https://app.chartgpt.***REMOVED*** to log in.")
+            st.error("Token doesn't exist")
+            show_sign_up_form()
             st.stop()
         else:
             set_user({"id": "anonymous", "email": "anonymous"})
