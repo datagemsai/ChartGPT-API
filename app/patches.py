@@ -93,8 +93,8 @@ def st_show(self):
             'json': chart_json,
         })
         chart_id = chart_ref.id
-        # st.session_state["container"].button('Open chart', type="primary", key=chart_id, on_click=open_page, args=(f"/?chart_id={chart_id}",))
-        st.session_state["container"].button('Copy chart URL', type="primary", key=chart_id, on_click=copy_url_to_clipboard, args=(f"/?chart_id={chart_id}",))
+        # TODO Re-enable sharing of charts
+        # st.session_state["container"].button('Copy chart URL', type="primary", key=chart_id, on_click=copy_url_to_clipboard, args=(f"/?chart_id={chart_id}",))
         st.session_state["text"] = "\n\n"
         st.session_state["empty_container"] = st.session_state["container"].empty()
         st.session_state["messages"].append({"role": "assistant", "content": self, "type": "chart", "chart_id": chart_id})

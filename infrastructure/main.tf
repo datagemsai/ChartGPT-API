@@ -83,7 +83,7 @@ resource "google_cloud_run_v2_service" "chartgpt_app_service" {
   traffic {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
-    tag     = data.external.git.result.sha
+    tag     = "git-${data.external.git.result.sha}"
   }
 
   # Waits for the Cloud Run API to be enabled

@@ -214,13 +214,14 @@ def main(user_id, _user_email):
                 chart = message["content"]
                 chart_id = message["chart_id"]
                 st.plotly_chart(chart, use_container_width=True)
-                st.button(
-                    "Copy chart URL",
-                    type="primary",
-                    key=chart_id,
-                    on_click=copy_url_to_clipboard,
-                    args=(f"/?chart_id={chart_id}",),
-                )
+                # TODO Re-enable sharing of charts
+                # st.button(
+                #     "Copy chart URL",
+                #     type="primary",
+                #     key=chart_id,
+                #     on_click=copy_url_to_clipboard,
+                #     args=(f"/?chart_id={chart_id}",),
+                # )
             else:
                 st.markdown(message["content"])
 

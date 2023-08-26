@@ -77,7 +77,7 @@ def requires_auth(f=lambda *args, **kwargs: None):
         else:
             set_user({"id": "anonymous", "email": "anonymous"})
             try:
-                decoded_token = jwt.decode(token, '1234', algorithms=['HS256'])
+                decoded_token = jwt.decode(token, key=os.environ["JWT_SECRET_KEY"], algorithms=['HS256'])
                 user_id = decoded_token['user_id']
                 user_email = decoded_token['user_email']
                 closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
@@ -85,7 +85,7 @@ def requires_auth(f=lambda *args, **kwargs: None):
                 query_params = st.experimental_get_query_params()
                 chart_id = query_params.get('chart_id', None)
                 if user_id and user_email:
-                    st.toast(f"Logging in...", icon='🔒')
+                    # st.toast(f"Logging in...", icon='🔒')
                     set_user({"id": user_id, "email": user_email})
                     if user_email.lower() in closed_beta_email_addresses:
                         # Save user details in Firestore
@@ -119,8 +119,8 @@ def requires_auth(f=lambda *args, **kwargs: None):
                             st.experimental_set_query_params(**{"token": token, "chart_id": chart_id})
                         else:
                             st.experimental_set_query_params(**{"token": token})
-                        if token:
-                            st.toast(f"Logged in as {user_email}.", icon='🎉')
+                        # if token:
+                            # st.toast(f"Logged in as {user_email}.", icon='🎉')
                     else:
                         st.info(f"{user_email} does not have access to the ChartGPT Marketplace closed beta. Please join the waitlist.")
                         show_sign_up_form(user_email=user_email)
