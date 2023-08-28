@@ -15,7 +15,7 @@ test_sample_questions:
 # Start web app, API, Discord bot
 
 start_app:
-	. venv/bin/activate; python -m streamlit run app/ChartGPT.py
+	. venv/bin/activate; python -m streamlit run app/Home.py
 
 start_api:
 	. venv/bin/activate; python -m api.app

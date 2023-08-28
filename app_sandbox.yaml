@@ -6,7 +6,7 @@ env: flex
 
 # runtime: python311
 # env: standard
-# entrypoint: streamlit run app/ChartGPT.py --server.port=$PORT --server.address=0.0.0.0
+# entrypoint: streamlit run app/Home.py --server.port=$PORT --server.address=0.0.0.0
 
 includes:
   - app_secrets_sandbox.yaml

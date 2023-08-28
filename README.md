@@ -30,7 +30,7 @@ For local development:
 
 ### Streamlit
 
-Edit `app/ChartGPT.py` to customize this app to your heart's desire. :heart:
+Edit `app/Home.py` to customize this app to your heart's desire. :heart:
 
 Run Streamlit app locally using `make run` - open in a browser and edit the code live.
 
