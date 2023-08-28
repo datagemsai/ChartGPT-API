@@ -29,7 +29,7 @@ import app.settings
 # # add_page_title()
 # show_pages(
 #     [
-#         Page("app/ChartGPT.py", "ChartGPT"),
+#         Page("app/Home.py", "ChartGPT"),
 #         Page("app/pages/1_My_Charts.py", "My Charts"),
 #     ]
 # )
