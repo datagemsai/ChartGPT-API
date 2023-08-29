@@ -292,8 +292,7 @@ def main(user_id, _user_email):
             )
             st.write(assistant_response)
             try:
-                is_nda_broken = "False"
-                # is_nda_broken = nda_agent({"question": question})["text"]
+                is_nda_broken = nda_agent({"question": question})["text"]
                 if is_nda_broken.lower() == "false":
                     with get_openai_callback() as cb:
                         container = st.container()
