@@ -101,4 +101,5 @@ class CustomCallbackHandler(BaseCallbackHandler):
         """Run on agent end."""
         logger.info(f"on_agent_finish: {finish}")
         output = finish.return_values["output"]
-        st.session_state["messages"].append({"role": "assistant", "content": output})
+        if "messages" in st.session_state:
+            st.session_state["messages"].append({"role": "assistant", "content": output})

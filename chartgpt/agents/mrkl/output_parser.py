@@ -21,6 +21,8 @@ class CustomOutputParser(AgentOutputParser):
         return FORMAT_INSTRUCTIONS
 
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
+        if "messages" not in st.session_state:
+            return AgentFinish(return_values={"output": llm_output}, log=llm_output)
         regex = (
             r"(.*?)\s*\d*\s*(```python|```)\s*\d*\s*(.*?)\s*\d*\s*```"
         )
