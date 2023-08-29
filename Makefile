@@ -14,7 +14,12 @@ test_sample_questions:
 
 # Start web app, API, Discord bot
 
-start_app:
+start_app_staging:
+	gcloud config set project chartgpt-staging
+	. venv/bin/activate; python -m streamlit run app/Home.py
+
+start_app_production:
+	gcloud config set project chartgpt-production
 	. venv/bin/activate; python -m streamlit run app/Home.py
 
 start_api:

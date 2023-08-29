@@ -228,7 +228,8 @@ def main(user_id, _user_email):
     class StreamHandler(BaseCallbackHandler):
         def on_llm_new_token(self, token: str, **kwargs) -> None:
             if "text" not in st.session_state:
-                st.session_state["text"] = ""
+                # NOTE This is necessary because of a bug in Streamlit state after st.stop()
+                return
             st.session_state["text"] += token
             # Using regex, find ``` followed by a word and add a newline after ``` unless the word is "python"
             st.session_state["text"] = re.sub(
@@ -291,7 +292,8 @@ def main(user_id, _user_email):
             )
             st.write(assistant_response)
             try:
-                is_nda_broken = nda_agent({"question": question})["text"]
+                is_nda_broken = "False"
+                # is_nda_broken = nda_agent({"question": question})["text"]
                 if is_nda_broken.lower() == "false":
                     with get_openai_callback() as cb:
                         container = st.container()
@@ -366,6 +368,8 @@ def main(user_id, _user_email):
                         + "\n\n"
                         + "[We welcome any feedback or bug reports.](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)"
                     )
+            finally:
+                st.session_state.question = ""
 
 if __name__ == "__main__":
     main()

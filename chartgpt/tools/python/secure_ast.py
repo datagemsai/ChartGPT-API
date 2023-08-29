@@ -1,3 +1,4 @@
+from sentry_sdk import capture_exception
 import ast
 import builtins
 
@@ -45,6 +46,16 @@ insecure_functions = {
     "vars",
     "dir",
     "importlib",
+}
+
+disallowed_attributes = {
+    # Builtins
+    "os",
+    "sys",
+    "__import__",
+    # Streamlit
+    "session_state",
+    "secrets"
 }
 
 allowed_imports = {
@@ -135,32 +146,57 @@ allowed_imports = {
     "re",
 }
 
-def allowed_node(node, allowed_imports):
+def allowed_node(node):
     if isinstance(node, (ast.Import, ast.ImportFrom)):
         for alias in node.names:
             if alias.name not in allowed_imports:
                 raise ValueError(f"Importing '{alias.name}' is not allowed")
-    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in insecure_functions:
-        raise ValueError(f"Function '{node.func.id}' is not allowed")
+    
+    if isinstance(node, ast.Call):
+        # Check for the '__import__' function
+        if isinstance(node.func, ast.Name) and node.func.id == '__import__':
+            if isinstance(node.args[0], ast.Str):
+                if node.args[0].s not in allowed_imports:
+                    raise ValueError(f"Dynamic importing '{node.args[0].s}' is not allowed")
+        # Check for other insecure functions
+        elif isinstance(node.func, ast.Name) and node.func.id in insecure_functions:
+            raise ValueError(f"Function '{node.func.id}' is not allowed")
+        
+    if isinstance(node, ast.Attribute):
+        full_name = []
+        n = node
+        while isinstance(n, ast.Attribute):
+            full_name.insert(0, n.attr)
+            n = n.value
+        if isinstance(n, ast.Name):
+            full_name.insert(0, n.id)
+        full_attr_name = '.'.join(full_name)
+        if full_attr_name in disallowed_attributes:
+            raise ValueError(f"Accessing '{full_attr_name}' is not allowed")
+    
     if isinstance(node, (ast.Attribute, ast.Name)):
         if (node.attr.startswith('._') or node.attr.startswith('.__')) if hasattr(node, 'attr') else (node.id.startswith('._') or node.id.startswith('.__')):
             raise ValueError(f"Accessing private members is not allowed")
 
-def analyze_ast(node, allowed_imports, max_depth, current_depth=0):
+def analyze_ast(node, max_depth, current_depth=0):
     if current_depth >= max_depth:
         return
 
-    if isinstance(node, ast.AST):
-        allowed_node(node, allowed_imports)
-        for child in ast.iter_child_nodes(node):
-            analyze_ast(child, allowed_imports, max_depth, current_depth + 1)
+    try:
+        if isinstance(node, ast.AST):
+            allowed_node(node)
+            for child in ast.iter_child_nodes(node):
+                analyze_ast(child, max_depth, current_depth + 1)
+    except Exception as e:
+        capture_exception(e)
+        raise e
 
 def secure_exec(code, custom_globals={}, custom_locals={}, max_depth=float("inf")):
     safe_builtins = {name: getattr(builtins, name) for name in allowed_builtins}
     custom_globals["__builtins__"] = safe_builtins
 
     tree = ast.parse(code)
-    analyze_ast(tree, allowed_imports, max_depth)
+    analyze_ast(tree, max_depth)
 
     exec(compile(tree, "<ast>", "exec"), custom_globals, custom_locals)
 
@@ -169,6 +205,6 @@ def secure_eval(expr, custom_globals={}, custom_locals={}, max_depth=float("inf"
     custom_globals["__builtins__"] = safe_builtins
 
     tree = ast.parse(expr, mode="eval")
-    analyze_ast(tree, allowed_imports, max_depth)
+    analyze_ast(tree, max_depth)
 
     return eval(compile(tree, "<ast>", "eval"), custom_globals, custom_locals)
