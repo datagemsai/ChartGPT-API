@@ -68,89 +68,74 @@ def requires_auth(f=lambda *args, **kwargs: None):
     """
     @wraps(f)
     def decorated(*args, **kwargs):
-        # load_bar = st.progress(0, text="Loading...")
         token = get_token()
         user_id = None
         user_email = None
         if not token:
-            # load_bar.empty()
             st.error("Authorisation failed. Please visit https://app.chartgpt.cadlabs.org to log in.")
             st.stop()
         else:
             set_user({"id": "anonymous", "email": "anonymous"})
-            # load_bar.progress(10)
-            try:
-                decoded_token = jwt.decode(token, key=os.environ["JWT_SECRET_KEY"], algorithms=['HS256'])
-                user_id = decoded_token['user_id']
-                user_email = decoded_token['user_email']
-                # load_bar.progress(20)
-                closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
-                closed_beta_email_addresses = [doc.id.lower() for doc in closed_beta_email_addresses_result]
-                query_params = st.experimental_get_query_params()
-                chart_id = query_params.get('chart_id', None)
-                # load_bar.progress(40)
-                if user_id and user_email:
-                    # st.toast(f"Logging in...", icon='🔒')
-                    set_user({"id": user_id, "email": user_email})
-                    # load_bar.progress(50)
-                    if user_email.lower() in closed_beta_email_addresses:
-                        # Save user details in Firestore
-                        user_ref = db_users.document(user_id)
-                        # load_bar.progress(60)
-                        if not user_ref.get().exists:
-                            # Create user if they don't exist
-                            user_ref.create({
-                                'user_id': user_id,
-                                'user_email': user_email,
-                            })
+            with st.spinner("Loading..."):
+                try:
+                    decoded_token = jwt.decode(token, key=os.environ["JWT_SECRET_KEY"], algorithms=['HS256'])
+                    user_id = decoded_token['user_id']
+                    user_email = decoded_token['user_email']
+                    closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
+                    closed_beta_email_addresses = [doc.id.lower() for doc in closed_beta_email_addresses_result]
+                    query_params = st.experimental_get_query_params()
+                    chart_id = query_params.get('chart_id', None)
+                    if user_id and user_email:
+                        # st.toast(f"Logging in...", icon='🔒')
+                        set_user({"id": user_id, "email": user_email})
+                        if user_email.lower() in closed_beta_email_addresses:
+                            # Save user details in Firestore
+                            user_ref = db_users.document(user_id)
+                            if not user_ref.get().exists:
+                                # Create user if they don't exist
+                                user_ref.create({
+                                    'user_id': user_id,
+                                    'user_email': user_email,
+                                })
+                            else:
+                                # Update user if they exist
+                                user_ref.update({
+                                    'user_id': user_id,
+                                    'user_email': user_email,
+                                })
+
+                            # Create user credits if they don't exist
+                            if not (user_credits := UserCredits.collection.get(key=f"user_credits/{user_id}")):
+                                user_credits = UserCredits()
+                                user_credits.user_id = user_id
+                                user_credits.free_credits = 20
+                                user_credits.save()
+
+                            # Save user details in session state
+                            st.session_state["user_id"] = user_id
+                            st.session_state["user_email"] = user_email
+                            st.session_state["user_free_credits"] = user_credits.free_credits
+
+                            if chart_id:
+                                st.experimental_set_query_params(**{"token": token, "chart_id": chart_id})
+                            else:
+                                st.experimental_set_query_params(**{"token": token})
+                            # if token:
+                                # st.toast(f"Logged in as {user_email}.", icon='🎉')
                         else:
-                            # Update user if they exist
-                            user_ref.update({
-                                'user_id': user_id,
-                                'user_email': user_email,
-                            })
-                        # load_bar.progress(70)
-
-                        # Create user credits if they don't exist
-                        if not (user_credits := UserCredits.collection.get(key=f"user_credits/{user_id}")):
-                            user_credits = UserCredits()
-                            user_credits.user_id = user_id
-                            user_credits.free_credits = 20
-                            user_credits.save()
-                        # load_bar.progress(90)
-
-                        # Save user details in session state
-                        st.session_state["user_id"] = user_id
-                        st.session_state["user_email"] = user_email
-                        st.session_state["user_free_credits"] = user_credits.free_credits
-
-                        if chart_id:
-                            st.experimental_set_query_params(**{"token": token, "chart_id": chart_id})
-                        else:
-                            st.experimental_set_query_params(**{"token": token})
-                        # if token:
-                            # st.toast(f"Logged in as {user_email}.", icon='🎉')
-                        # load_bar.progress(100)
-                        # load_bar.empty()
+                            st.info(f"{user_email} does not have access to the ChartGPT Marketplace closed beta. Please join the waitlist.")
+                            show_sign_up_form(user_email=user_email)
+                            st.stop()
                     else:
-                        # load_bar.empty()
-                        st.info(f"{user_email} does not have access to the ChartGPT Marketplace closed beta. Please join the waitlist.")
-                        show_sign_up_form(user_email=user_email)
                         st.stop()
-                else:
-                    # load_bar.empty()
+                except jwt.ExpiredSignatureError:
+                    st.info("Your session has expired. Please log in again.")
                     st.stop()
-            except jwt.ExpiredSignatureError:
-                # load_bar.empty()
-                st.info("Your session has expired. Please log in again.")
-                st.stop()
-            except jwt.InvalidTokenError:
-                # load_bar.empty()
-                st.error("Authorisation failed.")
-                st.stop()
-            if not user_id and user_email:
-                raise AuthError("User is not authenticated")
-            # load_bar.empty()
+                except jwt.InvalidTokenError:
+                    st.error("Authorisation failed.")
+                    st.stop()
+                if not user_id and user_email:
+                    raise AuthError("User is not authenticated")
             return f(user_id, user_email, *args, **kwargs)
     if not f:
         decorated()
