@@ -13,6 +13,7 @@ from google.oauth2 import service_account
 from google.cloud import bigquery
 from typing import Dict, List, Tuple, Union
 from dotenv import load_dotenv
+import inspect
 
 from app.config import Dataset
 from app.config.production import datasets
@@ -24,7 +25,7 @@ load_dotenv(".env")
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 SQL_GPT_MODEL = "gpt-4"
-PYTHON_GPT_MODEL = "gpt-3.5-turbo"
+PYTHON_GPT_MODEL = "gpt-4"
 GPT_TEMPERATURE = 0.0
 
 credentials = service_account.Credentials.from_service_account_info(
@@ -68,8 +69,8 @@ def validate_sql_query(query: str) -> List[str]:
 functions = [
     {
         "name": "validate_sql_query",
-        "description": f"""
-        Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any.
+        "description": """
+        Takes a BigQuery GoogleSQL query, executes it using a dry run, and returns a list of errors, if any.
         """,
         "parameters": {
             "type": "object",
@@ -91,7 +92,7 @@ functions = [
     },
     {
         "name": "execute_python_code",
-        "description": f"""
+        "description": """
         Takes a Python code string, executes it, and returns an instance of PythonExecutionResult.
         """,
         "parameters": {
@@ -221,23 +222,24 @@ def execute_sql_query(query: str) -> pd.DataFrame:
 def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
     messages = [
         {"role": "system", "content": f"""
-            You are a data analyst - an expert in the use of GoogleSQL, Pandas, and Plotly. Answer the user's analytics question and visualise the results, using the following procedure:
-            (1) First, analyse and understand the data available by looking at the BigQuery database schema.
-            (2) Second, plan step-by-step and write a valid GoogleSQL query to get the data that you'll need to answer the question and visualise the results.
-            (3) Third, write Python code to analyze the data and plot the results using Pandas and Plotly.
-            
-            # SQL Instructions
-            - Always drop NULL values from the results: e.g. `WHERE column_name IS NOT NULL`
-            - Do NOT make DML statements (INSERT, UPDATE, DELETE, DROP, etc.).
-            - Always use `LOWER` when comparing strings to ensure case insensitivity: e.g. `LOWER(column_name) = LOWER('value')`
+            You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
+
+            1. **Understand the Data:** Analyze the BigQuery database schema to understand what data is available.
+            2. **GoogleSQL Query:** Develop a step-by-step plan and write a GoogleSQL query compatible with BigQuery to fetch the data necessary for your analysis and visualization.
+            3. **Python Code:** Implement Python code to analyze the data using Pandas and visualize the findings using Plotly.
+
+            # GoogleSQL Guidelines
+            Always exclude NULL values: `WHERE column_name IS NOT NULL`
+            Avoid DML operations (INSERT, UPDATE, DELETE, DROP, etc.)
+            Use `LOWER` for case-insensitive string comparisons: `LOWER(column_name) = LOWER('value')`
             
             # BigQuery Database Schema
-            SQL should be written using the following database schema, ensuring the column names are correct:
-            
+            The GoogleSQL query should be constructed based on the following database schema:
+
             {str(tables_summary)}
 
             # Begin
-            Complete steps (1) and (2).
+            Complete Steps (1) and (2).
         """},
         {"role": "user", "content": "Analytics question: " + user_query},
     ]
@@ -293,7 +295,7 @@ def execute_python_code(code: str, docstring: str, imports=None, local_variables
     else:
         local_variables = local_variables.copy()
 
-    local_variables["result"] = None
+    local_variables["fig"] = None
 
     if imports:
         imported_modules = execute_python_imports(imports=imports)
@@ -307,10 +309,10 @@ def execute_python_code(code: str, docstring: str, imports=None, local_variables
     io_buffer = StringIO()
     try:
         with redirect_stdout(io_buffer):
-            exec(f"{code}\nresult = {code.splitlines()[-1]}", global_variables, local_variables)
-            result = local_variables["result"]
+            exec(f"{code}", global_variables, local_variables)
+            fig = local_variables["fig"]
             io = io_buffer.getvalue()
-            return PythonExecutionResult(result=result, local_variables=local_variables, io=io, error=error)
+            return PythonExecutionResult(result=fig, local_variables=local_variables, io=io, error=error)
     except Exception as e:
         print(e)
         error = "{}: {}".format(type(e).__name__, str(e))
@@ -358,14 +360,16 @@ def generate_valid_python_code(code: str, docstring="", messages=[], imports=Non
                 {
                     "role": "user",
                     "content": f"""
-                    There was an error in the Python code. Please correct the following errors and try again:
+                    # Error Detected in Python Code
+                    Please correct the errors and try again.
                     
-                    ## Code attempt {attempts}
+                    Attempt #{attempts}:
                     ```python
                     {code}
                     ```
 
-                    Error: {result.error}
+                    Error Message:
+                    {result.error}
                     """,
                 }
             )  # extend conversation with function response
@@ -374,8 +378,9 @@ def generate_valid_python_code(code: str, docstring="", messages=[], imports=Non
             messages.append(
                 {
                     "role": "user",
-                    "content": f"""
-                    Expected a Plotly figure named `fig` to exist. Please create and display a Plotly figure using `fig.show()`.
+                    "content": """
+                    # Missing Plotly Figure
+                    A Plotly figure named `fig` is expected but not found. Please create and display the figure using `fig.show()`.
                     """,
                 }
             )  # extend conversation with function response
@@ -427,45 +432,52 @@ def answer_user_query(user_query: str) -> QueryResult:
 
     df = execute_sql_query(query=valid_sql_query)
     messages = [
-        {"role": "system", "content": f"""
-            You are a data analyst - an expert in the use of GoogleSQL, Pandas, and Plotly. Answer the user's analytics question and visualise the results, using the following procedure:
-            (1) First, analyse and understand the data available in the Pandas DataFrame `df` by looking at the GoogleSQL Query.
-            (2) Second, complete the function `answer_user_query(df: pd.DataFrame)` by writing Python code to analyze the Pandas DataFrame `df`.
-            (3) Third, plot the results using Plotly code within the function `answer_user_query(df: pd.DataFrame)`.
+        {"role": "system", "content": inspect.cleandoc(f"""
+            You're a Data Analyst proficient in GoogleSQL, Pandas, and Plotly. Your task is to analyze a dataset and visualize the results. Follow these steps:
+
+            1. **Understand Data:** Start by examining the GoogleSQL query to understand what data is available in the Pandas DataFrame `df`.
+            2. **Code Analysis:** Implement the function `generate_chart(df: pd.DataFrame)` to analyze `df`.
+            3. **Data Visualization:** Within `generate_chart(df: pd.DataFrame)`, use Plotly to create a chart that visualizes your analysis.
          
             # GoogleSQL Query
-            {sql_query_description}
-
             ```sql
             {valid_sql_query}
             ```
 
-            # Pandas DataFrame
-            {df.dtypes}
+            # DataFrame Schema
+            Data Types: {df.dtypes}
 
-            # Python Instructions
-            - Unless displaying Plotly charts and Pandas DataFrames, use `print()` to display output, for example on the last line of code.
+            # Instructions
+            - Display text outputs using `print()`.
+            - For visual outputs, use Plotly within the `generate_chart()` function.
 
-            Complete the following code to answer the analytics question:
+            # Code Template
+            Complete the following code, replacing <YOUR CODE HERE> with your own code.
             ```python
-            # Imports
+            # Required Imports
             {imports}
 
-            # Function
-            def answer_user_query(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+            # Analysis and Visualization Function
+            def generate_chart(df: pd.DataFrame) -> plotly.graph_objs.Figure:
                 '''
-                <Google style Python docstring>
+                Function to analyze the data and generate a Plotly chart.
+                
+                Parameters:
+                    df (pd.DataFrame): DataFrame containing the data.
+                
+                Returns:
+                    plotly.graph_objs.Figure: The Plotly figure object.
                 '''
-                ...
+                <YOUR CODE HERE>
                 return fig
-            
-            # Answer
-            fig = answer_user_query(df.copy())
+
+            # Generate and Show Chart
+            fig = generate_chart(df.copy())
             fig.show()
             ```
 
             # Analytics Question
-        """},
+        """)},
         {"role": "user", "content": user_query},
     ]
     docstring, initial_python_code = get_initial_python_code(messages)

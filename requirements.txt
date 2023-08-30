@@ -73,7 +73,8 @@ nbformat
 sqlparse~=0.4.4
 google_cloud_api_keys
 
-connexion
+gunicorn
+connexion[swagger-ui]==2.14.2
 api/clients/python_client/
 
 flask>=2.0.3

@@ -22,21 +22,21 @@ def main(user_id, user_email):
     # Display app name
     PAGE_NAME = "API Playground"
     st.markdown("# " + PAGE_NAME + " 🎢")
-    st.markdown("### Try out the ChartGPT API")
+    st.markdown("### Try out the ChartGPT API with the MetaQuants dataset")
 
-    st.info("Coming soon! 🚀")
-    st.stop()
+    # st.info("Coming soon! 🚀")
+    # st.stop()
 
     # Defining the host is optional and defaults to https://api.chartgpt.cadlabs.org
     # See configuration.py for a list of all supported configuration parameters.
     configuration = openapi_client.Configuration(
         # TODO Fetch from environment variable
-        host = "http://127.0.0.1:8080"
+        host = "http://0.0.0.0:8080"
     )
 
-    if st.button("Create API key"):
-        create_api_key(user_id)
-    api_keys = get_api_keys(user_id)
+    # if st.button("Create API key"):
+    #     create_api_key(user_id)
+    # api_keys = get_api_keys(user_id)
 
     # TODO Add feature to add/remove API keys and set expiry date
     # for api_key in api_keys:
@@ -45,15 +45,17 @@ def main(user_id, user_email):
     #     cols[0].markdown(api_key)
     #     cols[1].button("Delete API key", key=api_key, on_click=(lambda api_key=api_key: delete_api_key(user_id=user_id, api_key=api_key)))
 
-    api_key = st.text_input("API key", value=(api_keys[0] if api_keys else ""))
+    # api_key = st.text_input("API key", value=(api_keys[0] if api_keys else ""))
 
     with st.form(key="chart_api_request"):
         st.markdown("### API endpoint: `/chart`")
-        question = st.text_input("question", value="")
+        question = st.text_input("question", value="Plot the average APR for the NFTfi protocol in the past 6 months.")
         submitted = st.form_submit_button("Submit")
 
         if submitted:
-            configuration.api_key['ApiKeyAuth'] = api_key
+            # TODO Enable API key authentication
+            # configuration.api_key['ApiKeyAuth'] = api_key
+            configuration.api_key['ApiKeyAuth'] = "abc"
             # Enter a context with an instance of the API client
             with openapi_client.ApiClient(configuration) as api_client:
                 with st.spinner("Generating chart..."):
@@ -85,6 +87,7 @@ def main(user_id, user_email):
                         st.markdown(inspect.cleandoc(f"""```sql
                         {formatted_sql_query}
                         """))
+                        st.markdown("\n")
 
                         query_job = client.query(sql_query)
                         results = query_job.result()
@@ -99,16 +102,18 @@ def main(user_id, user_email):
                         st.markdown("**Generated chart:**")
                         st.plotly_chart(figure_json)
                     except openapi_client.ApiException as e:
-                        st.warning("API call failed: %s\n" % e)
+                        st.warning("API call failed")
 
 
     with st.form(key="sql_api_request"):
         st.markdown("### API endpoint: `/sql`")
-        question = st.text_input("question", value="")
+        question = st.text_input("question", value="Get the average APR for the NFTfi protocol in the past 6 months.")
         submitted = st.form_submit_button("Submit")
 
         if submitted:
-            configuration.api_key['ApiKeyAuth'] = api_key
+            # TODO Enable API key authentication
+            # configuration.api_key['ApiKeyAuth'] = api_key
+            configuration.api_key['ApiKeyAuth'] = "abc"
 
             # Enter a context with an instance of the API client
             with openapi_client.ApiClient(configuration) as api_client:
@@ -129,7 +134,7 @@ def main(user_id, user_email):
                         {formatted_sql_query}
                         """))
                     except openapi_client.ApiException as e:
-                        st.warning("API call failed: %s\n" % e)
+                        st.warning("API call failed")
 
 if __name__ == "__main__":
     main()
