@@ -217,7 +217,7 @@ def execute_sql_query(query: str) -> pd.DataFrame:
 
 def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
     messages = [
-        {"role": "system", "content": f"""
+        {"role": "system", "content": inspect.cleandoc(f"""
             You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
 
             1. **Understand the Data:** Analyze the BigQuery database schema to understand what data is available.
@@ -225,9 +225,9 @@ def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
             3. **Python Code:** Implement Python code to analyze the data using Pandas and visualize the findings using Plotly.
 
             # GoogleSQL Guidelines
-            Always exclude NULL values: `WHERE column_name IS NOT NULL`
-            Avoid DML operations (INSERT, UPDATE, DELETE, DROP, etc.)
-            Use `LOWER` for case-insensitive string comparisons: `LOWER(column_name) = LOWER('value')`
+            - Always exclude NULL values: `WHERE column_name IS NOT NULL`
+            - Avoid DML operations (INSERT, UPDATE, DELETE, DROP, etc.)
+            - Use `LOWER` for case-insensitive string comparisons: `LOWER(column_name) = LOWER('value')`
             
             # BigQuery Database Schema
             The GoogleSQL query should be constructed based on the following database schema:
@@ -236,7 +236,7 @@ def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
 
             # Begin
             Complete Steps (1) and (2).
-        """},
+        """)},
         {"role": "user", "content": "Analytics question: " + user_query},
     ]
     
@@ -427,6 +427,13 @@ def answer_user_query(user_query: str) -> QueryResult:
     figure_json_string = ""
 
     df = execute_sql_query(query=valid_sql_query)
+    # Convert Period dtype to timestamp to ensure DataFrame is JSON serializable
+    df = df.astype({col: "datetime64[ns]" for col in df.columns if pd.api.types.is_period_dtype(df[col])})
+    # def convert_period_to_timestamp_in_df(df):
+    # for col in df.columns:
+    #     if pd.api.types.is_period_dtype(df[col]):
+    #         df[col] = df[col].apply(lambda x: pd.Timestamp(x).strftime('%Y-%m-%d %H:%M:%S') if pd.notna(x) else x)
+    # return df
     messages = [
         {"role": "system", "content": inspect.cleandoc(f"""
             You're a Data Analyst proficient in GoogleSQL, Pandas, and Plotly. Your task is to analyze a dataset and visualize the results. Follow these steps:
