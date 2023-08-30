@@ -15,6 +15,7 @@ from typing import Dict, List, Tuple, Union
 from dotenv import load_dotenv
 import inspect
 
+from chartgpt.app import client
 from app.config import Dataset
 from app.config.production import datasets
 
@@ -27,11 +28,6 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 SQL_GPT_MODEL = "gpt-4"
 PYTHON_GPT_MODEL = "gpt-4"
 GPT_TEMPERATURE = 0.0
-
-credentials = service_account.Credentials.from_service_account_info(
-    json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)
-)
-client = bigquery.Client(credentials=credentials)
 
 def get_tables_summary(
         client: bigquery.Client,
