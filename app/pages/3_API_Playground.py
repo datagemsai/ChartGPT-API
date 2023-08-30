@@ -31,7 +31,7 @@ def main(user_id, user_email):
     # See configuration.py for a list of all supported configuration parameters.
     configuration = openapi_client.Configuration(
         # TODO Fetch from environment variable
-        host = "http://0.0.0.0:8080"
+        host = "http://0.0.0.0:8081"
     )
 
     # if st.button("Create API key"):
