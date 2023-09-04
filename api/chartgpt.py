@@ -306,7 +306,9 @@ class SQLExecutionResult:
     dataframe: pd.DataFrame
 
 
-def generate_valid_sql_query(query: str, description: str, messages, attempts=0, max_attempts=10) -> SQLExecutionResult:
+def generate_valid_sql_query(
+    query: str, description: str, messages, attempts=0, max_attempts=10
+) -> SQLExecutionResult:
     query = apply_lower_to_where(query)
     df = pd.DataFrame()
 
@@ -317,7 +319,7 @@ def generate_valid_sql_query(query: str, description: str, messages, attempts=0,
         # If there are no errors, try executing the query
         try:
             df = execute_sql_query(query=query)
-            if df.dropna(how='all').empty:
+            if df.dropna(how="all").empty:
                 print("Query returned no results.")
                 errors += ["Query returned no results, please try again."]
         except Exception as e:
@@ -366,7 +368,10 @@ def generate_valid_sql_query(query: str, description: str, messages, attempts=0,
         query = function_args.get("query")
 
         return generate_valid_sql_query(
-            query=query, description=updated_description, messages=messages, attempts=attempts
+            query=query,
+            description=updated_description,
+            messages=messages,
+            attempts=attempts,
         )
     else:
         return SQLExecutionResult(
@@ -388,7 +393,8 @@ def get_valid_sql_query(user_query: str) -> SQLExecutionResult:
     messages = [
         {
             "role": "system",
-            "content": inspect.cleandoc(f"""
+            "content": inspect.cleandoc(
+                f"""
             You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
 
             1. **Understand the Data:** Analyze the BigQuery database schema to understand what data is available.
@@ -422,7 +428,7 @@ def get_valid_sql_query(user_query: str) -> SQLExecutionResult:
     result: SQLExecutionResult = generate_valid_sql_query(
         query=initial_sql_query,
         description=initial_sql_query_description,
-        messages=messages
+        messages=messages,
     )
     print(f"Final SQL query description:\n{result.description}")
     print(f"Valid SQL query:\n{result.query}")
@@ -503,10 +509,12 @@ def execute_python_code(
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         file_name, line_number, function_name, line_data = tb[-1]
-        error = inspect.cleandoc(f"""
+        error = inspect.cleandoc(
+            f"""
         {type(e).__name__}: {str(e)}
         On line {line_number}, function `{function_name}`, with code `{line_data}`
-        """)
+        """
+        )
         return PythonExecutionResult(
             result=result, local_variables=local_variables, io=io, error=error
         )
@@ -635,14 +643,18 @@ def answer_user_query(user_query: str) -> QueryResult:
     )
 
     try:
-        df_summary = {column_name: f"{sample}: {dtype}" for column_name, sample, dtype in zip(df.columns, df.iloc[0], df.dtypes)}
+        df_summary = {
+            column_name: f"{sample}: {dtype}"
+            for column_name, sample, dtype in zip(df.columns, df.iloc[0], df.dtypes)
+        }
     except IndexError:
         df_summary = "DataFrame is empty"
 
     messages = [
         {
             "role": "system",
-            "content": inspect.cleandoc(f"""
+            "content": inspect.cleandoc(
+                f"""
             You're a Data Analyst proficient in the use of GoogleSQL, Pandas, and Plotly.
             You have been provided with a Pandas DataFrame `df` containing the results of a GoogleSQL query.
             Your task is to use the data provided to answer a user's Analytics Question and visualise the results.
