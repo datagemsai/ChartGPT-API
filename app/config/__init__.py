@@ -25,6 +25,6 @@ class Dataset:
 
     def __repr__(self):
         return self.name
- 
+
     def __eq__(self, other) -> bool:
         return self.id == other.id

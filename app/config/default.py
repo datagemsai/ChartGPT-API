@@ -13,7 +13,7 @@ datasets = [
             "Plot the pairs corresponding to the largest USDC transactions",
             "Plot the highest USD transactions grouped by blockchain",
             "Plot the highest trade count grouped by blockchain and trading pair",
-        ]
+        ],
     ),
     Dataset(
         name="NFT Lending Protocol Aggregate Borrow Volume",
@@ -51,5 +51,5 @@ datasets = [
             "Tell me more about Azuki and Artblocks",
             "Plot borrow_usd on one y-axis, num_unique_nft on a secondary y-axis, grouped by Bored Ape Yacht Club, Azuki and Wrapped Cryptopunks, and the remainder collections displayed as Others",
         ],
-    )
+    ),
 ]

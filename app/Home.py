@@ -1,3 +1,6 @@
+# pylint: disable=C0103
+# pylint: disable=C0116
+
 from dataclasses import dataclass
 from enum import Enum
 import re
@@ -23,6 +26,7 @@ from app.components.sidebar import Sidebar
 from app.components.notices import Notices
 from app.utils import copy_url_to_clipboard
 import app.settings
+
 # from st_pages import Page, show_pages, hide_pages
 
 
@@ -60,6 +64,7 @@ if "chart_id" in query_params:
     else:
         st.error("Chart not found")
         st.stop()
+
 
 @requires_auth
 def main(user_id, _user_email):
@@ -212,9 +217,9 @@ def main(user_id, _user_email):
         with st.chat_message(message["role"]):
             if message.get("type", None) == "chart":
                 chart = message["content"]
-                chart_id = message["chart_id"]
                 st.plotly_chart(chart, use_container_width=True)
                 # TODO Re-enable sharing of charts
+                # chart_id = message["chart_id"]
                 # st.button(
                 #     "Copy chart URL",
                 #     type="primary",
@@ -369,6 +374,7 @@ def main(user_id, _user_email):
                     )
             finally:
                 st.session_state.question = ""
+
 
 if __name__ == "__main__":
     main()

@@ -19,22 +19,30 @@ class Sidebar:
             user_id = st.session_state["user_id"]
             user_email = st.session_state["user_email"]
 
-            user_query_count = app.db_queries.where(
-                filter=FieldFilter("user_id", "==", user_id)
-            ).count().get()[0][0].value
+            user_query_count = (
+                app.db_queries.where(filter=FieldFilter("user_id", "==", user_id))
+                .count()
+                .get()[0][0]
+                .value
+            )
             st.session_state["user_query_count"] = user_query_count
 
-            user_chart_count = app.db_charts.where(
-                filter=FieldFilter("user_id", "==", user_id)
-            ).count().get()[0][0].value
+            user_chart_count = (
+                app.db_charts.where(filter=FieldFilter("user_id", "==", user_id))
+                .count()
+                .get()[0][0]
+                .value
+            )
             st.session_state["user_chart_count"] = user_chart_count
 
-            st.markdown(f"""
+            st.markdown(
+                f"""
             ### User Profile
             Google account: {user_email}\n
             Total queries performed: {user_query_count}\n
             Total charts generated: {user_chart_count}
-            """)
+            """
+            )
 
             st.divider()
 
@@ -42,7 +50,10 @@ class Sidebar:
             user_free_credits = st.session_state["user_free_credits"]
             used_free_credits = min(user_query_count, user_free_credits)
             free_trial_usage = min(1.0, used_free_credits / user_free_credits)
-            st.progress(free_trial_usage, text=f"Free trial usage: {used_free_credits} / {int(user_free_credits)} queries")
+            st.progress(
+                free_trial_usage,
+                text=f"Free trial usage: {used_free_credits} / {int(user_free_credits)} queries",
+            )
 
     def display_settings(self):
         with st.sidebar:
@@ -61,7 +72,9 @@ class Sidebar:
                 value=float(os.environ.get("DEFAULT_MODEL_TEMPERATURE", 0.0)),
                 step=0.1,
             )
-            self.model_verbose_mode = advanced_settings.checkbox("Enable verbose analysis", value=True)
+            self.model_verbose_mode = advanced_settings.checkbox(
+                "Enable verbose analysis", value=True
+            )
             submitted = advanced_settings.form_submit_button("Update Settings")
             if submitted:
                 # Clear prior query

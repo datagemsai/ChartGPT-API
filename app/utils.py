@@ -6,7 +6,7 @@ def copy_url_to_clipboard(url):
     """
     Copy a URL to the clipboard.
     """
-    script= f"""
+    script = f"""
         <script type="text/javascript">
             // Copy the URL
             parent.navigator.clipboard.writeText(parent.location.origin + "{url}").then(() => {{
@@ -20,6 +20,7 @@ def copy_url_to_clipboard(url):
     html(script)
     st.session_state.question = ""
 
+
 def open_page(url, target="_blank"):
     """
     Open a page in a new tab.
@@ -32,6 +33,7 @@ def open_page(url, target="_blank"):
     """
     html(script)
     st.session_state.question = ""
+
 
 def open_page_and_copy_url_to_clipboard(url, target="_blank"):
     """

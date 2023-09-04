@@ -10,12 +10,14 @@ import streamlit as st
 from streamlit.components.v1 import html
 import os
 import asyncio
+
 # See https://frankie567.github.io/httpx-oauth/oauth2/
 from httpx_oauth.clients.google import GoogleOAuth2
 from typing import Optional, Tuple
 import json
 import app
 from app import db_users
+
 # from app.cookies import cookies
 # from app.cookies_v2 import clear_cookies
 from sentry_sdk import set_user
@@ -23,9 +25,9 @@ from app.config.content import chartgpt_description
 from app.users import UserCredits
 
 
-CLIENT_ID = os.environ['GOOGLE_OAUTH_CLIENT_ID']
-CLIENT_SECRET = os.environ['GOOGLE_OAUTH_CLIENT_SECRET']
-REDIRECT_URI = os.environ['REDIRECT_URI']
+CLIENT_ID = os.environ["GOOGLE_OAUTH_CLIENT_ID"]
+CLIENT_SECRET = os.environ["GOOGLE_OAUTH_CLIENT_SECRET"]
+REDIRECT_URI = os.environ["REDIRECT_URI"]
 
 
 # def hydrate_session_state():
@@ -55,36 +57,46 @@ from functools import wraps
 class AuthError(Exception):
     pass
 
+
 def get_token() -> Optional[str]:
     url = st.experimental_get_query_params()
-    if 'token' in url:
-        token = url['token'][0]
+    if "token" in url:
+        token = url["token"][0]
         return token
     else:
         return None
 
+
 def requires_auth(f=lambda *args, **kwargs: None):
-    """Determines if the Access Token is valid
-    """
+    """Determines if the Access Token is valid"""
+
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token()
         user_id = None
         user_email = None
         if not token:
-            st.error("Authorisation failed. Please visit https://app.chartgpt.cadlabs.org to log in.")
+            st.error(
+                "Authorisation failed. Please visit https://app.chartgpt.cadlabs.org to log in."
+            )
             st.stop()
         else:
             set_user({"id": "anonymous", "email": "anonymous"})
             with st.spinner("Loading..."):
                 try:
-                    decoded_token = jwt.decode(token, key=os.environ["JWT_SECRET_KEY"], algorithms=['HS256'])
-                    user_id = decoded_token['user_id']
-                    user_email = decoded_token['user_email']
-                    closed_beta_email_addresses_result = app.db.collection('closed_beta_email_addresses').get()
-                    closed_beta_email_addresses = [doc.id.lower() for doc in closed_beta_email_addresses_result]
+                    decoded_token = jwt.decode(
+                        token, key=os.environ["JWT_SECRET_KEY"], algorithms=["HS256"]
+                    )
+                    user_id = decoded_token["user_id"]
+                    user_email = decoded_token["user_email"]
+                    closed_beta_email_addresses_result = app.db.collection(
+                        "closed_beta_email_addresses"
+                    ).get()
+                    closed_beta_email_addresses = [
+                        doc.id.lower() for doc in closed_beta_email_addresses_result
+                    ]
                     query_params = st.experimental_get_query_params()
-                    chart_id = query_params.get('chart_id', None)
+                    chart_id = query_params.get("chart_id", None)
                     if user_id and user_email:
                         # st.toast(f"Logging in...", icon='🔒')
                         set_user({"id": user_id, "email": user_email})
@@ -93,19 +105,27 @@ def requires_auth(f=lambda *args, **kwargs: None):
                             user_ref = db_users.document(user_id)
                             if not user_ref.get().exists:
                                 # Create user if they don't exist
-                                user_ref.create({
-                                    'user_id': user_id,
-                                    'user_email': user_email,
-                                })
+                                user_ref.create(
+                                    {
+                                        "user_id": user_id,
+                                        "user_email": user_email,
+                                    }
+                                )
                             else:
                                 # Update user if they exist
-                                user_ref.update({
-                                    'user_id': user_id,
-                                    'user_email': user_email,
-                                })
+                                user_ref.update(
+                                    {
+                                        "user_id": user_id,
+                                        "user_email": user_email,
+                                    }
+                                )
 
                             # Create user credits if they don't exist
-                            if not (user_credits := UserCredits.collection.get(key=f"user_credits/{user_id}")):
+                            if not (
+                                user_credits := UserCredits.collection.get(
+                                    key=f"user_credits/{user_id}"
+                                )
+                            ):
                                 user_credits = UserCredits()
                                 user_credits.user_id = user_id
                                 user_credits.free_credits = 20
@@ -114,16 +134,22 @@ def requires_auth(f=lambda *args, **kwargs: None):
                             # Save user details in session state
                             st.session_state["user_id"] = user_id
                             st.session_state["user_email"] = user_email
-                            st.session_state["user_free_credits"] = user_credits.free_credits
+                            st.session_state[
+                                "user_free_credits"
+                            ] = user_credits.free_credits
 
                             if chart_id:
-                                st.experimental_set_query_params(**{"token": token, "chart_id": chart_id})
+                                st.experimental_set_query_params(
+                                    **{"token": token, "chart_id": chart_id}
+                                )
                             else:
                                 st.experimental_set_query_params(**{"token": token})
                             # if token:
-                                # st.toast(f"Logged in as {user_email}.", icon='🎉')
+                            # st.toast(f"Logged in as {user_email}.", icon='🎉')
                         else:
-                            st.info(f"{user_email} does not have access to the ChartGPT Marketplace closed beta. Please join the waitlist.")
+                            st.info(
+                                f"{user_email} does not have access to the ChartGPT Marketplace closed beta. Please join the waitlist."
+                            )
                             show_sign_up_form(user_email=user_email)
                             st.stop()
                     else:
@@ -137,6 +163,7 @@ def requires_auth(f=lambda *args, **kwargs: None):
                 if not user_id and user_email:
                     raise AuthError("User is not authenticated")
             return f(user_id, user_email, *args, **kwargs)
+
     if not f:
         decorated()
     else:
@@ -225,6 +252,7 @@ def requires_auth(f=lambda *args, **kwargs: None):
 #         st.experimental_set_query_params()
 #         st.stop()
 
+
 def check_user_credits() -> None:
     # Check user credit usage
     user_query_count = st.session_state["user_query_count"]
@@ -232,37 +260,49 @@ def check_user_credits() -> None:
     free_trial_usage = min(1.0, user_query_count / user_free_credits)
     free_trial_credits_depleted = free_trial_usage >= 1.0
     if free_trial_credits_depleted:
-        st.info("Thank you for using ChartGPT! All your free trial queries have been used. We'll get in touch when more are available.")
+        st.info(
+            "Thank you for using ChartGPT! All your free trial queries have been used. We'll get in touch when more are available."
+        )
         st.stop()
+
 
 def display_log_in_header() -> None:
     st.markdown("## Welcome to the ChartGPT Marketplace!")
     st.markdown(chartgpt_description)
-    st.button("Log In with Google", on_click=login_with_google, key="login", type="primary")
+    st.button(
+        "Log In with Google", on_click=login_with_google, key="login", type="primary"
+    )
+
 
 def show_sign_up_form(user_email="") -> None:
     with st.form("sign_up_form"):
         st.markdown("### Join the waitlist")
         st.markdown("We'll contact you when the next round of users is onboarded.")
         st.text_input("Google account email address", value=user_email, key="email")
+
         def submit_form():
             email = st.session_state["email"]
             if email:
-                app.db.collection('closed_beta_email_addresses_waitlist').document(email).set({})
+                app.db.collection("closed_beta_email_addresses_waitlist").document(
+                    email
+                ).set({})
                 st.success("Thanks for signing up! We'll be in touch soon.")
             else:
                 st.error("Please enter a valid email address.")
             # clear_auth_cookies_and_state()
             st.experimental_set_query_params()
             st.stop()
+
         st.form_submit_button("Sign Up", on_click=submit_form)
+
 
 def is_user_admin() -> bool:
     return st.session_state["user_email"] in [
         "ben@cadlabs.org",
         "konrad@cadlabs.org",
-        "mrsharadgupta@gmail.com"
+        "mrsharadgupta@gmail.com",
     ]
+
 
 def basic_auth():
     """Returns `True` if the user had the correct password."""

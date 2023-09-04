@@ -9,7 +9,8 @@ def get_cookies() -> dict:
     cookie_event_key = "cookie_event"
 
     # JavaScript to get cookies and send them back to Streamlit
-    st.write(f"""
+    st.write(
+        f"""
     <script>
         function getCookies() {{
             var pairs = document.cookie.split(";");
@@ -29,15 +30,19 @@ def get_cookies() -> dict:
             key: '{cookie_event_key}'
         }}, "*");
     </script>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     cookies = st.session_state.get(cookie_event_key, {})
-    
+
     if cookies:
         decrypted_cookies = {}
         for name, encrypted_value in cookies.items():
             try:
-                decrypted_value = decrypt_cookie(encrypted_value, os.environ["COOKIES_PASSWORD"])
+                decrypted_value = decrypt_cookie(
+                    encrypted_value, os.environ["COOKIES_PASSWORD"]
+                )
                 decrypted_cookies[name] = decrypted_value
             except InvalidToken:
                 pass
@@ -57,13 +62,13 @@ def set_cookies(cookie_dict):
     <script language="javascript">
         (function () {
     """
-    
+
     for key, value in cookie_dict.items():
         encrypted_value = encrypt_cookie(value, os.environ["COOKIES_PASSWORD"])
         script += f"""
             document.cookie = "{key}={encrypted_value}; path=/;";
         """
-    
+
     script += """
         })();
     </script>
@@ -78,17 +83,20 @@ def encrypt_cookie(value, key):
 
 
 def delete_cookie(cookie_name):
-    html(f"""
+    html(
+        f"""
     <script language="javascript">
         (function () {{
             document.cookie = "{cookie_name}=; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/;";
         }})();
     </script>
-    """)
+    """
+    )
 
 
 def clear_cookies():
-    html(f"""
+    html(
+        f"""
     <script language="javascript">
         (function () {{
             var cookies = document.cookie.split("; ");
@@ -100,7 +108,8 @@ def clear_cookies():
             }}
         }})();
     </script>
-    """)
+    """
+    )
     # html("""
     # <script language="javascript">
     #     (function () {

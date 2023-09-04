@@ -29,18 +29,25 @@ logger.setLevel(logging.INFO)
 if ENV == "LOCAL":
     import app_secrets.gcp_service_accounts
 
-if DEBUG := (os.getenv('DEBUG', 'false').lower() == 'true'):
+if DEBUG := (os.getenv("DEBUG", "false").lower() == "true"):
     logger.warning("Application in debug mode, disable for production")
-    fh = logging.FileHandler('logs/debug.log')
+    fh = logging.FileHandler("logs/debug.log")
     fh.setLevel(logging.INFO)
-    fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    fh.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
+    )
     logger.addHandler(fh)
 
-if DISPLAY_USER_UPDATES := (os.getenv('DISPLAY_USER_UPDATES', 'false').lower() == 'true'):
+if DISPLAY_USER_UPDATES := (
+    os.getenv("DISPLAY_USER_UPDATES", "false").lower() == "true"
+):
     logger.info("User updates will be displayed")
 
 script_runner = sys.modules["streamlit.runtime.scriptrunner.script_runner"]
 handle_uncaught_app_exception = script_runner.handle_uncaught_app_exception
+
 
 def exception_handler(e):
     # Custom error handling
@@ -51,17 +58,16 @@ def exception_handler(e):
         set_tag("project", PROJECT)
         capture_exception(e)
 
+
 script_runner.handle_uncaught_app_exception = exception_handler
 
 if ENV != "LOCAL":
     sentry_sdk.init(
         dsn="https://76086ca93fddeba3df0b1a5512d41ae7@o4505696591544320.ingest.sentry.io/4505696597114880",
-
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production.
         traces_sample_rate=1.0,
-
         # To set a uniform sample rate
         # Set profiles_sample_rate to 1.0 to profile 100%
         # of sampled transactions.
@@ -77,20 +83,22 @@ st.set_page_config(page_title=PAGE_NAME, page_icon="📈")
 if not firebase_admin._apps:
     try:
         if ENV == "LOCAL":
-            cred = firebase_admin.credentials.Certificate(json.loads(os.environ['GCP_SERVICE_ACCOUNT']))
+            cred = firebase_admin.credentials.Certificate(
+                json.loads(os.environ["GCP_SERVICE_ACCOUNT"])
+            )
             _ = firebase_admin.initialize_app(cred)
         else:
             _ = firebase_admin.initialize_app()
     except ValueError as e:
-        _ = firebase_admin.get_app(name='[DEFAULT]')
+        _ = firebase_admin.get_app(name="[DEFAULT]")
 
 db = firestore.client()
-db_charts = db.collection('charts')
-db_users = db.collection('users')
-db_queries = db.collection('queries')
+db_charts = db.collection("charts")
+db_users = db.collection("users")
+db_queries = db.collection("queries")
 
 st.markdown(
-"""
+    """
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQTQQQK06"></script>
 <script crossorigin='anonymous'>
@@ -100,7 +108,9 @@ st.markdown(
 
     gtag('config', 'G-5LQTQQQK06');
 </script>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Import sample question for project
 datasets = import_module(f'app.config.{os.environ["PROJECT"].lower()}').datasets

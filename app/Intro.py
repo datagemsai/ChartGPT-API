@@ -8,7 +8,7 @@ st.set_page_config(
     page_icon="🧠",
 )
 
-image = Image.open('logo.png')
+image = Image.open("logo.png")
 st.image(image)
 
 st.write("# Welcome to cadGPT! 👋")

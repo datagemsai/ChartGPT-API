@@ -12,6 +12,7 @@ from app.components.notices import Notices
 # Show notices
 Notices()
 
+
 @requires_auth
 def main(user_id, user_email):
     st.markdown("# Admin Dashboard")
@@ -39,14 +40,20 @@ def main(user_id, user_email):
     st.dataframe(df_charts)
 
     # Set Pandas plotting backend to Plotly
-    pd.options.plotting.backend = "plotly" 
+    pd.options.plotting.backend = "plotly"
 
     # Check if df_queries has any rows
     if df_queries.shape[0] == 0:
         st.stop()
 
     # Plot a stacked area chart with normalized values of the number of queries with status "PASSED" and "FAILED" per day
-    df_status_cumulative = df_queries.groupby("timestamp_start")["status"].value_counts().unstack().fillna(0).cumsum()
+    df_status_cumulative = (
+        df_queries.groupby("timestamp_start")["status"]
+        .value_counts()
+        .unstack()
+        .fillna(0)
+        .cumsum()
+    )
 
     # Create a plot where "PASSED" is green and "FAILED" is red
     # fig = df_status_cumulative.plot.area(stacked=True)
@@ -59,7 +66,9 @@ def main(user_id, user_email):
 
     # Using `timestamp_start` and `timestamp_end`, plot the distribution of query response times in seconds for the current user
     st.markdown("## Query Response Times")
-    df_queries["response_time"] = pd.to_datetime(df_queries["timestamp_end"]) - pd.to_datetime(df_queries["timestamp_start"])
+    df_queries["response_time"] = pd.to_datetime(
+        df_queries["timestamp_end"]
+    ) - pd.to_datetime(df_queries["timestamp_start"])
     df_queries["response_time"] = df_queries["response_time"].dt.total_seconds()
     fig = px.histogram(df_queries, x="response_time", nbins=100)
     st.plotly_chart(fig)
@@ -84,6 +93,7 @@ def main(user_id, user_email):
             st.json(chart)
         else:
             st.info("Chart not found.")
+
 
 if __name__ == "__main__":
     main()
