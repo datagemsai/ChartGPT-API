@@ -31,10 +31,8 @@ scipy
 scikit-learn
 numpy~=1.25.2
 statsmodels
-
-# Discord bot
-discord~=2.3.2
-kaleido
+dataframe_image
+matplotlib
 
 # Miscellaneous
 
@@ -87,3 +85,9 @@ python-jose
 six
 st_pages==0.4.4
 RestrictedPython==6.1
+
+# Bots
+slack_bolt
+discord~=2.3.2
+kaleido
+frozendict

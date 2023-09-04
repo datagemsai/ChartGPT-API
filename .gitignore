@@ -138,3 +138,5 @@ app_secrets_production.yaml
 app_secrets_staging.yaml
 app_secrets_sandbox.yaml
 outputs/*
+/scratchpad/
+*.tfstate*
