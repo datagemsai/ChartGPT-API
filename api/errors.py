@@ -1,0 +1,2 @@
+class ContextLengthError(Exception):
+    pass
