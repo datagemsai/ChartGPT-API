@@ -33,6 +33,8 @@ import pandas as pd
 import plotly
 import plotly.express as px
 import numpy as np
+
+from typing import Optional
 """
 
 CODE_GENERATION_PROMPT_TEMPLATE = """
@@ -53,7 +55,7 @@ Your task is to use the data provided to answer a user's Analytics Question and 
 # Instructions
 - Display text or numeric outputs using `print()`.
 - For visual outputs, use Plotly within the `answer_question()` function.
-- Complete the following code, replacing <YOUR CODE HERE> with your own code.
+- Complete the following function code, replacing <COMPLETE THE FUNCTION CODE> with your own code.
 - Do not try to recreate the Pandas DataFrame `df` or generate sample data.
 
 ```python
@@ -69,9 +71,11 @@ def answer_question({function_parameters}) -> {output_type}:
     Returns:
         {output_type}: {output_description}
     '''
-    <YOUR CODE HERE>
+    <COMPLETE THE FUNCTION CODE>
     return {output_variable}
 ```
+
+Ensure that the `answer_question` function is defined and returns the correct output type.
 
 # Analytics Question
 """
