@@ -9,7 +9,10 @@ from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from chartgpt.tools.python.tool import PythonAstREPLTool
-from chartgpt.agents.agent_toolkits.bigquery.utils import get_tables_summary, get_example_query
+from chartgpt.agents.agent_toolkits.bigquery.utils import (
+    get_tables_summary,
+    get_example_query,
+)
 from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 from langchain.schema import BaseMemory
@@ -38,12 +41,13 @@ def create_bigquery_agent(
     example_query = get_example_query(datasets=datasets)
     python_tool = PythonAstREPLTool(
         secure_execution=secure_execution,
-        locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client}
+        locals={"tables_summary": tables_summary, "bigquery_client": bigquery_client},
     )
 
     def query_post_processing(query: str) -> str:
         query = query.replace("print(", "display(")
-        imports = inspect.cleandoc("""
+        imports = inspect.cleandoc(
+            """
         import streamlit as st
         import plotly.express as px
         import plotly.graph_objects as go
@@ -57,7 +61,8 @@ def create_bigquery_agent(
             import streamlit as st
             st.write(*args)
             return args
-        """)
+        """
+        )
         query = imports + "\n\n" + query
         query = re.sub(".*client =.*\n?", "client = bigquery_client", query)
         query = re.sub(".*bigquery_client =.*\n?", "", query)
@@ -67,7 +72,12 @@ def create_bigquery_agent(
     tools = [python_tool]
 
     if input_variables is None:
-        input_variables = ["tables_summary", "example_query", "input", "agent_scratchpad"]
+        input_variables = [
+            "tables_summary",
+            "example_query",
+            "input",
+            "agent_scratchpad",
+        ]
     if memory is not None:
         input_variables.append("chat_history")
 

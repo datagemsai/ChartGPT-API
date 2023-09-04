@@ -59,15 +59,19 @@ class CustomCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         """Run on agent action."""
         logger.info(f"on_agent_action: {action}")
-        new_lines = action.tool_input.count('\n')
+        new_lines = action.tool_input.count("\n")
         should_display = new_lines > 1 or not "display" in action.tool_input
         if should_display:
-            output = inspect.cleandoc(f"""
+            output = inspect.cleandoc(
+                f"""
             ```python
             {action.tool_input}
             ```
-            """)
-            st.session_state["messages"].append({"role": "assistant", "content": output})
+            """
+            )
+            st.session_state["messages"].append(
+                {"role": "assistant", "content": output}
+            )
 
     def on_tool_end(
         self,
@@ -102,4 +106,6 @@ class CustomCallbackHandler(BaseCallbackHandler):
         logger.info(f"on_agent_finish: {finish}")
         output = finish.return_values["output"]
         if "messages" in st.session_state:
-            st.session_state["messages"].append({"role": "assistant", "content": output})
+            st.session_state["messages"].append(
+                {"role": "assistant", "content": output}
+            )

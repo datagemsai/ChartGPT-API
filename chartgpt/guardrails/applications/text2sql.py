@@ -126,7 +126,7 @@ class Text2Sql:
         # Initialize the Guard class
         if rail_spec is None:
             rail_spec = os.path.join(os.path.dirname(__file__), "text2sql.rail")
-            rail_params = None # {"client": client}
+            rail_params = None  # {"client": client}
 
         # Load the rail specification.
         with open(rail_spec, "r") as f:
@@ -212,6 +212,8 @@ class Text2Sql:
             output = None
 
         return output
+
+
 # openai.ChatCompletion.create,
 #     prompt_params={"document": content[:6000]},
 #     model="gpt-3.5-turbo",

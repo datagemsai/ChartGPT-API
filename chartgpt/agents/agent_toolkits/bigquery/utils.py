@@ -10,6 +10,7 @@ from app.config import Dataset
 class StreamlitDict(dict):
     def __repr__(self):
         import streamlit as st
+
         df_id = id(self)
         if not df_id in st.session_state:
             st.session_state["container"].dataframe(self)
@@ -27,13 +28,15 @@ def get_dataset_ids(client: bigquery.Client) -> List[str]:
 
 def get_table_ids(client: bigquery.Client) -> List[str]:
     dataset_ids = get_dataset_ids(client=client)
-    return [table.table_id for dataset_id in dataset_ids for table in client.list_tables(dataset_id)]
+    return [
+        table.table_id
+        for dataset_id in dataset_ids
+        for table in client.list_tables(dataset_id)
+    ]
 
 
 def get_tables_summary(
-        client: bigquery.Client,
-        datasets: List[Dataset],
-        include_types = False
+    client: bigquery.Client, datasets: List[Dataset], include_types=False
 ) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
     # Generate tables_summary for all tables in datasets
     tables_summary = StreamlitDict()
@@ -47,10 +50,14 @@ def get_tables_summary(
                 (
                     schema_field.name,
                     schema_field.field_type,
-                    "Description: " + dataset.column_descriptions.get(schema_field.name, "")
-                ) if include_types else (
+                    "Description: "
+                    + dataset.column_descriptions.get(schema_field.name, ""),
+                )
+                if include_types
+                else (
                     schema_field.name,
-                    "Description: " + dataset.column_descriptions.get(schema_field.name, "")
+                    "Description: "
+                    + dataset.column_descriptions.get(schema_field.name, ""),
                 )
                 for schema_field in table.schema
             ]
@@ -65,9 +72,11 @@ def get_example_query(
     for dataset in datasets:
         dataset_id = dataset.id
         for table_id in dataset.tables:
-            example_query += inspect.cleandoc(f"""
+            example_query += inspect.cleandoc(
+                f"""
             SELECT * FROM `{dataset_id}.{table_id}` LIMIT 100
-            """)
+            """
+            )
     return example_query
 
 
