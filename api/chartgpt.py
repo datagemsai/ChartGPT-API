@@ -1,5 +1,7 @@
+import sys
 import pandas as pd
 import os
+from chartgpt.tools.python.secure_ast import secure_exec
 import openai
 import json
 import re
@@ -14,11 +16,19 @@ from google.cloud import bigquery
 from typing import Dict, List, Tuple, Union
 from dotenv import load_dotenv
 import inspect
+import plotly.graph_objs as go
+import traceback
+import pickle
+import base64
 
 from chartgpt.app import client
 from app.config import Dataset
-from app.config.production import datasets
+from app.config.production import datasets as production_datasets
 
+# Override Streamlit styling
+import plotly.io as pio
+
+pio.templates.default = "plotly"
 
 # Load environment variables from .env file
 load_dotenv(".env")
@@ -29,34 +39,162 @@ SQL_GPT_MODEL = "gpt-4"
 PYTHON_GPT_MODEL = "gpt-4"
 GPT_TEMPERATURE = 0.0
 
+# def get_tables_summary(
+#         client: bigquery.Client,
+#         datasets: List[Dataset],
+#         include_types = False
+# ) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
+#     # Generate tables_summary for all tables in datasets
+#     tables_summary = {}
+#     for dataset in datasets:
+#         dataset_id = dataset.id
+#         tables_summary[dataset_id] = {}
+#         for table_id in dataset.tables:
+#             table_ref = client.dataset(dataset_id).table(table_id)
+#             table = client.get_table(table_ref)
+#             tables_summary[dataset_id][table_id] = [
+#                 (schema_field.name, schema_field.field_type) if include_types else schema_field.name
+#                 for schema_field in table.schema
+#             ]
+#     return tables_summary
+
+
+# def get_tables_summary(
+#         client: bigquery.Client,
+#         datasets: List[bigquery.Dataset],
+#         dataset_ids: Optional[List[str]] = None,
+#         table_ids: Optional[List[str]] = None,
+#         include_types=False
+# ) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
+
+#     tables_summary = {}
+
+#     # Filter bigquery.Dataset objects by dataset_ids
+#     if dataset_ids:
+#         datasets = [dataset for dataset in datasets if dataset.dataset_id in dataset_ids]
+
+#     for dataset in datasets:
+#         dataset_id = dataset.dataset_id
+#         tables_summary[dataset_id] = {}
+
+#         # Filter bigquery.Table objects by table_ids
+#         if table_ids:
+#             tables = [table for table in list(client.list_tables(dataset)) if table.table_id in table_ids]
+#         else:
+#             tables = list(client.list_tables(dataset))
+
+#         for table in tables:
+#             table_id = table.table_id
+#             table_ref = client.dataset(dataset_id).table(table_id)
+#             table = client.get_table(table_ref)
+
+#             # SQL-like CREATE TABLE statement
+#             create_table_statement = f'CREATE TABLE {dataset_id}.{table_id} (\n'
+
+#             for field in table.schema:
+#                 create_table_statement += f'"{field.name}" {field.field_type}'
+
+#                 if field.mode == "REQUIRED":
+#                     create_table_statement += ' NOT NULL'
+
+#                 create_table_statement += ',\n'
+
+#             # Adding primary and foreign keys can be dataset-specific and needs more info.
+#             # Here we are not adding them, but they can be added based on the dataset schema.
+#             create_table_statement = create_table_statement.rstrip(',\n') + '\n)'
+
+#             # Populate the summary
+#             tables_summary[dataset_id][table_id] = {
+#                 "fields": [
+#                     (schema_field.name, schema_field.field_type) if include_types else schema_field.name
+#                     for schema_field in table.schema
+#                 ],
+#                 "SQL_Schema": create_table_statement
+#             }
+
+#     return tables_summary
+
+
 def get_tables_summary(
-        client: bigquery.Client,
-        datasets: List[Dataset],
-        include_types = False
-) -> Dict[str, List[Dict[str, List[Union[Tuple[str, str], str]]]]]:
-    # Generate tables_summary for all tables in datasets
-    tables_summary = {}
+    client: bigquery.Client,
+    datasets: List[bigquery.Dataset],
+    dataset_ids: Optional[List[str]] = None,
+    table_ids: Optional[List[str]] = None,
+    include_types: bool = False,
+) -> str:
+    markdown_summary = ""
+
+    # Filter bigquery.Dataset objects by dataset_ids
+    if dataset_ids:
+        datasets = [
+            dataset for dataset in datasets if dataset.dataset_id in dataset_ids
+        ]
+
     for dataset in datasets:
-        dataset_id = dataset.id
-        tables_summary[dataset_id] = {}
-        for table_id in dataset.tables:
+        dataset_id = dataset.dataset_id
+        markdown_summary += f"## Dataset: {dataset_id}\n"
+
+        # Filter bigquery.Table objects by table_ids
+        if table_ids:
+            tables = [
+                table
+                for table in list(client.list_tables(dataset))
+                if table.table_id in table_ids
+            ]
+        else:
+            tables = list(client.list_tables(dataset))
+
+        for table in tables:
+            table_id = table.table_id
             table_ref = client.dataset(dataset_id).table(table_id)
             table = client.get_table(table_ref)
-            tables_summary[dataset_id][table_id] = [
-                (schema_field.name, schema_field.field_type) if include_types else schema_field.name
-                for schema_field in table.schema
-            ]
-    return tables_summary
+
+            # SQL-like CREATE TABLE statement
+            create_table_statement = f"CREATE TABLE {dataset_id}.{table_id} (\n"
+
+            for field in table.schema:
+                create_table_statement += f'"{field.name}" {field.field_type}'
+
+                if field.mode == "REQUIRED":
+                    create_table_statement += " NOT NULL"
+
+                create_table_statement += ","
+                if field.description:
+                    create_table_statement += f" - {field.description}"
+                create_table_statement += "\n"
+
+            # Here we are not adding primary and foreign keys, but they can be added based on the dataset schema.
+            create_table_statement = create_table_statement.rstrip(",\n") + "\n)"
+
+            markdown_summary += f"### {dataset_id}.{table_id}\n"
+            markdown_summary += f"```\n{create_table_statement}\n```\n"
+
+    return markdown_summary
 
 
-tables_summary = get_tables_summary(client=client, datasets=datasets, include_types=True)
+datasets = list(client.list_datasets())
+tables_summary = get_tables_summary(
+    client=client,
+    datasets=datasets,
+    dataset_ids=[dataset.id for dataset in production_datasets],
+    table_ids=[
+        table_id for dataset in production_datasets for table_id in dataset.tables
+    ],
+    include_types=True,
+)
 
 
 def validate_sql_query(query: str) -> List[str]:
     """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
     try:
-        query_job = client.query(query, job_config=bigquery.QueryJobConfig(dry_run=True))
-        errors = [str(err['message']) for err in query_job.errors] if query_job.errors else []
+        query_job = client.query(
+            query, job_config=bigquery.QueryJobConfig(dry_run=True)
+        )
+        errors = (
+            [str(err["message"]) for err in query_job.errors]
+            if query_job.errors
+            else []
+        )
     except Exception as e:
         errors = [str(e)]
     return errors
@@ -121,20 +259,21 @@ def get_initial_sql_query(messages) -> Tuple[str, str]:
         temperature=GPT_TEMPERATURE,
     )
     response_message = response["choices"][0]["message"]
+    finish_reason = response["choices"][0]["finish_reason"]
+    if finish_reason == "length":
+        raise ContextLengthError
     messages.append(response_message)  # extend conversation with assistant's reply
     function_args = json.loads(
-        str(response_message["function_call"]["arguments"]),
-        strict=False
+        str(response_message["function_call"]["arguments"]), strict=False
     )
     description = function_args.get("description")
     query = function_args.get("query")
     return description, query
 
 
-
 def apply_lower_to_where(sql):
     # Regular expression to find the WHERE clause
-    where_clause = re.search(r'\bWHERE\b(.*)', sql, flags=re.IGNORECASE)
+    where_clause = re.search(r"\bWHERE\b(.*)", sql, flags=re.IGNORECASE)
 
     # If no WHERE clause is found, return the original SQL
     if where_clause is None:
@@ -153,17 +292,37 @@ def apply_lower_to_where(sql):
         where_clause = where_clause.replace(old_comparison, new_comparison, 1)
 
     # Replace the original WHERE clause with the modified one
-    modified_sql = re.sub(r'\bWHERE\b.*', f"WHERE{where_clause}", sql, flags=re.IGNORECASE)
+    modified_sql = re.sub(
+        r"\bWHERE\b.*", f"WHERE{where_clause}", sql, flags=re.IGNORECASE
+    )
 
     return modified_sql
 
 
-def generate_valid_sql_query(query: str, messages, attempts=0, max_attempts=10) -> str:
+@dataclass
+class SQLExecutionResult:
+    description: str
+    query: str
+    dataframe: pd.DataFrame
+
+
+def generate_valid_sql_query(query: str, description: str, messages, attempts=0, max_attempts=10) -> SQLExecutionResult:
     query = apply_lower_to_where(query)
+    df = pd.DataFrame()
 
     errors = validate_sql_query(
         query=query,
     )
+    if not errors:
+        # If there are no errors, try executing the query
+        try:
+            df = execute_sql_query(query=query)
+            if df.dropna(how='all').empty:
+                print("Query returned no results.")
+                errors += ["Query returned no results, please try again."]
+        except Exception as e:
+            errors += [str(e)]
+
     print(f"Query:\n{query}")
     print(f"Errors in query: {errors}")
 
@@ -193,18 +352,28 @@ def generate_valid_sql_query(query: str, messages, attempts=0, max_attempts=10) 
 
         print(f"Corrected response:\n{corrected_response}")
         corrected_response_message = corrected_response["choices"][0]["message"]
+        finish_reason = corrected_response["choices"][0]["finish_reason"]
+        if finish_reason == "length":
+            raise ContextLengthError
 
-        messages.append(corrected_response_message)  # extend conversation with assistant's reply
+        messages.append(
+            corrected_response_message
+        )  # extend conversation with assistant's reply
         function_args = json.loads(
-            str(corrected_response_message["function_call"]["arguments"]),
-            strict=False
+            str(corrected_response_message["function_call"]["arguments"]), strict=False
         )
-        _description = function_args.get("description")
+        updated_description = function_args.get("description")
         query = function_args.get("query")
-        
-        return generate_valid_sql_query(query=query, messages=messages, attempts=attempts)
+
+        return generate_valid_sql_query(
+            query=query, description=updated_description, messages=messages, attempts=attempts
+        )
     else:
-        return query
+        return SQLExecutionResult(
+            description=description,
+            query=query,
+            dataframe=df,
+        )
 
 
 def execute_sql_query(query: str) -> pd.DataFrame:
@@ -215,9 +384,11 @@ def execute_sql_query(query: str) -> pd.DataFrame:
     return df
 
 
-def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
+def get_valid_sql_query(user_query: str) -> SQLExecutionResult:
     messages = [
-        {"role": "system", "content": inspect.cleandoc(f"""
+        {
+            "role": "system",
+            "content": inspect.cleandoc(f"""
             You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
 
             1. **Understand the Data:** Analyze the BigQuery database schema to understand what data is available.
@@ -225,9 +396,10 @@ def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
             3. **Python Code:** Implement Python code to analyze the data using Pandas and visualize the findings using Plotly.
 
             # GoogleSQL Guidelines
-            - Always exclude NULL values: `WHERE column_name IS NOT NULL`
             - Avoid DML operations (INSERT, UPDATE, DELETE, DROP, etc.)
             - Use `LOWER` for case-insensitive string comparisons: `LOWER(column_name) = LOWER('value')`
+            - Use `LIKE` for case-insensitive substring matches: `LOWER(column_name) LIKE '%value%'`
+            - If the result is empty, try `LIKE` with other variations of the value.
             
             # BigQuery Database Schema
             The GoogleSQL query should be constructed based on the following database schema:
@@ -236,18 +408,26 @@ def get_valid_sql_query(user_query: str) -> Tuple[str, str]:
 
             # Begin
             Complete Steps (1) and (2).
-        """)},
+        """
+            ),
+        },
         {"role": "user", "content": "Analytics question: " + user_query},
     ]
-    
+    #             - Always exclude NULL values: `WHERE column_name IS NOT NULL`
+
     initial_sql_query_description, initial_sql_query = get_initial_sql_query(messages)
     print(f"Initial SQL query description:\n{initial_sql_query_description}")
     print(f"Initial SQL query:\n{initial_sql_query}")
-    
-    valid_sql_query = generate_valid_sql_query(query=initial_sql_query, messages=messages)
-    print(f"Valid SQL query:\n{valid_sql_query}")
 
-    return initial_sql_query_description, valid_sql_query
+    result: SQLExecutionResult = generate_valid_sql_query(
+        query=initial_sql_query,
+        description=initial_sql_query_description,
+        messages=messages
+    )
+    print(f"Final SQL query description:\n{result.description}")
+    print(f"Valid SQL query:\n{result.query}")
+
+    return result
 
 
 def execute_python_imports(imports: str) -> dict:
@@ -275,9 +455,13 @@ class QueryResult:
     query: str
     code: str
     chart: str
+    output: str
+    dataframe: str
 
 
-def execute_python_code(code: str, docstring: str, imports=None, local_variables=None) -> PythonExecutionResult:
+def execute_python_code(
+    code: str, docstring: str, imports=None, local_variables=None
+) -> PythonExecutionResult:
     """Takes a Python code string, executes it, and returns an instance of PythonExecutionResult"""
     result = ""
     io = ""
@@ -296,23 +480,40 @@ def execute_python_code(code: str, docstring: str, imports=None, local_variables
     if imports:
         imported_modules = execute_python_imports(imports=imports)
         local_variables.update(imported_modules)
-    
-    global_variables = local_variables
 
-    # for lib in libraries:
-    #     local_variables[lib] = importlib.import_module(lib)
+    global_variables = local_variables
 
     io_buffer = StringIO()
     try:
         with redirect_stdout(io_buffer):
-            exec(f"{code}", global_variables, local_variables)
-            fig = local_variables["fig"]
+            secure_exec(f"{code}", global_variables, local_variables)
+            fig = local_variables["fig"] = local_variables["generate_chart"](
+                local_variables["df"]
+            )
+            if not isinstance(fig, go.Figure):
+                error = f"The `generate_chart` function returned `{type(fig)}`. Please ensure that the function returns a single Plotly figure."
+
             io = io_buffer.getvalue()
-            return PythonExecutionResult(result=fig, local_variables=local_variables, io=io, error=error)
+            return PythonExecutionResult(
+                result=local_variables["fig"],
+                local_variables=local_variables,
+                io=io,
+                error=error,
+            )
     except Exception as e:
-        print(e)
-        error = "{}: {}".format(type(e).__name__, str(e))
-        return PythonExecutionResult(result=result, local_variables=local_variables, io=io, error=error)
+        tb = traceback.extract_tb(e.__traceback__)
+        file_name, line_number, function_name, line_data = tb[-1]
+        error = inspect.cleandoc(f"""
+        {type(e).__name__}: {str(e)}
+        On line {line_number}, function `{function_name}`, with code `{line_data}`
+        """)
+        return PythonExecutionResult(
+            result=result, local_variables=local_variables, io=io, error=error
+        )
+
+
+class ContextLengthError(Exception):
+    pass
 
 
 def get_initial_python_code(messages) -> str:
@@ -325,29 +526,34 @@ def get_initial_python_code(messages) -> str:
         temperature=GPT_TEMPERATURE,
     )
     response_message = response["choices"][0]["message"]
+    finish_reason = response["choices"][0]["finish_reason"]
+    if finish_reason == "length":
+        raise ContextLengthError
     messages.append(response_message)  # extend conversation with assistant's reply
     function_args = json.loads(
-        str(response_message["function_call"]["arguments"]),
-        strict=False
+        str(response_message["function_call"]["arguments"]), strict=False
     )
     docstring = function_args.get("docstring")
     code = function_args.get("code")
     return docstring, code
 
 
-def generate_valid_python_code(code: str, docstring="", messages=[], imports=None, local_variables=None, attempts=0, max_attempts=10) -> str:
+def generate_valid_python_code(
+    code: str,
+    docstring="",
+    messages=[],
+    imports=None,
+    local_variables=None,
+    attempts=0,
+    max_attempts=10,
+) -> str:
     result: PythonExecutionResult = execute_python_code(
-        code=code,
-        docstring=docstring,
-        imports=imports,
-        local_variables=local_variables
+        code=code, docstring=docstring, imports=imports, local_variables=local_variables
     )
     print(f"Code:\n{code}")
     print(f"Error in code: {result.error}")
 
-    figure_created = result.local_variables.get("fig", None)
-
-    if (result.error or not figure_created) and attempts < max_attempts:
+    if result.error and attempts < max_attempts:
         attempts += 1
         print(f"Attempt: {attempts} of {max_attempts}")
 
@@ -369,17 +575,6 @@ def generate_valid_python_code(code: str, docstring="", messages=[], imports=Non
                     """,
                 }
             )  # extend conversation with function response
-        
-        if not figure_created:
-            messages.append(
-                {
-                    "role": "user",
-                    "content": """
-                    # Missing Plotly Figure
-                    A Plotly figure named `fig` is expected but not found. Please create and display the figure using `fig.show()`.
-                    """,
-                }
-            )  # extend conversation with function response
 
         corrected_response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -392,22 +587,26 @@ def generate_valid_python_code(code: str, docstring="", messages=[], imports=Non
 
         print(f"Corrected response: {corrected_response}")
         corrected_response_message = corrected_response["choices"][0]["message"]
+        finish_reason = corrected_response["choices"][0]["finish_reason"]
+        if finish_reason == "length":
+            raise ContextLengthError
 
-        messages.append(corrected_response_message)  # extend conversation with assistant's reply
+        messages.append(
+            corrected_response_message
+        )  # extend conversation with assistant's reply
         function_args = json.loads(
-            str(corrected_response_message["function_call"]["arguments"]),
-            strict=False
+            str(corrected_response_message["function_call"]["arguments"]), strict=False
         )
         docstring = function_args.get("docstring")
         code = function_args.get("code")
-        
+
         return generate_valid_python_code(
             code=code,
             docstring=docstring,
             messages=messages,
             imports=imports,
             local_variables=local_variables,
-            attempts=attempts
+            attempts=attempts,
         )
     else:
         return code
@@ -423,39 +622,47 @@ import numpy as np
 
 def answer_user_query(user_query: str) -> QueryResult:
     # Returns
-    sql_query_description, valid_sql_query = get_valid_sql_query(user_query=user_query)
-    figure_json_string = ""
+    sql_result: SQLExecutionResult = get_valid_sql_query(user_query=user_query)
+    df = sql_result.dataframe
 
-    df = execute_sql_query(query=valid_sql_query)
     # Convert Period dtype to timestamp to ensure DataFrame is JSON serializable
-    df = df.astype({col: "datetime64[ns]" for col in df.columns if pd.api.types.is_period_dtype(df[col])})
-    # def convert_period_to_timestamp_in_df(df):
-    # for col in df.columns:
-    #     if pd.api.types.is_period_dtype(df[col]):
-    #         df[col] = df[col].apply(lambda x: pd.Timestamp(x).strftime('%Y-%m-%d %H:%M:%S') if pd.notna(x) else x)
-    # return df
-    messages = [
-        {"role": "system", "content": inspect.cleandoc(f"""
-            You're a Data Analyst proficient in GoogleSQL, Pandas, and Plotly. Your task is to analyze a dataset and visualize the results. Follow these steps:
+    df = df.astype(
+        {
+            col: "datetime64[ns]"
+            for col in df.columns
+            if pd.api.types.is_period_dtype(df[col])
+        }
+    )
 
-            1. **Understand Data:** Start by examining the GoogleSQL query to understand what data is available in the Pandas DataFrame `df`.
-            2. **Code Analysis:** Implement the function `generate_chart(df: pd.DataFrame)` to analyze `df`.
-            3. **Data Visualization:** Within `generate_chart(df: pd.DataFrame)`, use Plotly to create a chart that visualizes your analysis.
+    try:
+        df_summary = {column_name: f"{sample}: {dtype}" for column_name, sample, dtype in zip(df.columns, df.iloc[0], df.dtypes)}
+    except IndexError:
+        df_summary = "DataFrame is empty"
+
+    messages = [
+        {
+            "role": "system",
+            "content": inspect.cleandoc(f"""
+            You're a Data Analyst proficient in the use of GoogleSQL, Pandas, and Plotly.
+            You have been provided with a Pandas DataFrame `df` containing the results of a GoogleSQL query.
+            Your task is to use the data provided to answer a user's Analytics Question and visualise the results.
          
             # GoogleSQL Query
+            {sql_result.description}
+
             ```sql
-            {valid_sql_query}
+            {sql_result.query}
             ```
 
             # DataFrame Schema
-            Data Types: {df.dtypes}
+            {json.dumps(df_summary, indent=4, sort_keys=True)}
 
             # Instructions
             - Display text outputs using `print()`.
             - For visual outputs, use Plotly within the `generate_chart()` function.
+            - Complete the following code, replacing <YOUR CODE HERE> with your own code.
+            - Do not try to recreate the Pandas DataFrame `df` or generate sample data.
 
-            # Code Template
-            Complete the following code, replacing <YOUR CODE HERE> with your own code.
             ```python
             # Required Imports
             {imports}
@@ -473,16 +680,19 @@ def answer_user_query(user_query: str) -> QueryResult:
                 '''
                 <YOUR CODE HERE>
                 return fig
-
-            # Generate and Show Chart
-            fig = generate_chart(df.copy())
-            fig.show()
             ```
 
             # Analytics Question
-        """)},
+        """
+            ),
+        },
         {"role": "user", "content": user_query},
     ]
+    # Follow these steps:
+
+    # 1. **Understand Data:** Start by examining the GoogleSQL query to understand what data is available in the Pandas DataFrame `df`.
+    # 2. **Code Analysis:** Implement the function `generate_chart(df: pd.DataFrame)` to analyze `df`.
+    # 3. **Data Visualization:** Within `generate_chart(df: pd.DataFrame)`, use Plotly to create a chart that visualizes your analysis.
     docstring, initial_python_code = get_initial_python_code(messages)
     print(f"Initial Python code docstring:\n{docstring}")
     print(f"Initial Python code:\n{initial_python_code}")
@@ -503,7 +713,7 @@ def answer_user_query(user_query: str) -> QueryResult:
         docstring=docstring,
         messages=messages,
         imports=imports,
-        local_variables={"df": df.copy()}
+        local_variables={"df": df.copy()},
     )
     print(f"Valid Python code:\n{valid_python_code}")
 
@@ -515,34 +725,18 @@ def answer_user_query(user_query: str) -> QueryResult:
         code=valid_python_code,
         docstring=docstring,
         imports=imports,
-        local_variables={"df": df}
+        local_variables={"df": df},
     )
 
     print("\n")
-    # print(f"Final result: {result.result}")
-    # print(f"Final io: {result.io}")
     print(f"Final error: {result.error}")
 
     figure = result.local_variables.get("fig", None)
-    if figure:
-        figure_json_string = figure.to_json()
-        # figure_json = json.loads(figure_json_string, strict=False)
-        return QueryResult(
-            description=sql_query_description,
-            query=valid_sql_query,
-            code=valid_python_code,
-            chart=figure_json_string
-        )
-    else:
-        return QueryResult(
-            description=sql_query_description,
-            query=valid_sql_query,
-            code=valid_python_code,
-            chart=None,
-        )
-
-# answer_user_query("Give me a description of each of the columns in the dataset")
-# answer_user_query("Which protocol provided the lowest APRs in the past month?")
-# answer_user_query("Plot the average APR for the NFTfi protocol in the past 6 months")
-# answer_user_query("Plot a bar chart of the USD lending volume for all protocols")
-# answer_user_query("Plot a stacked area chart of the USD lending volume for all protocols over time")
+    return QueryResult(
+        description=sql_result.description,
+        query=sql_result.query,
+        code=valid_python_code,
+        chart=figure.to_json() if figure else None,
+        output=result.io,
+        dataframe=base64.b64encode(pickle.dumps(df)).decode("utf-8"),
+    )
