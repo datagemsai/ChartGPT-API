@@ -39,6 +39,9 @@ paths:
                 # $ref: '#/components/schemas/PlotlyFigureJSON'
                 type: object
                 properties:
+                  description:
+                    type: string
+                    description: "The description of the analysis."
                   query:
                     type: string
                     description: "The generated SQL query."
@@ -48,6 +51,12 @@ paths:
                   chart:
                     type: string
                     description: "The generated Plotly chart JSON string."
+                  output:
+                    type: string
+                    description: "The stdout output of the Python code."
+                  dataframe:
+                    type: string
+                    description: "The generated Pandas dataframe."
             image/png:
               schema:
                 type: string
