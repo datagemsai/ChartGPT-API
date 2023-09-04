@@ -493,17 +493,17 @@ def execute_python_code(
     try:
         with redirect_stdout(io_buffer):
             secure_exec(f"{code}", global_variables, local_variables)
-            fig = local_variables["fig"] = local_variables["generate_chart"](
-                local_variables["df"]
-            )
-            if not isinstance(fig, go.Figure):
-                error = f"The `generate_chart` function returned `{type(fig)}`. Please ensure that the function returns a single Plotly figure."
-
-            io = io_buffer.getvalue()
+            answer_question = local_variables.get("answer_question", None)
+            if not callable(answer_question):
+                error = "The `answer_question` function was not found. Please ensure that the function is named `answer_question` and is defined in the Python code."
+            else:
+                result = local_variables["fig"] = answer_question(local_variables["df"])
+                if not isinstance(result, go.Figure):
+                    error = f"The `answer_question` function returned `{type(result)}`. Please ensure that the function returns a single Plotly figure."
             return PythonExecutionResult(
-                result=local_variables["fig"],
+                result=result,
                 local_variables=local_variables,
-                io=io,
+                io=io_buffer.getvalue(),
                 error=error,
             )
     except Exception as e:
@@ -671,7 +671,7 @@ def answer_user_query(user_query: str) -> QueryResult:
 
             # Instructions
             - Display text outputs using `print()`.
-            - For visual outputs, use Plotly within the `generate_chart()` function.
+            - For visual outputs, use Plotly within the `answer_question()` function.
             - Complete the following code, replacing <YOUR CODE HERE> with your own code.
             - Do not try to recreate the Pandas DataFrame `df` or generate sample data.
 
@@ -680,7 +680,7 @@ def answer_user_query(user_query: str) -> QueryResult:
             {imports}
 
             # Analysis and Visualization Function
-            def generate_chart(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+            def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
                 '''
                 Function to analyze the data and generate a Plotly chart.
                 
@@ -703,8 +703,8 @@ def answer_user_query(user_query: str) -> QueryResult:
     # Follow these steps:
 
     # 1. **Understand Data:** Start by examining the GoogleSQL query to understand what data is available in the Pandas DataFrame `df`.
-    # 2. **Code Analysis:** Implement the function `generate_chart(df: pd.DataFrame)` to analyze `df`.
-    # 3. **Data Visualization:** Within `generate_chart(df: pd.DataFrame)`, use Plotly to create a chart that visualizes your analysis.
+    # 2. **Code Analysis:** Implement the function `answer_question(df: pd.DataFrame)` to analyze `df`.
+    # 3. **Data Visualization:** Within `answer_question(df: pd.DataFrame)`, use Plotly to create a chart that visualizes your analysis.
     docstring, initial_python_code = get_initial_python_code(messages)
     print(f"Initial Python code docstring:\n{docstring}")
     print(f"Initial Python code:\n{initial_python_code}")
