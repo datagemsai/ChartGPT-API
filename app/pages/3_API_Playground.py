@@ -4,7 +4,6 @@ import time
 import sqlparse
 import streamlit as st
 import openapi_client
-from openapi_client.apis.tags import default_api
 from app.auth import requires_auth
 from chartgpt.app import client
 from api.auth import create_api_key, get_api_keys
@@ -60,7 +59,7 @@ def main(user_id, user_email):
             with openapi_client.ApiClient(configuration) as api_client:
                 with st.spinner("Generating chart..."):
                     # Create an instance of the API class
-                    api_instance = default_api.DefaultApi(api_client)
+                    api_instance = openapi_client.DefaultApi(api_client)
                     try:
                         start_time = time.time()
                         # Generate a Plotly chart from a question
@@ -119,7 +118,7 @@ def main(user_id, user_email):
             with openapi_client.ApiClient(configuration) as api_client:
                 with st.spinner("Generating SQL query..."):
                     # Create an instance of the API class
-                    api_instance = default_api.DefaultApi(api_client)
+                    api_instance = openapi_client.DefaultApi(api_client)
                     try:
                         # Generate an SQL query from a question
                         api_response = api_instance.api_sql_generate_sql({
