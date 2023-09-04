@@ -11,6 +11,7 @@ faiss-cpu
 streamlit==1.25.0
 streamlit-elements==0.1.0
 # streamlit_cookies_manager==0.2.0
+extra_streamlit_components==0.1.56
 
 # Google Cloud Platform
 httpx_oauth==0.13.0
@@ -35,7 +36,7 @@ statsmodels
 discord~=2.3.2
 kaleido
 
-# Mischeallaneous
+# Miscellaneous
 
 # altair
 watchdog
@@ -73,16 +74,16 @@ nbformat
 sqlparse~=0.4.4
 google_cloud_api_keys
 
+# API
+openapi-generator
 gunicorn
 connexion[swagger-ui]==2.14.2
 api/clients/python_client/
-
 flask>=2.0.3
+flask-cors
 authlib>=1.0
-extra_streamlit_components==0.1.56
 
 python-jose
-flask-cors
 six
 st_pages==0.4.4
 RestrictedPython==6.1
