@@ -7,10 +7,7 @@ from langchain.prompts.prompt import PromptTemplate
 from langchain.agents.agent import AgentOutputParser
 from pydantic import root_validator
 from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
-from langchain.schema import (
-    AgentAction,
-    BaseMessage
-)
+from langchain.schema import AgentAction, BaseMessage
 from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 from chartgpt.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 import logging
@@ -18,6 +15,7 @@ from langchain.agents.mrkl.base import ZeroShotAgent
 
 
 logger = logging.getLogger(__name__)
+
 
 class CustomAgent(ZeroShotAgent):
     output_parser: AgentOutputParser = Field(default_factory=CustomOutputParser)
@@ -53,7 +51,9 @@ class CustomAgent(ZeroShotAgent):
         Returns:
             A PromptTemplate with the template assembled from the pieces here.
         """
-        tool_strings = "\n\n".join([f"## {tool.name}:\n\n{tool.description}" for tool in tools])
+        tool_strings = "\n\n".join(
+            [f"## {tool.name}:\n\n{tool.description}" for tool in tools]
+        )
         # tool_names = ", ".join([tool.name for tool in tools])
         # format_instructions = format_instructions.format(tool_names=tool_names)
         template = "\n\n".join([prefix, tool_strings, format_instructions, suffix])
@@ -78,7 +78,7 @@ class CustomAgent(ZeroShotAgent):
             else:
                 raise ValueError(f"Got unexpected prompt type {type(prompt)}")
         return values
-    
+
     def _construct_scratchpad(
         self, intermediate_steps: List[Tuple[AgentAction, str]]
     ) -> Union[str, List[BaseMessage]]:
@@ -90,6 +90,8 @@ class CustomAgent(ZeroShotAgent):
                 observation = str(observation)[:character_limit]
             thoughts += action.log
             thoughts += f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}"
-        logger.info(f"===================== scratchpad start =====================\n{thoughts}")
+        logger.info(
+            f"===================== scratchpad start =====================\n{thoughts}"
+        )
         logger.info("===================== scratchpad end =====================")
         return thoughts

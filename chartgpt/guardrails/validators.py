@@ -28,23 +28,25 @@ class BugFreeBigQuerySQL(Validator):
         on_fail: Optional[Callable] = None,
     ):
         super().__init__(on_fail=on_fail)
-        credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False))
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)
+        )
         client = bigquery.Client(credentials=credentials)
         self._client = client
 
-    
     def _validate_sql(self, sql: str) -> List[str]:
         """Validate the BigQuery SQL using a BigQuery dry run."""
         try:
-            query_job = self._client.query(sql, job_config=bigquery.QueryJobConfig(dry_run=True))
-            errors = [err['message'] for err in query_job.errors]
+            query_job = self._client.query(
+                sql, job_config=bigquery.QueryJobConfig(dry_run=True)
+            )
+            errors = [err["message"] for err in query_job.errors]
         except Exception as e:
             errors = [str(e)]
         print(sql)
         print(errors)
         return errors
 
-    
     def validate(self, key: str, value: Any, schema: Union[Dict, List]) -> Dict:
         errors = self._validate_sql(value)
         print(errors)

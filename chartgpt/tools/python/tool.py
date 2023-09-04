@@ -75,13 +75,19 @@ class PythonAstREPLTool(BaseTool):
             if self.query_post_processing:
                 query = self.query_post_processing(query)
             self.globals = self.locals
-            app.logger.info("Executing `exec(ast.unparse(module), self.globals, self.locals)`")
+            app.logger.info(
+                "Executing `exec(ast.unparse(module), self.globals, self.locals)`"
+            )
             app.logger.info("Raw query:\n\n%s", query)
             tree = ast.parse(query)
             module = ast.Module(tree.body[:-1], type_ignores=[])
             app.logger.info(ast.unparse(module))
             if self.secure_execution:
-                secure_exec(ast.unparse(module), custom_globals=self.globals, custom_locals=self.locals)
+                secure_exec(
+                    ast.unparse(module),
+                    custom_globals=self.globals,
+                    custom_locals=self.locals,
+                )
             else:
                 exec(ast.unparse(module), self.globals, self.locals)  # type: ignore
             module_end = ast.Module(tree.body[-1:], type_ignores=[])
@@ -89,10 +95,16 @@ class PythonAstREPLTool(BaseTool):
             io_buffer = StringIO()
             try:
                 with redirect_stdout(io_buffer):
-                    app.logger.info("Executing `eval(module_end_str, self.globals, self.locals)`")
+                    app.logger.info(
+                        "Executing `eval(module_end_str, self.globals, self.locals)`"
+                    )
                     app.logger.info(module_end_str)
                     if self.secure_execution:
-                        ret = secure_eval(module_end_str, custom_globals=self.globals, custom_locals=self.locals)
+                        ret = secure_eval(
+                            module_end_str,
+                            custom_globals=self.globals,
+                            custom_locals=self.locals,
+                        )
                     else:
                         ret = eval(module_end_str, self.globals, self.locals)
                     if ret is None:
@@ -102,10 +114,16 @@ class PythonAstREPLTool(BaseTool):
             except Exception as e:
                 app.logger.info(e)
                 with redirect_stdout(io_buffer):
-                    app.logger.info("Executing `eval(module_end_str, self.globals, self.locals)`")
+                    app.logger.info(
+                        "Executing `eval(module_end_str, self.globals, self.locals)`"
+                    )
                     app.logger.info(module_end_str)
                     if self.secure_execution:
-                        secure_exec(module_end_str, custom_globals=self.globals, custom_locals=self.locals)
+                        secure_exec(
+                            module_end_str,
+                            custom_globals=self.globals,
+                            custom_locals=self.locals,
+                        )
                     else:
                         exec(module_end_str, self.globals, self.locals)
                 return io_buffer.getvalue()

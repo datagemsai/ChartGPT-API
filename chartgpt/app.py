@@ -23,22 +23,29 @@ scopes = [
 ]
 
 if app.ENV == "LOCAL":
-    credentials = service_account.Credentials.from_service_account_info(json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)).with_scopes(scopes)
+    credentials = service_account.Credentials.from_service_account_info(
+        json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)
+    ).with_scopes(scopes)
     client = bigquery.Client(credentials=credentials)
 else:
     # If deployed using App Engine, use default App Engine credentials
     client = bigquery.Client()
 
+
 def get_agent(
-        secure_execution: bool = True,
-        temperature: float = 0.0,
-        datasets: Optional[List[Dataset]] = None,
-        callbacks: Optional[List] = None
-    ):
+    secure_execution: bool = True,
+    temperature: float = 0.0,
+    datasets: Optional[List[Dataset]] = None,
+    callbacks: Optional[List] = None,
+):
     if datasets:
         available_dataset_ids = get_dataset_ids(client=client)
-        invalid_dataset_ids = set([dataset.id for dataset in datasets]) - set(available_dataset_ids)
-        assert not invalid_dataset_ids, f"Dataset IDs {invalid_dataset_ids} not available"
+        invalid_dataset_ids = set([dataset.id for dataset in datasets]) - set(
+            available_dataset_ids
+        )
+        assert (
+            not invalid_dataset_ids
+        ), f"Dataset IDs {invalid_dataset_ids} not available"
     return create_bigquery_agent(
         ChatOpenAI(
             model_name=OPENAI_MODEL,
@@ -56,6 +63,11 @@ def get_agent(
         max_execution_time=120,  # seconds
         early_stopping_method="generate",
         return_intermediate_steps=True,
-        memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True, input_key='input', output_key="output"),
+        memory=ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True,
+            input_key="input",
+            output_key="output",
+        ),
         secure_execution=secure_execution,
     )
