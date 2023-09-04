@@ -68,10 +68,10 @@ def main(user_id, user_email):
                             "type": "json",
                         })
                         end_time = time.time()
-                        sql_query = api_response.body["query"]
-                        python_code = api_response.body["code"]
+                        sql_query = api_response.query
+                        python_code = api_response.code
                         formatted_sql_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
-                        figure_json_string = api_response.body["chart"]
+                        figure_json_string = api_response.chart
                         figure_json = json.loads(figure_json_string, strict=False)
                         
                         st.markdown("**API response:**")
@@ -124,7 +124,7 @@ def main(user_id, user_email):
                         api_response = api_instance.api_sql_generate_sql({
                             "question": question,
                         })
-                        sql_query = api_response.body["query"]
+                        sql_query = api_response.query
                         formatted_sql_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
                         st.markdown("**API response:**")
                         st.json({"query": sql_query}, expanded=False)
