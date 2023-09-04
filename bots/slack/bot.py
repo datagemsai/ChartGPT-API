@@ -96,32 +96,34 @@ Response time: {end_time - start_time:.2f} seconds
             response_type="in_channel",
         )
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            dfi.export(
-                dataframe.head(),
-                f"{tmpdirname}/df_head.png",
-                max_rows=10,
-                table_conversion="matplotlib",
-            )
-            dfi.export(
-                dataframe.describe(),
-                f"{tmpdirname}/df_describe.png",
-                table_conversion="matplotlib",
-            )
-
-            app.client.files_upload_v2(
-                channel=body["channel_id"],
-                file=open(f"{tmpdirname}/df_head.png", "rb"),
-                filename="df_head.png",
-                title="ChartGPT Table",
-            )
-
-            app.client.files_upload_v2(
-                channel=body["channel_id"],
-                file=open(f"{tmpdirname}/df_describe.png", "rb"),
-                filename="df_describe.png",
-                title="ChartGPT Table",
-            )
+        if not dataframe.empty:
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                # Define the data and filenames
+                data_and_files = [
+                    (dataframe, "df_head.png"),
+                    (dataframe.describe(), "df_describe.png")
+                ]
+                
+                # Export the dataframes as images and upload them
+                for data, filename in data_and_files:
+                    output_path = f"{tmpdirname}/{filename}"
+                    
+                    # Export dataframe as an image
+                    dfi.export(
+                        data,
+                        output_path,
+                        max_rows=10,
+                        table_conversion="matplotlib"
+                    )
+                    
+                    # Upload the image
+                    with open(output_path, "rb") as file:
+                        app.client.files_upload_v2(
+                            channel=body["channel_id"],
+                            file=file,
+                            filename=filename,
+                            title="ChartGPT Table"
+                        )
 
         respond(
             inspect.cleandoc(
@@ -136,20 +138,23 @@ Response time: {end_time - start_time:.2f} seconds
             response_type="in_channel",
         )
 
-        figure_json_string = query_result.chart
-        figure_json = json.loads(figure_json_string, strict=False)
-        fig = go.Figure(figure_json)
-        img_byte_arr = io.BytesIO()
-        fig.write_image(img_byte_arr, format="png")
-        chart_png_data = img_byte_arr.getvalue()
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            figure_json_string = query_result.chart
+            figure_json = json.loads(figure_json_string, strict=False)
+            fig = go.Figure(figure_json)
+            fig.write_image(f"{tmpdirname}/chart.png")
 
-        app.client.files_upload_v2(
-            channel=body["channel_id"],
-            file=chart_png_data,
-            filename="chart.png",
-            title="ChartGPT Chart",
-            initial_comment=f"ChartGPT chart for question: {question}",
-        )
+            # img_byte_arr = io.BytesIO()
+            # fig.write_image(img_byte_arr, format="png")
+            # chart_png_data = img_byte_arr.getvalue()
+
+            app.client.files_upload_v2(
+                channel=body["channel_id"],
+                file=f"{tmpdirname}/chart.png",
+                filename="chart.png",
+                title="ChartGPT Chart",
+                initial_comment=f"ChartGPT chart for question: {question}",
+            )
     else:
         respond(
             f"<@{body['user_id']}> Sorry, I couldn't answer your question.",
