@@ -144,6 +144,9 @@ allowed_imports = {
     "pickle",
     "csv",
     "re",
+    # Types
+    "typing",
+    "Optional",
 }
 
 
