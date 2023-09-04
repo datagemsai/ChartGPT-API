@@ -28,6 +28,6 @@ datasets = [
             "Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
             "Plot a bar chart of the USD lending volume for all protocols.",
             "Plot a stacked area chart of the USD lending volume for all protocols.",
-        ]
+        ],
     ),
 ]

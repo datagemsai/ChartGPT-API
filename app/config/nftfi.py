@@ -3,10 +3,10 @@ from app.config.default import Dataset
 
 datasets = [
     Dataset(
-        name = "Dune Datasets",
-        id = "dune_dataset",
-        description = "A dataset of Dune Analytics datasets",
-        sample_questions = [
+        name="Dune Datasets",
+        id="dune_dataset",
+        description="A dataset of Dune Analytics datasets",
+        sample_questions=[
             "Plot the borrow volume across the protocols nftfi, benddao, arcade, jpegd from December 2022 to March 2023",
             "Give three visualizations from dune_dataset",
             "Plot the 30-day median number of users starting from August 2022",
@@ -21,20 +21,20 @@ datasets = [
         ],
     ),
     Dataset(
-        name = "NFT Lending Aggregated Users",
-        id = "nft_lending_aggregated_users",
-        description = "A dataset of NFT lending aggregated users",
-        sample_questions = [
+        name="NFT Lending Aggregated Users",
+        id="nft_lending_aggregated_users",
+        description="A dataset of NFT lending aggregated users",
+        sample_questions=[
             "Plot daily users for nftfi, x2y2 and arcade",
             "Plot the weekly distribution of unique users over time",
             "On what date x2y2 had the highest number of users?",  # data request
-        ]
+        ],
     ),
     Dataset(
-        name = "NFT Lending Aggregated Borrow",
-        id = "nft_lending_aggregated_borrow",
-        description = "A dataset of NFT lending aggregated borrow",
-        sample_questions = [
+        name="NFT Lending Aggregated Borrow",
+        id="nft_lending_aggregated_borrow",
+        description="A dataset of NFT lending aggregated borrow",
+        sample_questions=[
             "Plot the borrow volume across the protocols nftfi, benddao, arcade, jpegd from December 2022 to March 2023",
         ],
     ),

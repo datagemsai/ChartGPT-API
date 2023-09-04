@@ -8,5 +8,5 @@ import cProfile
 from app.Home import main
 
 profiler = cProfile.Profile()
-profiler.runctx('main()', globals(), locals())
-profiler.dump_stats('app.profile')
+profiler.runctx("main()", globals(), locals())
+profiler.dump_stats("app.profile")

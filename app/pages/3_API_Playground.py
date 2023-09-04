@@ -13,6 +13,7 @@ from app.components.notices import Notices
 # Show notices
 Notices()
 
+
 @requires_auth
 def main(user_id, user_email):
     # Clear prior query
@@ -30,7 +31,7 @@ def main(user_id, user_email):
     # See configuration.py for a list of all supported configuration parameters.
     configuration = openapi_client.Configuration(
         # TODO Fetch from environment variable
-        host = "http://0.0.0.0:8081"
+        host="http://0.0.0.0:8081"
     )
 
     # if st.button("Create API key"):
@@ -48,13 +49,16 @@ def main(user_id, user_email):
 
     with st.form(key="chart_api_request"):
         st.markdown("### API endpoint: `/chart`")
-        question = st.text_input("question", value="Plot the average APR for the ***REMOVED*** protocol in the past 6 months.")
+        question = st.text_input(
+            "question",
+            value="Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
+        )
         submitted = st.form_submit_button("Submit")
 
         if submitted:
             # TODO Enable API key authentication
             # configuration.api_key['ApiKeyAuth'] = api_key
-            configuration.api_key['ApiKeyAuth'] = "abc"
+            configuration.api_key["ApiKeyAuth"] = "abc"
             # Enter a context with an instance of the API client
             with openapi_client.ApiClient(configuration) as api_client:
                 with st.spinner("Generating chart..."):
@@ -63,29 +67,42 @@ def main(user_id, user_email):
                     try:
                         start_time = time.time()
                         # Generate a Plotly chart from a question
-                        api_response = api_instance.api_chart_generate_chart({
-                            "question": question,
-                            "type": "json",
-                        })
+                        api_response = api_instance.api_chart_generate_chart(
+                            {
+                                "question": question,
+                                "type": "json",
+                            }
+                        )
                         end_time = time.time()
                         sql_query = api_response.query
                         python_code = api_response.code
-                        formatted_sql_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
+                        formatted_sql_query = sqlparse.format(
+                            sql_query, reindent=True, keyword_case="upper"
+                        )
                         figure_json_string = api_response.chart
                         figure_json = json.loads(figure_json_string, strict=False)
-                        
+
                         st.markdown("**API response:**")
-                        st.json({
-                            "query": sql_query,
-                            "code": python_code,
-                            "chart": "<Plotly chart JSON string>"
-                        }, expanded=False)
-                        st.markdown(f"**API response time:** {end_time - start_time:.2f} seconds")
+                        st.json(
+                            {
+                                "query": sql_query,
+                                "code": python_code,
+                                "chart": "<Plotly chart JSON string>",
+                            },
+                            expanded=False,
+                        )
+                        st.markdown(
+                            f"**API response time:** {end_time - start_time:.2f} seconds"
+                        )
 
                         st.markdown("**Validated SQL query:**")
-                        st.markdown(inspect.cleandoc(f"""```sql
+                        st.markdown(
+                            inspect.cleandoc(
+                                f"""```sql
                         {formatted_sql_query}
-                        """))
+                        """
+                            )
+                        )
                         st.markdown("\n")
 
                         query_job = client.query(sql_query)
@@ -94,25 +111,31 @@ def main(user_id, user_email):
                         st.dataframe(df)
 
                         st.markdown("**Validated Python code:**")
-                        st.markdown(inspect.cleandoc(f"""```python
+                        st.markdown(
+                            inspect.cleandoc(
+                                f"""```python
                         {python_code}
-                        """))
-                        
+                        """
+                            )
+                        )
+
                         st.markdown("**Generated chart:**")
                         st.plotly_chart(figure_json)
                     except openapi_client.ApiException as e:
                         st.warning("API call failed")
 
-
     with st.form(key="sql_api_request"):
         st.markdown("### API endpoint: `/sql`")
-        question = st.text_input("question", value="Get the average APR for the ***REMOVED*** protocol in the past 6 months.")
+        question = st.text_input(
+            "question",
+            value="Get the average APR for the ***REMOVED*** protocol in the past 6 months.",
+        )
         submitted = st.form_submit_button("Submit")
 
         if submitted:
             # TODO Enable API key authentication
             # configuration.api_key['ApiKeyAuth'] = api_key
-            configuration.api_key['ApiKeyAuth'] = "abc"
+            configuration.api_key["ApiKeyAuth"] = "abc"
 
             # Enter a context with an instance of the API client
             with openapi_client.ApiClient(configuration) as api_client:
@@ -121,19 +144,28 @@ def main(user_id, user_email):
                     api_instance = openapi_client.DefaultApi(api_client)
                     try:
                         # Generate an SQL query from a question
-                        api_response = api_instance.api_sql_generate_sql({
-                            "question": question,
-                        })
+                        api_response = api_instance.api_sql_generate_sql(
+                            {
+                                "question": question,
+                            }
+                        )
                         sql_query = api_response.query
-                        formatted_sql_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
+                        formatted_sql_query = sqlparse.format(
+                            sql_query, reindent=True, keyword_case="upper"
+                        )
                         st.markdown("**API response:**")
                         st.json({"query": sql_query}, expanded=False)
                         st.markdown("**Validated SQL query:**")
-                        st.markdown(inspect.cleandoc(f"""```sql
+                        st.markdown(
+                            inspect.cleandoc(
+                                f"""```sql
                         {formatted_sql_query}
-                        """))
+                        """
+                            )
+                        )
                     except openapi_client.ApiException as e:
                         st.warning("API call failed")
+
 
 if __name__ == "__main__":
     main()
