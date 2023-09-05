@@ -2,12 +2,10 @@
 # pylint: disable=C0116
 
 import base64
-import io
 import json
 import os
 import pickle
-import time
-from typing import Optional
+from bots.api import ask_chartgpt
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import dataframe_image as dfi
@@ -16,6 +14,8 @@ import plotly.graph_objects as go
 import sqlparse
 import pandas as pd
 import tempfile
+import chartgpt_client
+from chartgpt_client.models import OutputType
 
 # Import environment variables from .env file
 from dotenv import load_dotenv
@@ -24,37 +24,6 @@ load_dotenv("bots/slack/.env")
 
 # Install the Slack app and get xoxb- token in advance
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
-
-# ChartGPT API
-import chartgpt_client
-from chartgpt_client.models import OutputType
-from chartgpt_client.exceptions import ApiException
-
-
-configuration = chartgpt_client.Configuration(
-    # TODO Fetch from environment variable
-    host="http://0.0.0.0:8081"
-)
-configuration.api_key["ApiKeyAuth"] = "abc"
-
-
-def ask_chartgpt(question) -> Optional[chartgpt_client.Response]:
-    with chartgpt_client.ApiClient(configuration) as api_client:
-        api_instance = chartgpt_client.DefaultApi(api_client)
-        try:
-            api_request_ask_chartgpt_request = chartgpt_client.ApiRequestAskChartgptRequest(
-                prompt = question,
-                output_type = "plotly_chart",
-            )
-            api_response  = api_instance.api_request_ask_chartgpt(
-                api_request_ask_chartgpt_request
-            )
-            return api_response
-        except ApiException as e:
-            app.logger.error(
-                f"Exception when calling DefaultApi->api_chart_generate_chart: {e}"
-            )
-            return None
 
 
 @app.command("/ask_chartgpt")
@@ -77,21 +46,25 @@ def handle_ask_chartgpt(ack, body, respond):
         return
 
     respond(
-            inspect.cleandoc(
-                        f"""
+        inspect.cleandoc(
+            f"""
 <@{body['user_id']}> Here is the result:
 
 Response time: {response.finished_at - response.created_at:.2f} seconds
 
 *Question:* {response.prompt}
 
-"""), response_type="in_channel"
+"""
+        ),
+        response_type="in_channel",
     )
 
     for output in response.outputs:
         if output.type == OutputType.PLOTLY_CHART.value:
             if output.description:
-                respond(inspect.cleandoc(output.description), response_type="in_channel")
+                respond(
+                    inspect.cleandoc(output.description), response_type="in_channel"
+                )
             with tempfile.TemporaryDirectory() as tmpdirname:
                 figure_json_string = output.value
                 figure_json = json.loads(figure_json_string, strict=False)
@@ -113,7 +86,9 @@ Response time: {response.finished_at - response.created_at:.2f} seconds
             respond(
                 (
                     f"{output.description}"
-                    f"\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```" if output.value else ""
+                    f"\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```"
+                    if output.value
+                    else ""
                 ),
                 response_type="in_channel",
             )
@@ -123,35 +98,37 @@ Response time: {response.finished_at - response.created_at:.2f} seconds
                     base64.b64decode(output.value.encode())
                 )
             except Exception as e:
-                app.logger.error(f"Exception when converting DataFrame to markdown: {e}")
+                app.logger.error(
+                    f"Exception when converting DataFrame to markdown: {e}"
+                )
                 dataframe = pd.DataFrame()
             if not dataframe.empty:
                 with tempfile.TemporaryDirectory() as tmpdirname:
                     # Define the data and filenames
                     data_and_files = [
                         (dataframe, "df_head.png"),
-                        (dataframe.describe(), "df_describe.png")
+                        (dataframe.describe(), "df_describe.png"),
                     ]
-                    
+
                     # Export the dataframes as images and upload them
                     for data, filename in data_and_files:
                         output_path = f"{tmpdirname}/{filename}"
-                        
+
                         # Export dataframe as an image
                         dfi.export(
                             data,
                             output_path,
                             max_rows=10,
-                            table_conversion="matplotlib"
+                            table_conversion="matplotlib",
                         )
-                        
+
                         # Upload the image
                         with open(output_path, "rb") as file:
                             app.client.files_upload_v2(
                                 channel=body["channel_id"],
                                 file=file,
                                 filename=filename,
-                                title="ChartGPT Table"
+                                title="ChartGPT Table",
                             )
         elif output.type == OutputType.PYTHON_CODE.value:
             respond(
