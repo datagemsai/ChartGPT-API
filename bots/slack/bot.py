@@ -111,8 +111,9 @@ Response time: {response.finished_at - response.created_at:.2f} seconds
                 )
         elif output.type == OutputType.SQL_QUERY.value:
             respond(
-                inspect.cleandoc(
-                    (f"{output.description}\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```")
+                (
+                    f"{output.description}"
+                    f"\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```" if output.value else ""
                 ),
                 response_type="in_channel",
             )

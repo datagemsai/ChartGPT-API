@@ -489,7 +489,8 @@ def answer_user_query(
     print("\n")
     print(f"Final error: {code_generation_result.error}")
 
-    figure = code_generation_result.local_variables.get("fig", None)
+    # TODO Handle all output types:
+    output_value = code_generation_result.output
     created_at = int(time.time())
 
     outputs = [
@@ -519,14 +520,14 @@ def answer_user_query(
             created_at=created_at,
             description="",
             type=OutputType.PYTHON_OUTPUT.value,
-            value=str(code_generation_result.output),
+            value=str(code_generation_result.io),
         ),
         Output(
             index=4,
             created_at=created_at,
             description=output_description,
             type=OutputType.PLOTLY_CHART.value,
-            value=str(figure.to_json() if figure else None),
+            value=str(output_value.to_json() if output_value else None),
         )
     ]
 
