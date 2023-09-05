@@ -72,13 +72,13 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     message_text = inspect.cleandoc(
         f"""
-Here is the result:
+        Here is the result:
 
-Response time: {response.finished_at - response.created_at:.2f} seconds
+        Response time: {response.finished_at - response.created_at:.0f} seconds
 
-*Question:* {response.prompt}
+        *Question:* {response.prompt}
 
-"""
+        """
     )
     message = await update_message(update, context, message, message_text)
 

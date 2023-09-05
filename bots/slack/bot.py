@@ -50,7 +50,7 @@ def handle_ask_chartgpt(ack, body, respond):
             f"""
 <@{body['user_id']}> Here is the result:
 
-Response time: {response.finished_at - response.created_at:.2f} seconds
+Response time: {response.finished_at - response.created_at:.0f} seconds
 
 *Question:* {response.prompt}
 
@@ -61,10 +61,10 @@ Response time: {response.finished_at - response.created_at:.2f} seconds
 
     for output in response.outputs:
         if output.type == OutputType.PLOTLY_CHART.value:
-            if output.description:
-                respond(
-                    inspect.cleandoc(output.description), response_type="in_channel"
-                )
+            # if output.description:
+            #     respond(
+            #         inspect.cleandoc(output.description), response_type="in_channel"
+            #     )
             with tempfile.TemporaryDirectory() as tmpdirname:
                 figure_json_string = output.value
                 figure_json = json.loads(figure_json_string, strict=False)
