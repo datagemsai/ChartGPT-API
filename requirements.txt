@@ -81,6 +81,12 @@ flask>=2.0.3
 flask-cors
 authlib>=1.0
 
+# FastAPI
+# fastapi==0.45.0
+# uvicorn
+# pydantic>=1.2.0,<2.0.0
+# pydantic_settings
+
 python-jose
 six
 st_pages==0.4.4

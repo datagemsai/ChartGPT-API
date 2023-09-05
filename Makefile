@@ -23,7 +23,7 @@ start_app_production:
 	. venv/bin/activate; python -m streamlit run app/Home.py
 
 start_api:
-	. venv/bin/activate; python -m api.app
+	. venv/bin/activate; python -m api
 
 start_discord_bot:
 	. venv/bin/activate; python -m app.discord_bot

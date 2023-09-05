@@ -15,9 +15,9 @@
 import unittest
 import datetime
 
-import openapi_client
-from openapi_client.models.api_chart_generate_chart_request import ApiChartGenerateChartRequest  # noqa: E501
-from openapi_client.rest import ApiException
+import chartgpt_client
+from chartgpt_client.models.api_chart_generate_chart_request import ApiChartGenerateChartRequest  # noqa: E501
+from chartgpt_client.rest import ApiException
 
 class TestApiChartGenerateChartRequest(unittest.TestCase):
     """ApiChartGenerateChartRequest unit test stubs"""
@@ -35,7 +35,7 @@ class TestApiChartGenerateChartRequest(unittest.TestCase):
             optional params are included """
         # uncomment below to create an instance of `ApiChartGenerateChartRequest`
         """
-        model = openapi_client.models.api_chart_generate_chart_request.ApiChartGenerateChartRequest()  # noqa: E501
+        model = chartgpt_client.models.api_chart_generate_chart_request.ApiChartGenerateChartRequest()  # noqa: E501
         if include_optional :
             return ApiChartGenerateChartRequest(
                 question = 'Plot the average APR for the NFTfi protocol in the past 6 months.', 

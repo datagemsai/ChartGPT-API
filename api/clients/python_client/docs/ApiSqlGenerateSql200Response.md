@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from openapi_client.models.api_sql_generate_sql200_response import ApiSqlGenerateSql200Response
+from chartgpt_client.models.api_sql_generate_sql200_response import ApiSqlGenerateSql200Response
 
 # TODO update the JSON string below
 json = "{}"
