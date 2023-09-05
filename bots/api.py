@@ -1,3 +1,4 @@
+import app
 from typing import Optional
 
 import chartgpt_client

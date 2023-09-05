@@ -38,6 +38,8 @@ def handle_ask_chartgpt(ack, body, respond):
     respond("I'm thinking... :thinking_face:", response_type="in_channel")
     response: chartgpt_client.Response = ask_chartgpt(question)
 
+    channel_id = body["channel_id"]
+
     if not response:
         respond(
             f"<@{body['user_id']}> Sorry, I couldn't answer your question.",
@@ -45,22 +47,22 @@ def handle_ask_chartgpt(ack, body, respond):
         )
         return
 
-    respond(
-        inspect.cleandoc(
+    initial_response = app.client.chat_postMessage(
+        text=inspect.cleandoc(
             f"""
-<@{body['user_id']}> Here is the result:
+<@{body['user_id']}> Here is the result 🧵
 
 Response time: {response.finished_at - response.created_at:.0f} seconds
 
 *Question:* {response.prompt}
-
 """
         ),
-        response_type="in_channel",
+        channel=channel_id,
     )
 
+    thread_ts = initial_response["ts"]
     for output in response.outputs:
-        if output.type == OutputType.PLOTLY_CHART.value:
+        if output.type == OutputType.PLOTLY_CHART.value and output.value:
             # if output.description:
             #     respond(
             #         inspect.cleandoc(output.description), response_type="in_channel"
@@ -76,23 +78,25 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
                 # chart_png_data = img_byte_arr.getvalue()
 
                 app.client.files_upload_v2(
-                    channel=body["channel_id"],
+                    channel=channel_id,
                     file=f"{tmpdirname}/chart.png",
                     filename="chart.png",
                     title="ChartGPT Chart",
                     # initial_comment=f"ChartGPT chart for question: {question}",
+                    thread_ts=thread_ts,
                 )
-        elif output.type == OutputType.SQL_QUERY.value:
-            respond(
-                (
+        elif output.type == OutputType.SQL_QUERY.value and output.value:
+            app.client.chat_postMessage(
+                text=(
                     f"{output.description}"
                     f"\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```"
                     if output.value
                     else ""
                 ),
-                response_type="in_channel",
+                channel=channel_id,
+                thread_ts=thread_ts,
             )
-        elif output.type == OutputType.PANDAS_DATAFRAME.value:
+        elif output.type == OutputType.PANDAS_DATAFRAME.value and output.value:
             try:
                 dataframe: pd.DataFrame = pickle.loads(
                     base64.b64decode(output.value.encode())
@@ -125,20 +129,23 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
                         # Upload the image
                         with open(output_path, "rb") as file:
                             app.client.files_upload_v2(
-                                channel=body["channel_id"],
+                                channel=channel_id,
                                 file=file,
                                 filename=filename,
                                 title="ChartGPT Table",
+                                thread_ts=thread_ts,
                             )
-        elif output.type == OutputType.PYTHON_CODE.value:
-            respond(
-                inspect.cleandoc(f"{output.description}\n\n```\n{output.value}\n```"),
-                response_type="in_channel",
+        elif output.type == OutputType.PYTHON_CODE.value and output.value:
+            app.client.chat_postMessage(
+                text=inspect.cleandoc(f"{output.description}\n\n```\n{output.value}\n```"),
+                channel=channel_id,
+                thread_ts=thread_ts,
             )
-        elif output.type == OutputType.PYTHON_OUTPUT.value:
-            respond(
-                inspect.cleandoc(output.value),
-                response_type="in_channel",
+        elif output.type == OutputType.PYTHON_OUTPUT.value and output.value:
+            app.client.chat_postMessage(
+                text=inspect.cleandoc(output.value),
+                channel=channel_id,
+                thread_ts=thread_ts,
             )
         else:
             print("Invalid output type:", output.type)
