@@ -4,6 +4,7 @@ import time
 from dataclasses import asdict
 
 from api.chartgpt import answer_user_query
+from api.guards import is_nda_broken
 # from api.types import OutputType, QueryResult, Request, Response, Usage
 from api.types import OutputType, QueryResult
 from api.errors import ContextLengthError
@@ -18,12 +19,9 @@ def generate_uuid() -> str:
 
 
 def ask_chartgpt(body) -> Response:
-    request: Request = Request(**body)
-
-    # print(request.output_type)
-    # print(OutputType.__members__.values())
-    # if not request.output_type in OutputType.__members__.values():
-    #     return {"error": "Invalid output type"}, 400
+    request: Request = Request.from_dict(body)
+    if is_nda_broken(request.prompt):
+        return {"error": "Could not complete analysis: NDA broken"}, 400
 
     try:
         job_uuid = f"ask-{generate_uuid()}"
