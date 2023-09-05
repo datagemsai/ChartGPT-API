@@ -92,8 +92,15 @@ six
 st_pages==0.4.4
 RestrictedPython==6.1
 
-# Bots
-slack_bolt
-discord~=2.3.2
+# All bots
 kaleido
 frozendict
+
+# Discord bot
+discord~=2.3.2
+
+# Slack bot
+slack_bolt
+
+# Telegram bot
+python-telegram-bot
