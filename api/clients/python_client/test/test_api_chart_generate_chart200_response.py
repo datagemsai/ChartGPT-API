@@ -15,9 +15,9 @@
 import unittest
 import datetime
 
-import openapi_client
-from openapi_client.models.api_chart_generate_chart200_response import ApiChartGenerateChart200Response  # noqa: E501
-from openapi_client.rest import ApiException
+import chartgpt_client
+from chartgpt_client.models.api_chart_generate_chart200_response import ApiChartGenerateChart200Response  # noqa: E501
+from chartgpt_client.rest import ApiException
 
 class TestApiChartGenerateChart200Response(unittest.TestCase):
     """ApiChartGenerateChart200Response unit test stubs"""
@@ -35,7 +35,7 @@ class TestApiChartGenerateChart200Response(unittest.TestCase):
             optional params are included """
         # uncomment below to create an instance of `ApiChartGenerateChart200Response`
         """
-        model = openapi_client.models.api_chart_generate_chart200_response.ApiChartGenerateChart200Response()  # noqa: E501
+        model = chartgpt_client.models.api_chart_generate_chart200_response.ApiChartGenerateChart200Response()  # noqa: E501
         if include_optional :
             return ApiChartGenerateChart200Response(
                 description = '', 

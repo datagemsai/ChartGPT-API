@@ -1,6 +1,7 @@
 # pylint: disable=C0103
 # pylint: disable=C0116
 
+import time
 import pandas as pd
 from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
 from api.templates import (
@@ -10,8 +11,13 @@ from api.templates import (
     CODE_GENERATION_IMPORTS,
     CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
 )
+from chartgpt_client import ApiRequestAskChartgptRequest as Request
+from chartgpt_client import Attempt, Output, OutputType
 from api.types import (
+    # Request,
+    # Attempt,
     CodeGenerationConfig,
+    # Output,
     PythonExecutionResult,
     QueryResult,
     SQLExecutionResult,
@@ -23,11 +29,10 @@ from chartgpt.tools.python.secure_ast import secure_exec
 import openai
 import json
 
-import plotly
 from plotly.graph_objs import Figure
 from contextlib import redirect_stdout
 from io import StringIO
-from typing import List, Optional
+from typing import List
 from google.cloud import bigquery
 from typing import List, Tuple
 import inspect
@@ -39,6 +44,9 @@ import base64
 from chartgpt.app import client
 from app import datasets as production_datasets
 
+# Imports required for `eval` of `output_type` argument to work
+import plotly
+from typing import Optional
 
 # Override Streamlit styling
 import plotly.io as pio
@@ -383,10 +391,12 @@ def generate_valid_python_code(
     return result
 
 
-def answer_user_query(user_query: str) -> QueryResult:
-    # Returns
+def answer_user_query(
+        request: Request,
+    ) -> QueryResult:
+    print(request)
     sql_generation_result: SQLExecutionResult = get_valid_sql_query(
-        user_query=user_query,
+        user_query=request.prompt,
         config=SQLQueryGenerationConfig(
             assert_results_not_empty=False,
         ),
@@ -411,18 +421,21 @@ def answer_user_query(user_query: str) -> QueryResult:
     except IndexError:
         df_summary = "DataFrame is empty"
 
-    # TODO Temporarily hardcoding the request
-    request = {
-        "output_type": "chart",
-    }
-    request_output_type = request["output_type"]
-    if request_output_type == "any":
+    # TODO Handle all output types:
+    # - any
+    # - plotly_chart
+    # - sql_query
+    # - python_code
+    # - python_output
+    # - pandas_dataframe
+
+    if request.output_type == OutputType.ANY.value:
         function_parameters = "df: pd.DataFrame"
         function_description = "Function to analyze the data and optionally return a list of results `result_list` or `None`."
         output_type = "Optional[List[Any]]"
         output_description = "A list of any type of object."
         output_variable = "result_list"
-    elif request_output_type == "chart":
+    elif request.output_type == OutputType.PLOTLY_CHART.value:
         function_parameters = "df: pd.DataFrame"
         function_description = (
             # "Function to analyze the data and return a list of Plotly charts."
@@ -431,7 +444,7 @@ def answer_user_query(user_query: str) -> QueryResult:
         output_type = "plotly.graph_objs.Figure"
         output_description = "A Plotly figure object."
         output_variable = "fig"
-    elif request_output_type == "optional_chart":
+    elif request.output_type == "optional_chart":
         function_parameters = "df: pd.DataFrame"
         function_description = (
             "Function to analyze the data and optionally return a Plotly chart."
@@ -461,11 +474,10 @@ def answer_user_query(user_query: str) -> QueryResult:
     Figure.show = no_show
 
     code_generation_result: PythonExecutionResult = generate_valid_python_code(
-        user_query=user_query,
+        user_query=request.prompt,
         code_generation_prompt=code_generation_prompt,
         local_variables={"df": df.copy()},
         config=CodeGenerationConfig(
-            max_attempts=10,
             output_type=output_type,
             output_variable=output_variable,
         ),
@@ -478,11 +490,49 @@ def answer_user_query(user_query: str) -> QueryResult:
     print(f"Final error: {code_generation_result.error}")
 
     figure = code_generation_result.local_variables.get("fig", None)
+    created_at = int(time.time())
+
+    outputs = [
+        Output(
+            index=0,
+            created_at=created_at,
+            description=sql_generation_result.description,
+            type=OutputType.SQL_QUERY.value,
+            value=str(sql_generation_result.query),
+        ),
+        Output(
+            index=1,
+            created_at=created_at,
+            description="",
+            type=OutputType.PANDAS_DATAFRAME.value,
+            value=str(base64.b64encode(pickle.dumps(df)).decode("utf-8")),
+        ),
+        Output(
+            index=2,
+            created_at=created_at,
+            description=code_generation_result.description,
+            type=OutputType.PYTHON_CODE.value,
+            value=str(code_generation_result.code),
+        ),
+        Output(
+            index=3,
+            created_at=created_at,
+            description="",
+            type=OutputType.PYTHON_OUTPUT.value,
+            value=str(code_generation_result.output),
+        ),
+        Output(
+            index=4,
+            created_at=created_at,
+            description=output_description,
+            type=OutputType.PLOTLY_CHART.value,
+            value=str(figure.to_json() if figure else None),
+        )
+    ]
+
     return QueryResult(
-        description=sql_generation_result.description,
-        query=sql_generation_result.query,
-        code=code_generation_result.code,
-        chart=figure.to_json() if figure else None,
-        output=code_generation_result.io,
-        dataframe=base64.b64encode(pickle.dumps(df)).decode("utf-8"),
+        output_type=request.output_type,
+        attempts=[],
+        errors=[],
+        outputs=outputs,
     )

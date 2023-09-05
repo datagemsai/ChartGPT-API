@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from openapi_client.models.api_chart_generate_chart_request import ApiChartGenerateChartRequest
+from chartgpt_client.models.api_chart_generate_chart_request import ApiChartGenerateChartRequest
 
 # TODO update the JSON string below
 json = "{}"

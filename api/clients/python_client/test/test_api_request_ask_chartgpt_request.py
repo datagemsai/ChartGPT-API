@@ -16,11 +16,11 @@ import unittest
 import datetime
 
 import chartgpt_client
-from chartgpt_client.models.api_sql_generate_sql200_response import ApiSqlGenerateSql200Response  # noqa: E501
+from chartgpt_client.models.api_request_ask_chartgpt_request import ApiRequestAskChartgptRequest  # noqa: E501
 from chartgpt_client.rest import ApiException
 
-class TestApiSqlGenerateSql200Response(unittest.TestCase):
-    """ApiSqlGenerateSql200Response unit test stubs"""
+class TestApiRequestAskChartgptRequest(unittest.TestCase):
+    """ApiRequestAskChartgptRequest unit test stubs"""
 
     def setUp(self):
         pass
@@ -29,24 +29,30 @@ class TestApiSqlGenerateSql200Response(unittest.TestCase):
         pass
 
     def make_instance(self, include_optional):
-        """Test ApiSqlGenerateSql200Response
+        """Test ApiRequestAskChartgptRequest
             include_option is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `ApiSqlGenerateSql200Response`
+        # uncomment below to create an instance of `ApiRequestAskChartgptRequest`
         """
-        model = chartgpt_client.models.api_sql_generate_sql200_response.ApiSqlGenerateSql200Response()  # noqa: E501
+        model = chartgpt_client.models.api_request_ask_chartgpt_request.ApiRequestAskChartgptRequest()  # noqa: E501
         if include_optional :
-            return ApiSqlGenerateSql200Response(
-                query = ''
+            return ApiRequestAskChartgptRequest(
+                prompt = 'Plot the average APR for the ***REMOVED*** protocol in the past 6 months.', 
+                dataset_id = '', 
+                output_type = 'chart', 
+                max_outputs = 56, 
+                max_attempts = 56, 
+                max_tokens = 56, 
+                stream = True
             )
         else :
-            return ApiSqlGenerateSql200Response(
+            return ApiRequestAskChartgptRequest(
         )
         """
 
-    def testApiSqlGenerateSql200Response(self):
-        """Test ApiSqlGenerateSql200Response"""
+    def testApiRequestAskChartgptRequest(self):
+        """Test ApiRequestAskChartgptRequest"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

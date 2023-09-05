@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from openapi_client.models.api_chart_generate_chart200_response import ApiChartGenerateChart200Response
+from chartgpt_client.models.api_chart_generate_chart200_response import ApiChartGenerateChart200Response
 
 # TODO update the JSON string below
 json = "{}"

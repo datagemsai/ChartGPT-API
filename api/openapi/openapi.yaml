@@ -9,11 +9,11 @@ servers:
   - url: "https://api.chartgpt.***REMOVED***"
 
 paths:
-  /chart:
+  /ask_chartgpt:
     post:
-      summary: "Generate a Plotly chart from a question"
-      description: "This endpoint takes a question and returns a Plotly figure in either JSON or PNG format, depending on the `type` parameter."
-      operationId: api.chart.generate_chart
+      summary: "Ask ChartGPT a question"
+      description: "This endpoint takes a question and returns a response."
+      operationId: api.request.ask_chartgpt
       requestBody:
         required: true
         content:
@@ -21,89 +21,145 @@ paths:
             schema:
               type: object
               properties:
-                question:
+                prompt:
                   type: string
-                  description: "The question based on which the chart will be generated."
+                  description: "The prompt based on which the response will be generated."
                   example: "Plot the average APR for the ***REMOVED*** protocol in the past 6 months."
-                type:
+                dataset_id:
                   type: string
-                  enum: ["json", "png"]
-                  description: "The format in which the chart should be returned. Accepted values are `json` or `png`."
-                  default: "json"
+                  description: "The dataset ID based on which the response will be generated."
+                  example: "metaquants"
+                  default: ""
+                output_type:
+                  $ref: '#/components/schemas/OutputType'
+                max_outputs:
+                  type: integer
+                  description: "The maximum number of outputs to generate."
+                  default: 10
+                max_attempts:
+                  type: integer
+                  description: "The maximum number of attempts to generate an output."
+                  default: 10
+                max_tokens:
+                  type: integer
+                  description: "The maximum number of tokens to use for generating an output."
+                  default: 10
+                stream:
+                  type: boolean
+                  description: "Whether to stream the response."
+                  default: false
       responses:
         '200':
           description: "Successful response"
           content:
             application/json:
               schema:
-                # $ref: '#/components/schemas/PlotlyFigureJSON'
-                type: object
-                properties:
-                  description:
-                    type: string
-                    description: "The description of the analysis."
-                  query:
-                    type: string
-                    description: "The generated SQL query."
-                  code:
-                    type: string
-                    description: "The generated Python code."
-                  chart:
-                    type: string
-                    description: "The generated Plotly chart JSON string."
-                  output:
-                    type: string
-                    description: "The stdout output of the Python code."
-                  dataframe:
-                    type: string
-                    description: "The generated Pandas dataframe."
-            image/png:
-              schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/Response'
         '400':
           description: "Bad request"
         '401':
           $ref: "#/components/responses/UnauthorizedError"
         '500':
           description: "Internal server error"
+  # /chart:
+  #   post:
+  #     summary: "Generate a Plotly chart from a question"
+  #     description: "This endpoint takes a question and returns a Plotly figure in either JSON or PNG format, depending on the `type` parameter."
+  #     operationId: api.chart.generate_chart
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               question:
+  #                 type: string
+  #                 description: "The question based on which the chart will be generated."
+  #                 example: "Plot the average APR for the ***REMOVED*** protocol in the past 6 months."
+  #               type:
+  #                 type: string
+  #                 enum: ["json", "png"]
+  #                 description: "The format in which the chart should be returned. Accepted values are `json` or `png`."
+  #                 default: "json"
+  #     responses:
+  #       '200':
+  #         description: "Successful response"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               # $ref: '#/components/schemas/PlotlyFigureJSON'
+  #               type: object
+  #               properties:
+  #                 description:
+  #                   type: string
+  #                   description: "The description of the analysis."
+  #                 query:
+  #                   type: string
+  #                   description: "The generated SQL query."
+  #                 code:
+  #                   type: string
+  #                   description: "The generated Python code."
+  #                 chart:
+  #                   type: string
+  #                   description: "The generated Plotly chart JSON string."
+  #                 output:
+  #                   type: string
+  #                   description: "The stdout output of the Python code."
+  #                 dataframe:
+  #                   type: string
+  #                   description: "The generated Pandas dataframe."
+  #           image/png:
+  #             schema:
+  #               type: string
+  #               format: binary
+  #       '400':
+  #         description: "Bad request"
+  #       '401':
+  #         $ref: "#/components/responses/UnauthorizedError"
+  #       '500':
+  #         description: "Internal server error"
 
-  /sql:
-    post:
-      summary: "Generate an SQL query from a question"
-      description: "This endpoint takes a question and returns an SQL query."
-      operationId: api.sql.generate_sql
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                question:
-                  type: string
-                  description: "The question based on which the SQL query will be generated."
-                  example: "Which NFTFi protocol provided the lowest APRs in the past month?"
-      responses:
-        '200':
-          description: "Successful response"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  query:
-                    type: string
-                    description: "The generated SQL query."
-        '400':
-          description: "Bad request"
-        '401':
-          $ref: "#/components/responses/UnauthorizedError"
-        '500':
-          description: "Internal server error"
+  # /sql:
+  #   post:
+  #     summary: "Generate an SQL query from a question"
+  #     description: "This endpoint takes a question and returns an SQL query."
+  #     operationId: api.sql.generate_sql
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               question:
+  #                 type: string
+  #                 description: "The question based on which the SQL query will be generated."
+  #                 example: "Which NFTFi protocol provided the lowest APRs in the past month?"
+  #     responses:
+  #       '200':
+  #         description: "Successful response"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 query:
+  #                   type: string
+  #                   description: "The generated SQL query."
+  #       '400':
+  #         description: "Bad request"
+  #       '401':
+  #         $ref: "#/components/responses/UnauthorizedError"
+  #       '500':
+  #         description: "Internal server error"
 
-# 1) Define the key name and location
+# 2) Apply the API key globally to all operations
+security:
+  - ApiKeyAuth: []     # use the same name as under securitySchemes
+
 components:
+  # 1) Define the key name and location
   securitySchemes:
     ApiKeyAuth:        # arbitrary name for the security scheme
       type: apiKey
@@ -117,15 +173,118 @@ components:
         WWW_Authenticate:
           schema:
             type: string
-
-# 2) Apply the API key globally to all operations
-security:
-  - ApiKeyAuth: []     # use the same name as under securitySchemes
-
-# components:
-#   schemas:
-#     PlotlyFigureJSON:
-#       type: object
-#       description: "Plotly figure represented as a JSON object."
-#       properties:
-#         # Add properties according to the Plotly figure schema here
+  schemas:
+    Response:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The ID of the request."
+        created_at:
+          type: integer
+          description: "The timestamp of when the request was created."
+        finished_at:
+          type: integer
+          description: "The timestamp of when the request was finished."
+        status:
+          type: string
+          description: "The status of the request."
+        prompt:
+          type: string
+          description: "The prompt of the request."
+        dataset_id:
+          type: string
+          description: "The dataset ID of the request."
+        attempts:
+          type: array
+          description: "The attempts of the request."
+          items:
+            $ref: "#/components/schemas/Attempt"
+        output_type:
+          $ref: '#/components/schemas/OutputType'
+        outputs:
+          type: array
+          description: "The outputs of the request."
+          items:
+            $ref: "#/components/schemas/Output"
+        errors:
+          type: array
+          description: "The errors of the request."
+          items:
+            $ref: "#/components/schemas/Error"
+        usage:
+          type: object
+          description: "The usage of the request."
+          properties:
+            tokens:
+              type: integer
+              description: "The number of tokens used for the request."
+    Attempt:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: "The index of the attempt."
+        created_at:
+          type: integer
+          description: "The timestamp of when the attempt was created."
+        outputs:
+          type: array
+          description: "The outputs of the attempt."
+          items:
+            $ref: "#/components/schemas/Output"
+        errors:
+          type: array
+          description: "The errors of the attempt."
+          items:
+            $ref: "#/components/schemas/Error"
+    Output:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: "The index of the output."
+        created_at:
+          type: integer
+          description: "The timestamp of when the output was created."
+        description:
+          type: string
+          description: "The description of the output."
+        type:
+          type: string
+          description: "The type of the output."
+        value:
+          type: string
+          description: "The value of the output."
+    Error:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: "The index of the error."
+        created_at:
+          type: integer
+          description: "The timestamp of when the error was created."
+        type:
+          type: string
+          description: "The type of the error."
+        value:
+          type: string
+          description: "The value of the error."
+    Usage:
+      type: object
+      properties:
+        tokens:
+          type: integer
+          description: "The number of tokens used for the request."
+    OutputType:
+      description: "The output type of the response."
+      type: string
+      default: any
+      enum:
+        - any
+        - plotly_chart
+        - sql_query
+        - python_code
+        - python_output
+        - pandas_dataframe

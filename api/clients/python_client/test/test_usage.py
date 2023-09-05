@@ -16,11 +16,11 @@ import unittest
 import datetime
 
 import chartgpt_client
-from chartgpt_client.models.api_sql_generate_sql200_response import ApiSqlGenerateSql200Response  # noqa: E501
+from chartgpt_client.models.usage import Usage  # noqa: E501
 from chartgpt_client.rest import ApiException
 
-class TestApiSqlGenerateSql200Response(unittest.TestCase):
-    """ApiSqlGenerateSql200Response unit test stubs"""
+class TestUsage(unittest.TestCase):
+    """Usage unit test stubs"""
 
     def setUp(self):
         pass
@@ -29,24 +29,24 @@ class TestApiSqlGenerateSql200Response(unittest.TestCase):
         pass
 
     def make_instance(self, include_optional):
-        """Test ApiSqlGenerateSql200Response
+        """Test Usage
             include_option is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `ApiSqlGenerateSql200Response`
+        # uncomment below to create an instance of `Usage`
         """
-        model = chartgpt_client.models.api_sql_generate_sql200_response.ApiSqlGenerateSql200Response()  # noqa: E501
+        model = chartgpt_client.models.usage.Usage()  # noqa: E501
         if include_optional :
-            return ApiSqlGenerateSql200Response(
-                query = ''
+            return Usage(
+                tokens = 56
             )
         else :
-            return ApiSqlGenerateSql200Response(
+            return Usage(
         )
         """
 
-    def testApiSqlGenerateSql200Response(self):
-        """Test ApiSqlGenerateSql200Response"""
+    def testUsage(self):
+        """Test Usage"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

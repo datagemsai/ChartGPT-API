@@ -15,9 +15,9 @@
 import unittest
 import datetime
 
-import openapi_client
-from openapi_client.models.api_sql_generate_sql_request import ApiSqlGenerateSqlRequest  # noqa: E501
-from openapi_client.rest import ApiException
+import chartgpt_client
+from chartgpt_client.models.api_sql_generate_sql_request import ApiSqlGenerateSqlRequest  # noqa: E501
+from chartgpt_client.rest import ApiException
 
 class TestApiSqlGenerateSqlRequest(unittest.TestCase):
     """ApiSqlGenerateSqlRequest unit test stubs"""
@@ -35,7 +35,7 @@ class TestApiSqlGenerateSqlRequest(unittest.TestCase):
             optional params are included """
         # uncomment below to create an instance of `ApiSqlGenerateSqlRequest`
         """
-        model = openapi_client.models.api_sql_generate_sql_request.ApiSqlGenerateSqlRequest()  # noqa: E501
+        model = chartgpt_client.models.api_sql_generate_sql_request.ApiSqlGenerateSqlRequest()  # noqa: E501
         if include_optional :
             return ApiSqlGenerateSqlRequest(
                 question = 'Which NFTFi protocol provided the lowest APRs in the past month?'

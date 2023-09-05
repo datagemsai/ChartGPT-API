@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from enum import Enum
+from typing import Any, Dict, List, Optional
 import pandas as pd
 
 
@@ -33,11 +34,74 @@ class PythonExecutionResult:
     error: str = None
 
 
+class OutputType(Enum):
+    CHART = "chart"
+    TABLE = "table"
+    TEXT = "text"
+    FLOAT = "float"
+    INT = "int"
+    BOOL = "bool"
+
+
+@dataclass
+class Request:
+    prompt: str
+    max_outputs: int
+    max_attempts: int
+    max_tokens: int
+    stream: bool
+    dataset_id: Optional[str] = None
+    output_type: OutputType = OutputType.CHART
+
+
+@dataclass
+class Output:
+    index: int
+    created_at: int
+    description: str
+    type: str
+    value: str
+
+
+@dataclass
+class Error:
+    index: int
+    created_at: int
+    type: str
+    value: str
+
+
+@dataclass
+class Attempt:
+    index: int
+    created_at: int
+    outputs: List[Output]
+    errors: List[Error]
+
+
+@dataclass
+class Usage:
+    tokens: int
+
+
+@dataclass
+class Response:
+    id: str
+    created_at: int
+    finished_at: int
+    status: str
+    prompt: str
+    dataset_id: str
+    attempts: List[Attempt]
+    output_type: OutputType
+    outputs: List[Output]
+    errors: List[Error]
+    usage: Usage
+
+
 @dataclass
 class QueryResult:
-    description: str
-    query: str
-    code: str
-    chart: str
-    output: str
-    dataframe: str
+    output_type: OutputType
+    attempts: List[Attempt]
+    outputs: List[Output]
+    errors: List[Error]
