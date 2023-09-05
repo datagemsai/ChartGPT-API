@@ -489,47 +489,55 @@ def answer_user_query(
     print("\n")
     print(f"Final error: {code_generation_result.error}")
 
-    # TODO Handle all output types:
-    output_value = code_generation_result.output
     created_at = int(time.time())
 
-    outputs = [
+    sql_generation_outputs = [
         Output(
             index=0,
             created_at=created_at,
             description=sql_generation_result.description,
             type=OutputType.SQL_QUERY.value,
-            value=str(sql_generation_result.query),
+            value=sql_generation_result.query,
         ),
         Output(
             index=1,
             created_at=created_at,
             description="",
             type=OutputType.PANDAS_DATAFRAME.value,
-            value=str(base64.b64encode(pickle.dumps(df)).decode("utf-8")),
+            value=base64.b64encode(pickle.dumps(df)).decode("utf-8"),
         ),
+    ]
+
+    code_generation_outputs = [
         Output(
             index=2,
             created_at=created_at,
             description=code_generation_result.description,
             type=OutputType.PYTHON_CODE.value,
-            value=str(code_generation_result.code),
+            value=code_generation_result.code,
         ),
         Output(
             index=3,
             created_at=created_at,
             description="",
             type=OutputType.PYTHON_OUTPUT.value,
-            value=str(code_generation_result.io),
+            value=code_generation_result.io,
         ),
-        Output(
-            index=4,
-            created_at=created_at,
-            description=output_description,
-            type=OutputType.PLOTLY_CHART.value,
-            value=str(output_value.to_json() if output_value else None),
-        )
     ]
+
+    # TODO Handle all output types:
+    if isinstance(code_generation_result.output, Figure):
+        code_generation_outputs += [
+            Output(
+                index=4,
+                created_at=created_at,
+                description=output_description,
+                type=OutputType.PLOTLY_CHART.value,
+                value=code_generation_result.output.to_json(),
+            )
+        ]
+
+    outputs = sql_generation_outputs + code_generation_outputs
 
     return QueryResult(
         output_type=request.output_type,
