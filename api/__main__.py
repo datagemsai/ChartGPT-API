@@ -1,3 +1,5 @@
-from api.run import create_app
+from api.run import app
 
-app = create_app()
+
+# Run the app
+app.run(port=8081)
