@@ -1,16 +1,18 @@
 version: '3'
 
 services:
-    app:
-        image: cadGPT
+    discord-bot:
+        image: discord-bot
         build:
-            dockerfile: ./Dockerfile
+            dockerfile: ./bots/discord/Dockerfile
             context: .
-        environment:
-            - PORT=${PORT}
-            - OPENAI_API_KEY=${OPENAI_API_KEY}
-            - ACTIVELOOP_TOKEN=${ACTIVELOOP_TOKEN}
-        ports:
-            - ${PORT}:${PORT}
-        # volumes:
-        #     - ./app:/usr/app/src/
+    slack-bot:
+        image: slack-bot
+        build:
+            dockerfile: ./bots/slack/Dockerfile
+            context: .
+    telegram-bot:
+        image: telegram-bot
+        build:
+            dockerfile: ./bots/telegram/Dockerfile
+            context: .

@@ -12,6 +12,10 @@ kernel:
 test_sample_questions:
 	. venv/bin/activate; pytest -n 8 tests/test_sample_questions.py
 
+format:
+	black .
+	isort .
+
 # Start web app, API, Discord bot
 
 start_app_staging:

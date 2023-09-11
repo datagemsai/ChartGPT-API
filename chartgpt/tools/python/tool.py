@@ -1,21 +1,21 @@
 """A tool for running python code in a REPL."""
 
 import ast
-import sys
-from io import StringIO
-from typing import Dict, Optional
-from collections.abc import Callable
-from pydantic import Field, root_validator
-from chartgpt.tools.python.secure_ast import secure_eval, secure_exec
-import streamlit as st
-from langchain.tools.base import BaseTool
-import app
 import re
+import sys
+import traceback
+from collections.abc import Callable
 from contextlib import redirect_stdout
 from io import StringIO
-from langchain.callbacks.manager import (
-    CallbackManagerForToolRun,
-)
+from typing import Dict, Optional
+
+import streamlit as st
+from langchain.callbacks.manager import CallbackManagerForToolRun
+from langchain.tools.base import BaseTool
+from pydantic import Field, root_validator
+
+import app
+from chartgpt.tools.python.secure_ast import secure_eval, secure_exec
 
 
 def sanitize_input(query: str) -> str:

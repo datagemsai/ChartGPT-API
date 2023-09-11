@@ -1,7 +1,7 @@
-from sentry_sdk import capture_exception
 import ast
 import builtins
 
+from sentry_sdk import capture_exception
 
 allowed_builtins = {
     "abs",
@@ -61,6 +61,7 @@ disallowed_attributes = {
 allowed_imports = {
     "dataclass",
     "pandas",
+    "random",
     "streamlit",
     "bigquery",
     "plotly",
@@ -147,6 +148,9 @@ allowed_imports = {
     # Types
     "typing",
     "Optional",
+    "List",
+    "Any",
+    "Union",
 }
 
 
@@ -189,7 +193,7 @@ def allowed_node(node):
             raise ValueError(f"Accessing private members is not allowed")
 
 
-def analyze_ast(node, max_depth, current_depth=0):
+def analyze_ast(node, max_depth=float("inf"), current_depth=0):
     if current_depth >= max_depth:
         return
 
@@ -203,11 +207,17 @@ def analyze_ast(node, max_depth, current_depth=0):
         raise e
 
 
+def assert_secure_code(code, mode="exec", max_depth=float("inf")):
+    """Assert that the code is secure. If not, raise an exception."""
+    tree = ast.parse(code, mode=mode)
+    analyze_ast(tree, max_depth)
+
+
 def secure_exec(code, custom_globals={}, custom_locals={}, max_depth=float("inf")):
     safe_builtins = {name: getattr(builtins, name) for name in allowed_builtins}
     custom_globals["__builtins__"] = safe_builtins
 
-    tree = ast.parse(code)
+    tree = ast.parse(code, mode="exec")
     analyze_ast(tree, max_depth)
 
     exec(compile(tree, "<ast>", "exec"), custom_globals, custom_locals)

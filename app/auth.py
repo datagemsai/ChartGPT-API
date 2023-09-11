@@ -6,24 +6,23 @@ Remember to enable the Google People API:
 https://console.developers.google.com/apis/api/people.googleapis.com/overview
 """
 
-import streamlit as st
-from streamlit.components.v1 import html
-import os
 import asyncio
+import json
+import os
+from typing import Optional, Tuple
 
+import streamlit as st
 # See https://frankie567.github.io/httpx-oauth/oauth2/
 from httpx_oauth.clients.google import GoogleOAuth2
-from typing import Optional, Tuple
-import json
-import app
-from app import db_users
-
 # from app.cookies import cookies
 # from app.cookies_v2 import clear_cookies
 from sentry_sdk import set_user
+from streamlit.components.v1 import html
+
+import app
+from app import db_users
 from app.config.content import chartgpt_description
 from app.users import UserCredits
-
 
 CLIENT_ID = os.environ["GOOGLE_OAUTH_CLIENT_ID"]
 CLIENT_SECRET = os.environ["GOOGLE_OAUTH_CLIENT_SECRET"]
@@ -50,8 +49,9 @@ REDIRECT_URI = os.environ["REDIRECT_URI"]
 #         if key in st.session_state:
 #             del st.session_state[key]
 
-import jwt
 from functools import wraps
+
+import jwt
 
 
 class AuthError(Exception):

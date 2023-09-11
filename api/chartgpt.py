@@ -1,73 +1,47 @@
 # pylint: disable=C0103
 # pylint: disable=C0116
 
-import time
-import pandas as pd
-from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
-from api.templates import (
-    SQL_QUERY_GENERATION_PROMPT_TEMPLATE,
-    SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
-    CODE_GENERATION_PROMPT_TEMPLATE,
-    CODE_GENERATION_IMPORTS,
-    CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
-)
-from chartgpt_client import ApiRequestAskChartgptRequest as Request
-from chartgpt_client import Attempt, Output, OutputType
-from api.types import (
-    # Request,
-    # Attempt,
-    CodeGenerationConfig,
-    # Output,
-    PythonExecutionResult,
-    QueryResult,
-    SQLExecutionResult,
-    SQLQueryGenerationConfig,
-)
-from api.errors import ContextLengthError
-from api.utils import apply_lower_to_where, get_tables_summary
-from chartgpt.tools.python.secure_ast import secure_exec
-import openai
+import base64
+import inspect
 import json
-
-from plotly.graph_objs import Figure
+import pickle
+import time
+import traceback
 from contextlib import redirect_stdout
 from io import StringIO
-from typing import List
-from google.cloud import bigquery
-from typing import List, Tuple
-import inspect
-import plotly.graph_objs as go
-import traceback
-import pickle
-import base64
+from typing import Any, List, Optional, Tuple, Union
 
-from chartgpt.app import client
-from app import datasets as production_datasets
-
+import openai
+import pandas as pd
 # Imports required for `eval` of `output_type` argument to work
 import plotly
-from typing import Optional
-
+import plotly.graph_objs as go
 # Override Streamlit styling
 import plotly.io as pio
+from chartgpt_client import ApiRequestAskChartgptRequest as Request
+from chartgpt_client import Attempt, Output, OutputType
+from google.cloud import bigquery
+from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
+from IPython.utils import io
+from plotly.graph_objs import Figure
+from typeguard import TypeCheckError, check_type, typechecked
+
+from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
+from api.errors import ContextLengthError
+from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
+                         CODE_GENERATION_IMPORTS,
+                         CODE_GENERATION_PROMPT_TEMPLATE,
+                         SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
+                         SQL_QUERY_GENERATION_PROMPT_TEMPLATE)
+from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
+    CodeGenerationConfig, PythonExecutionResult, QueryResult,
+    SQLExecutionResult, SQLQueryGenerationConfig, accepted_output_types,
+    assert_matches_accepted_type, map_type_to_output_type)
+from api.utils import apply_lower_to_where, get_tables_summary
+from chartgpt.app import client
+from chartgpt.tools.python.secure_ast import assert_secure_code
 
 pio.templates.default = "plotly"
-
-
-def validate_sql_query(query: str) -> List[str]:
-    """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
-    try:
-        query_job = client.query(
-            query, job_config=bigquery.QueryJobConfig(dry_run=True)
-        )
-        errors = (
-            [str(err["message"]) for err in query_job.errors]
-            if query_job.errors
-            else []
-        )
-    except Exception as e:
-        errors = [str(e)]
-    return errors
 
 
 functions = [
@@ -117,6 +91,22 @@ functions = [
         },
     },
 ]
+
+
+def validate_sql_query(query: str) -> List[str]:
+    """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
+    try:
+        query_job = client.query(
+            query, job_config=bigquery.QueryJobConfig(dry_run=True)
+        )
+        errors = (
+            [str(err["message"]) for err in query_job.errors]
+            if query_job.errors
+            else []
+        )
+    except Exception as e:
+        errors = [str(e)]
+    return errors
 
 
 def openai_chat_completion(model, messages, function_name):
@@ -208,21 +198,19 @@ def execute_sql_query(query: str) -> pd.DataFrame:
 
 
 def get_valid_sql_query(
-    user_query: str, config: SQLQueryGenerationConfig = SQLQueryGenerationConfig()
+    user_query: str, config: SQLQueryGenerationConfig
 ) -> SQLExecutionResult:
     tables_summary = get_tables_summary(
         client=client,
-        datasets=list(client.list_datasets()),
-        dataset_ids=[dataset.id for dataset in production_datasets],
-        table_ids=[
-            table_id for dataset in production_datasets for table_id in dataset.tables
-        ],
+        data_source_url=config.data_source_url,
     )
+    print("Tables summary:", tables_summary)
 
     sql_query_generation_prompt = SQL_QUERY_GENERATION_PROMPT_TEMPLATE.format(
         sql_query_instruction=(
             "Develop a step-by-step plan and write a GoogleSQL query compatible with BigQuery",
             "to fetch the data necessary for your analysis and visualization.",
+            # "Use Python Pandas functions rather than GoogleSQL queries wherever possible.",
         ),
         python_code_instruction=(
             "Implement Python code to analyze the data using Pandas and visualize the findings using Plotly."
@@ -295,48 +283,69 @@ def execute_python_code(
         raise ValueError("No code provided")
 
     local_variables = local_variables.copy() if local_variables else {}
-    local_variables[config.output_variable] = None
+    result = None
+    output = ""
 
     if imports:
         local_variables.update(execute_python_imports(imports))
 
-    with StringIO() as io_buffer, redirect_stdout(io_buffer):
-        try:
-            secure_exec(code, local_variables, local_variables)
-            answer_fn = local_variables.get("answer_question")
-            if callable(answer_fn):
-                result = local_variables[config.output_variable] = answer_fn(
-                    local_variables["df"]
+    try:
+        # Assert that the code is secure
+        assert_secure_code(code)
+
+        shell = InteractiveShell.instance()
+        shell.push(local_variables)
+
+        with io.capture_output() as captured:
+            r: ExecutionResult = shell.run_cell(code, store_history=True)
+            r.raise_error()
+
+        answer_fn = shell.user_ns.get("answer_question")
+
+        if callable(answer_fn):
+            with io.capture_output() as captured:
+                r: ExecutionResult = shell.run_cell(
+                    "answer_question(df.copy())", store_history=True
                 )
-            elif local_variables[config.output_variable]:
-                result = local_variables[config.output_variable]
-            else:
-                raise ValueError("The `answer_question` function was not found.")
-            if not isinstance(result, eval(config.output_type)):
-                raise ValueError(
-                    f"The `answer_question` function must return a variable of type {config.output_type}."
-                )
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            _, line_number, function_name, line_data = tb[-1]
-            error_msg = f"{type(e).__name__}: {str(e)}\nOn line {line_number}, function `{function_name}`, with code `{line_data}`"
-            return PythonExecutionResult(
-                description=docstring,
-                code=code,
-                output=None,
-                local_variables=local_variables,
-                io=io_buffer.getvalue(),
-                error=error_msg,
-            )
+                r.raise_error()
+
+        output = captured.stdout
+        result = r.result
+
+        if result:
+            try:
+                # check_type(result, config.output_type)
+                assert_matches_accepted_type(result, config.output_type)
+            except TypeCheckError as exc:
+                raise TypeError(
+                    f"The `answer_question` function must return a variable of type `{config.output_type}`."
+                ) from exc
         else:
-            return PythonExecutionResult(
-                description=docstring,
-                code=code,
-                output=result,
-                local_variables=local_variables,
-                io=io_buffer.getvalue(),
-                error=None,
+            raise ValueError(
+                f"The variable `{config.output_variable}` or function `answer_question` was not found."
             )
+        return PythonExecutionResult(
+            description=docstring,
+            code=code,
+            result=result,
+            local_variables=local_variables,
+            io=output,
+            error=None,
+        )
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        _, line_number, function_name, line_data = tb[-1]
+        error_msg = f"{type(e).__name__}: {str(e)}\nOn line {line_number}, function `{function_name}`, with code `{line_data}`"
+        return PythonExecutionResult(
+            description=docstring,
+            code=code,
+            result=None,
+            local_variables=local_variables,
+            io=output,
+            error=error_msg,
+        )
+    finally:
+        shell.clear_instance()
 
 
 def get_initial_python_code(messages) -> Tuple[str, str]:
@@ -365,6 +374,8 @@ def generate_valid_python_code(
 
     result: PythonExecutionResult = PythonExecutionResult()
     for attempt in range(config.max_attempts):
+        local_variables["df"] = local_variables["df"].copy()
+
         result: PythonExecutionResult = execute_python_code(
             code,
             docstring,
@@ -392,12 +403,13 @@ def generate_valid_python_code(
 
 
 def answer_user_query(
-        request: Request,
-    ) -> QueryResult:
+    request: Request,
+) -> QueryResult:
     print(request)
     sql_generation_result: SQLExecutionResult = get_valid_sql_query(
         user_query=request.prompt,
         config=SQLQueryGenerationConfig(
+            data_source_url=request.data_source_url,
             assert_results_not_empty=False,
         ),
     )
@@ -421,19 +433,12 @@ def answer_user_query(
     except IndexError:
         df_summary = "DataFrame is empty"
 
-    # TODO Handle all output types:
-    # - any
-    # - plotly_chart
-    # - sql_query
-    # - python_code
-    # - python_output
-    # - pandas_dataframe
-
     if request.output_type == OutputType.ANY.value:
         function_parameters = "df: pd.DataFrame"
         function_description = "Function to analyze the data and optionally return a list of results `result_list` or `None`."
-        output_type = "Optional[List[Any]]"
-        output_description = "A list of any type of object."
+        output_type = accepted_output_types
+        # output_type = Any
+        output_description = "A list of any type of object or `None`."
         output_variable = "result_list"
     elif request.output_type == OutputType.PLOTLY_CHART.value:
         function_parameters = "df: pd.DataFrame"
@@ -441,7 +446,7 @@ def answer_user_query(
             # "Function to analyze the data and return a list of Plotly charts."
             "Function to analyze the data and return a Plotly chart."
         )
-        output_type = "plotly.graph_objs.Figure"
+        output_type = [plotly.graph_objs.Figure]
         output_description = "A Plotly figure object."
         output_variable = "fig"
     elif request.output_type == "optional_chart":
@@ -449,7 +454,7 @@ def answer_user_query(
         function_description = (
             "Function to analyze the data and optionally return a Plotly chart."
         )
-        output_type = "Optional[plotly.graph_objs.Figure]"
+        output_type = [Optional[plotly.graph_objs.Figure]]
         output_description = "A Plotly figure object or None."
         output_variable = "fig"
     else:
@@ -497,7 +502,7 @@ def answer_user_query(
             created_at=created_at,
             description=sql_generation_result.description,
             type=OutputType.SQL_QUERY.value,
-            value=sql_generation_result.query,
+            value=str(sql_generation_result.query),
         ),
         Output(
             index=1,
@@ -514,32 +519,47 @@ def answer_user_query(
             created_at=created_at,
             description=code_generation_result.description,
             type=OutputType.PYTHON_CODE.value,
-            value=code_generation_result.code,
+            value=str(code_generation_result.code),
         ),
         Output(
             index=3,
             created_at=created_at,
             description="",
             type=OutputType.PYTHON_OUTPUT.value,
-            value=code_generation_result.io,
+            value=str(code_generation_result.io),
         ),
     ]
 
-    # TODO Handle all output types:
-    if isinstance(code_generation_result.output, Figure):
+    if not code_generation_result.result:
+        code_generation_results = []
+    elif not isinstance(code_generation_result.result, list):
+        code_generation_results = [code_generation_result.result]
+    else:
+        code_generation_results = code_generation_result.result
+
+    for index, output in enumerate(code_generation_results):
+        _type: OutputType = map_type_to_output_type(output)
+        # Convert output to JSON if it is a Plotly chart
+        if _type == OutputType.PLOTLY_CHART:
+            _output = output.to_json()
+        elif _type == OutputType.PANDAS_DATAFRAME:
+            _output = base64.b64encode(pickle.dumps(output)).decode("utf-8")
+        else:
+            _output = str(output)
         code_generation_outputs += [
             Output(
-                index=4,
+                index=4 + index,
                 created_at=created_at,
                 description=output_description,
-                type=OutputType.PLOTLY_CHART.value,
-                value=code_generation_result.output.to_json(),
+                type=_type.value,
+                value=_output,
             )
         ]
 
     outputs = sql_generation_outputs + code_generation_outputs
 
     return QueryResult(
+        data_source="",
         output_type=request.output_type,
         attempts=[],
         errors=[],

@@ -1,17 +1,17 @@
+import json
+import logging
+import os
+import sys
+from importlib import import_module
+
+import firebase_admin
+import sentry_sdk
 import streamlit as st
 from dotenv import load_dotenv
-import os
-import firebase_admin
-import logging
-import json
-from importlib import import_module
 from firebase_admin import firestore
-import sys
-
-import sentry_sdk
-from sentry_sdk import capture_exception
-from sentry_sdk import set_tag
-
+from google.cloud import bigquery
+from google.oauth2 import service_account
+from sentry_sdk import capture_exception, set_tag
 
 # Load environment variables from .env
 load_dotenv()
@@ -112,5 +112,18 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Import sample question for project
+scopes = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/bigquery",
+]
+
+if ENV == "LOCAL":
+    credentials = service_account.Credentials.from_service_account_info(
+        json.loads(os.environ["GCP_SERVICE_ACCOUNT"], strict=False)
+    ).with_scopes(scopes)
+    bigquery_client = bigquery.Client(credentials=credentials)
+else:
+    # If deployed using App Engine, use default App Engine credentials
+    bigquery_client = bigquery.Client()
+
 datasets = import_module(f'app.config.{os.environ["PROJECT"].lower()}').datasets

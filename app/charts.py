@@ -1,4 +1,5 @@
 from typing import Optional
+
 from app import db_charts
 
 

@@ -2,25 +2,25 @@
 # pylint: disable=C0116
 
 import base64
+import inspect
 import json
 import os
 import pickle
-from bots.api import ask_chartgpt
-from slack_bolt import App
-from slack_bolt.adapter.socket_mode import SocketModeHandler
+import tempfile
+
+import chartgpt_client
 import dataframe_image as dfi
-import inspect
+import pandas as pd
 import plotly.graph_objects as go
 import sqlparse
-import pandas as pd
-import tempfile
-import chartgpt_client
 from chartgpt_client.models import OutputType
-
-# Import environment variables from .env file
 from dotenv import load_dotenv
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-load_dotenv("bots/slack/.env")
+from bots.api import ask_chartgpt
+
+load_dotenv("bots/.env")
 
 # Install the Slack app and get xoxb- token in advance
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
@@ -50,11 +50,11 @@ def handle_ask_chartgpt(ack, body, respond):
     initial_response = app.client.chat_postMessage(
         text=inspect.cleandoc(
             f"""
+*Question:* {response.prompt}
+
 <@{body['user_id']}> Here is the result 🧵
 
 Response time: {response.finished_at - response.created_at:.0f} seconds
-
-*Question:* {response.prompt}
 """
         ),
         channel=channel_id,
@@ -62,7 +62,10 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
 
     thread_ts = initial_response["ts"]
     for output in response.outputs:
-        if output.type == OutputType.PLOTLY_CHART.value and output.value:
+        if not output.value:
+            print("Output value is empty for type:", output.type)
+
+        elif output.type == OutputType.PLOTLY_CHART.value:
             # if output.description:
             #     respond(
             #         inspect.cleandoc(output.description), response_type="in_channel"
@@ -85,7 +88,8 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
                     # initial_comment=f"ChartGPT chart for question: {question}",
                     thread_ts=thread_ts,
                 )
-        elif output.type == OutputType.SQL_QUERY.value and output.value:
+
+        elif output.type == OutputType.SQL_QUERY.value:
             app.client.chat_postMessage(
                 text=(
                     f"{output.description}"
@@ -96,7 +100,8 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
                 channel=channel_id,
                 thread_ts=thread_ts,
             )
-        elif output.type == OutputType.PANDAS_DATAFRAME.value and output.value:
+
+        elif output.type == OutputType.PANDAS_DATAFRAME.value:
             try:
                 dataframe: pd.DataFrame = pickle.loads(
                     base64.b64decode(output.value.encode())
@@ -135,18 +140,29 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
                                 title="ChartGPT Table",
                                 thread_ts=thread_ts,
                             )
-        elif output.type == OutputType.PYTHON_CODE.value and output.value:
+
+        elif output.type == OutputType.PYTHON_CODE.value:
             app.client.chat_postMessage(
-                text=inspect.cleandoc(f"{output.description}\n\n```\n{output.value}\n```"),
+                text=inspect.cleandoc(
+                    f"{output.description}\n\n```\n{output.value}\n```"
+                ),
                 channel=channel_id,
                 thread_ts=thread_ts,
             )
-        elif output.type == OutputType.PYTHON_OUTPUT.value and output.value:
+
+        elif output.type in [
+            OutputType.PYTHON_OUTPUT.value,
+            OutputType.STRING.value,
+            OutputType.INT.value,
+            OutputType.FLOAT.value,
+            OutputType.BOOL.value,
+        ]:
             app.client.chat_postMessage(
-                text=inspect.cleandoc(output.value),
+                text=inspect.cleandoc("Code output:\n" + output.value),
                 channel=channel_id,
                 thread_ts=thread_ts,
             )
+
         else:
             print("Invalid output type:", output.type)
 

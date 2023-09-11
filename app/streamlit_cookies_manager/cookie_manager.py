@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import MutableMapping, Mapping
+from typing import Mapping, MutableMapping
 from urllib.parse import unquote
 
 import streamlit as st

@@ -1,6 +1,6 @@
 import streamlit as st
-from app.config.content import ai_token_engineer_description
 
+from app.config.content import ai_token_engineer_description
 
 PAGE_NAME = "AI Token Engineer"
 st.set_page_config(page_title=PAGE_NAME, page_icon="🧠")

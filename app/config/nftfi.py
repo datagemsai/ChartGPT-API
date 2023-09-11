@@ -1,9 +1,9 @@
-from app.config.default import Dataset
-
+from app.config.datasets import Dataset
 
 datasets = [
     Dataset(
         name="Dune Datasets",
+        project="chartgpt-staging",
         id="dune_dataset",
         description="A dataset of Dune Analytics datasets",
         sample_questions=[
@@ -22,6 +22,7 @@ datasets = [
     ),
     Dataset(
         name="NFT Lending Aggregated Users",
+        project="chartgpt-staging",
         id="nft_lending_aggregated_users",
         description="A dataset of NFT lending aggregated users",
         sample_questions=[
@@ -32,6 +33,7 @@ datasets = [
     ),
     Dataset(
         name="NFT Lending Aggregated Borrow",
+        project="chartgpt-staging",
         id="nft_lending_aggregated_borrow",
         description="A dataset of NFT lending aggregated borrow",
         sample_questions=[

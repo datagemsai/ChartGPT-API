@@ -4,7 +4,7 @@ All URIs are relative to *https://api.chartgpt.cadlabs.org*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**api_request_ask_chartgpt**](DefaultApi.md#api_request_ask_chartgpt) | **POST** /ask_chartgpt | Ask ChartGPT a question
+[**api_request_ask_chartgpt**](DefaultApi.md#api_request_ask_chartgpt) | **POST** /v1/ask_chartgpt | Ask ChartGPT a question
 
 
 # **api_request_ask_chartgpt**

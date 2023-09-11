@@ -1,22 +1,21 @@
-from typing import Any, Dict, List, Optional
 import inspect
 import re
+from typing import Any, Dict, List, Optional
 
 from langchain.agents.agent import AgentExecutor
-from app.config import Dataset
-from chartgpt.agents.mrkl.base import CustomAgent
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
-from chartgpt.tools.python.tool import PythonAstREPLTool
-from chartgpt.agents.agent_toolkits.bigquery.utils import (
-    get_tables_summary,
-    get_example_query,
-)
-from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
-from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 from langchain.schema import BaseMemory
+
 from app import logger
+from app.config.datasets import Dataset
+from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
+from chartgpt.agents.agent_toolkits.bigquery.utils import (get_example_query,
+                                                           get_tables_summary)
+from chartgpt.agents.mrkl.base import CustomAgent
+from chartgpt.agents.mrkl.output_parser import CustomOutputParser
+from chartgpt.tools.python.tool import PythonAstREPLTool
 
 
 def create_bigquery_agent(
@@ -92,7 +91,7 @@ def create_bigquery_agent(
         tables_summary=tables_summary_escaped,
         example_query=example_query,
     )
-    logger.info(partial_prompt.json())
+
     llm_chain = LLMChain(
         llm=llm,
         prompt=partial_prompt,

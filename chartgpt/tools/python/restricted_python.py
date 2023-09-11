@@ -1,6 +1,4 @@
-from RestrictedPython import compile_restricted
-
-from RestrictedPython import safe_builtins
+from RestrictedPython import compile_restricted, safe_builtins
 
 # from RestrictedPython import limited_builtins
 # from RestrictedPython import utility_builtins

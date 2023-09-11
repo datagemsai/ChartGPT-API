@@ -6,22 +6,22 @@ Remember to enable the Google People API:
 https://console.developers.google.com/apis/api/people.googleapis.com/overview
 """
 
-import streamlit as st
-from streamlit.components.v1 import html
-import os
 import asyncio
+import json
+import os
+from typing import Optional, Tuple
 
+import streamlit as st
 # See https://frankie567.github.io/httpx-oauth/oauth2/
 from httpx_oauth.clients.google import GoogleOAuth2
-from typing import Optional, Tuple
-import json
+from sentry_sdk import set_user
+from streamlit.components.v1 import html
+
 import app
 from app import db_users
-from app.cookies import cookies
-from sentry_sdk import set_user
 from app.config.content import chartgpt_description
+from app.cookies import cookies
 from app.users import UserCredits
-
 
 """
 The following code fixes the following error:
@@ -43,7 +43,7 @@ https://discuss.streamlit.io/t/eliminate-states-of-modules-to-avoid-the-accident
 # cookies = cookie_manager.get_all()
 # st.write(cookies)
 
-from app.cookies import get_cookies, set_cookies, clear_cookies, delete_cookie
+from app.cookies import clear_cookies, delete_cookie, get_cookies, set_cookies
 
 CLIENT_ID = os.environ["GOOGLE_OAUTH_CLIENT_ID"]
 CLIENT_SECRET = os.environ["GOOGLE_OAUTH_CLIENT_SECRET"]
@@ -78,9 +78,10 @@ def clear_auth_cookies_and_state():
     print("after clear_auth_cookies_and_state", get_cookies())
 
 
-from urllib.parse import urlparse, parse_qs
-import jwt
 from functools import wraps
+from urllib.parse import parse_qs, urlparse
+
+import jwt
 
 
 class AuthError(Exception):

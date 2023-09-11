@@ -13,28 +13,39 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
-
 from typing import Optional
+
 from pydantic import BaseModel, Field, StrictStr
+
 
 class ApiChartGenerateChart200Response(BaseModel):
     """
     ApiChartGenerateChart200Response
     """
-    description: Optional[StrictStr] = Field(None, description="The description of the analysis.")
+
+    description: Optional[StrictStr] = Field(
+        None, description="The description of the analysis."
+    )
     query: Optional[StrictStr] = Field(None, description="The generated SQL query.")
     code: Optional[StrictStr] = Field(None, description="The generated Python code.")
-    chart: Optional[StrictStr] = Field(None, description="The generated Plotly chart JSON string.")
-    output: Optional[StrictStr] = Field(None, description="The stdout output of the Python code.")
-    dataframe: Optional[StrictStr] = Field(None, description="The generated Pandas dataframe.")
+    chart: Optional[StrictStr] = Field(
+        None, description="The generated Plotly chart JSON string."
+    )
+    output: Optional[StrictStr] = Field(
+        None, description="The stdout output of the Python code."
+    )
+    dataframe: Optional[StrictStr] = Field(
+        None, description="The generated Pandas dataframe."
+    )
     __properties = ["description", "query", "code", "chart", "output", "dataframe"]
 
     class Config:
         """Pydantic configuration"""
+
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -53,10 +64,7 @@ class ApiChartGenerateChart200Response(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
         return _dict
 
     @classmethod
@@ -68,14 +76,14 @@ class ApiChartGenerateChart200Response(BaseModel):
         if not isinstance(obj, dict):
             return ApiChartGenerateChart200Response.parse_obj(obj)
 
-        _obj = ApiChartGenerateChart200Response.parse_obj({
-            "description": obj.get("description"),
-            "query": obj.get("query"),
-            "code": obj.get("code"),
-            "chart": obj.get("chart"),
-            "output": obj.get("output"),
-            "dataframe": obj.get("dataframe")
-        })
+        _obj = ApiChartGenerateChart200Response.parse_obj(
+            {
+                "description": obj.get("description"),
+                "query": obj.get("query"),
+                "code": obj.get("code"),
+                "chart": obj.get("chart"),
+                "output": obj.get("output"),
+                "dataframe": obj.get("dataframe"),
+            }
+        )
         return _obj
-
-

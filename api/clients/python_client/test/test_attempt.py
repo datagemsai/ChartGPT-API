@@ -12,12 +12,13 @@
 """  # noqa: E501
 
 
-import unittest
 import datetime
+import unittest
 
 import chartgpt_client
 from chartgpt_client.models.attempt import Attempt  # noqa: E501
 from chartgpt_client.rest import ApiException
+
 
 class TestAttempt(unittest.TestCase):
     """Attempt unit test stubs"""
@@ -30,9 +31,9 @@ class TestAttempt(unittest.TestCase):
 
     def make_instance(self, include_optional):
         """Test Attempt
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
+        include_option is a boolean, when False only required
+        params are included, when True both required and
+        optional params are included"""
         # uncomment below to create an instance of `Attempt`
         """
         model = chartgpt_client.models.attempt.Attempt()  # noqa: E501
@@ -66,5 +67,6 @@ class TestAttempt(unittest.TestCase):
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

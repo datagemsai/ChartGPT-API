@@ -2,16 +2,16 @@ import json
 import os
 from string import Template
 from typing import Callable, Dict, List, Optional, Tuple, Union
-from google.cloud import bigquery
 
 import openai
-
+from google.cloud import bigquery
 from guardrails.document_store import DocumentStoreBase, EphemeralDocumentStore
 from guardrails.embedding import EmbeddingBase, OpenAIEmbedding
 from guardrails.guard import Guard
 from guardrails.llm_providers import PromptCallable
 from guardrails.utils.sql_utils import create_sql_driver
 from guardrails.vectordb import Faiss, VectorDBBase
+
 from chartgpt.guardrails.validators import BugFreeBigQuerySQL
 
 REASK_PROMPT = """

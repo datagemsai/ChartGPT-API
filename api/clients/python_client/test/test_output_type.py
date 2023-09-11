@@ -12,12 +12,13 @@
 """  # noqa: E501
 
 
-import unittest
 import datetime
+import unittest
 
 import chartgpt_client
 from chartgpt_client.models.output_type import OutputType  # noqa: E501
 from chartgpt_client.rest import ApiException
+
 
 class TestOutputType(unittest.TestCase):
     """OutputType unit test stubs"""
@@ -32,5 +33,6 @@ class TestOutputType(unittest.TestCase):
         """Test OutputType"""
         # inst = OutputType()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
