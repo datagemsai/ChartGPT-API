@@ -64,7 +64,7 @@ def main(user_id, user_email):
         output_type = st.selectbox(
             "output_type",
             options=["any", "plotly_chart", "pandas_dataframe", "int", "float", "bool"],
-            index=0,
+            index=1,
         )
         submitted = st.form_submit_button("Submit")
 
