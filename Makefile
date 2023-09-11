@@ -95,8 +95,8 @@ terraform_deploy_production: project_production
 	terraform -chdir=infrastructure workspace select production
 	terraform -chdir=infrastructure apply --auto-approve -var-file="variables/production.tfvars"
 
-deploy_app_production:
-	gcloud app deploy --project=chartgpt-production app_production.yaml
+# deploy_app_production:
+# 	gcloud app deploy --project=chartgpt-production app_production.yaml
 
-deploy_app_staging:
-	gcloud app deploy --project=chartgpt-staging app_staging.yaml
+# deploy_app_staging:
+# 	gcloud app deploy --project=chartgpt-staging app_staging.yaml
