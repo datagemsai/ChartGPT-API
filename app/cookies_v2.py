@@ -1,7 +1,8 @@
 import os
+
+import streamlit as st
 from cryptography.fernet import Fernet, InvalidToken
 from streamlit.components.v1 import html
-import streamlit as st
 
 
 def get_cookies() -> dict:

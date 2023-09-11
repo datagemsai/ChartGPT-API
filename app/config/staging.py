@@ -1,9 +1,10 @@
-from app.config import Dataset
-
+from app.config.datasets import (Dataset, get_dataset_description,
+                                 get_table_description)
 
 datasets = [
     Dataset(
         name="MetaQuants NFT Finance Aggregator",
+        project="chartgpt-staging",
         id="metaquants_nft_finance_aggregator",
         description="""
         Leverage the MetaQuants NFT Finance Aggregator to gain valuable insights into NFT loan history, outstanding loan indicators, and activity on both P2Peer and P2Pool protocols. The dataset currently includes a range of leading providers, including X2Y2, Pine, BendDAO, ***REMOVED***, Arcade, and JPEGD.        
@@ -28,6 +29,46 @@ datasets = [
             "Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
             "Plot a bar chart of the USD lending volume for all protocols.",
             "Plot a stacked area chart of the USD lending volume for all protocols.",
+        ],
+    ),
+    Dataset(
+        name="US Residential Real Estate Sample Data",
+        project="housecanary-com",
+        id="sample",
+        description="Time series of median home value per block designated as single family residential (SFD), condominium (CND), or townhouse (TH).",
+        tables=[
+            "block_value_ts",
+        ],
+        sample_questions=[
+            "Plot the average value over time for single family residential properties."
+        ],
+    ),
+    Dataset(
+        name="Google Analytics Sample Data",
+        project="bigquery-public-data",
+        id="google_analytics_sample",
+        description=get_table_description(
+            "bigquery-public-data", "google_analytics_sample", "ga_sessions_20170801"
+        ),
+        tables=["ga_sessions_20170801"],
+        sample_questions=[
+            "Which Google Analytics channel provides the highest number of visitors?",
+            "Which device accounts for the highest number of visitors?",
+        ],
+    ),
+    Dataset(
+        name="Ethereum Blockchain Transactions Sample Data",
+        project="bigquery-public-data",
+        id="crypto_ethereum",
+        description=get_table_description(
+            "bigquery-public-data", "crypto_ethereum", "transactions"
+        ),
+        tables=[
+            # "token_transfers",
+            "transactions"
+        ],
+        sample_questions=[
+            "Plot the number of transactions over time for transactions with a value over 0 Wei."
         ],
     ),
 ]

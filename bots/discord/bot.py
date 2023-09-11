@@ -1,28 +1,27 @@
 # pylint: disable=C0103
 # pylint: disable=C0116
 
+import asyncio
 import base64
 import json
 import os
-import asyncio
 import pickle
 import tempfile
-import plotly.graph_objects as go
-import dataframe_image as dfi
-import pandas as pd
-import sqlparse
-from bots.api import ask_chartgpt
-import discord
-from discord.ext import tasks
-from discord import app_commands
+
 import chartgpt_client
+import dataframe_image as dfi
+import discord
+import pandas as pd
+import plotly.graph_objects as go
+import sqlparse
 from chartgpt_client import OutputType
-
-
-# Import environment variables from .env file
+from discord import app_commands
+from discord.ext import tasks
 from dotenv import load_dotenv
 
-load_dotenv()
+from bots.api import ask_chartgpt
+
+load_dotenv("bots/.env")
 
 
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
@@ -57,7 +56,9 @@ async def handle_ask_chartgpt(interaction: discord.Interaction, question: str):
     await interaction.response.send_message("Coming right up 🪄")
 
     embed = create_embed(question)
-    msg = await interaction.channel.send(embed=embed, file=discord.File("media/logo_chartgpt.png", filename="logo.png"))
+    msg = await interaction.channel.send(
+        embed=embed, file=discord.File("media/logo_chartgpt.png", filename="logo.png")
+    )
 
     embed_progress_bar.start(embed, msg)
 
@@ -85,13 +86,23 @@ async def handle_no_response(embed: discord.Embed, msg: discord.Message):
     await msg.edit(embed=embed)
 
 
-async def handle_response(embed: discord.Embed, msg: discord.Message, interaction: discord.Interaction, response: dict):
+async def handle_response(
+    embed: discord.Embed,
+    msg: discord.Message,
+    interaction: discord.Interaction,
+    response: dict,
+):
     embed_progress_bar.cancel()
-    description = f"Response time: {response.finished_at - response.created_at:.0f} seconds\n\n"
+    description = (
+        f"Response time: {response.finished_at - response.created_at:.0f} seconds\n\n"
+    )
     files = []
 
     for output in response.outputs:
-        if output.type == OutputType.PLOTLY_CHART.value:
+        if not output.value:
+            print("Output value is empty for type:", output.type)
+
+        elif output.type == OutputType.PLOTLY_CHART.value:
             # if output.description:
             #     description += f"{output.description}\n"
             with tempfile.TemporaryDirectory() as tmpdirname:
@@ -112,9 +123,13 @@ async def handle_response(embed: discord.Embed, msg: discord.Message, interactio
 
         elif output.type == OutputType.PANDAS_DATAFRAME.value:
             try:
-                dataframe: pd.DataFrame = pickle.loads(base64.b64decode(output.value.encode()))
+                dataframe: pd.DataFrame = pickle.loads(
+                    base64.b64decode(output.value.encode())
+                )
             except Exception as e:
-                print(f"Exception when converting DataFrame to markdown: {e}")  # Adjusted the error logging to a simple print, you can adapt this to your preferred logging method.
+                print(
+                    f"Exception when converting DataFrame to markdown: {e}"
+                )  # Adjusted the error logging to a simple print, you can adapt this to your preferred logging method.
                 dataframe = pd.DataFrame()
 
             if not dataframe.empty:
@@ -130,7 +145,12 @@ async def handle_response(embed: discord.Embed, msg: discord.Message, interactio
                         output_path = f"{tmpdirname}/{filename}"
 
                         # Export dataframe as an image
-                        dfi.export(data, output_path, max_rows=10, table_conversion="matplotlib")
+                        dfi.export(
+                            data,
+                            output_path,
+                            max_rows=10,
+                            table_conversion="matplotlib",
+                        )
 
                         files += [discord.File(output_path, filename=filename)]
 
@@ -138,7 +158,7 @@ async def handle_response(embed: discord.Embed, msg: discord.Message, interactio
             description += f"\n\n{output.description}\n\n```python\n{output.value}\n```"
 
         elif output.type == OutputType.PYTHON_OUTPUT.value:
-            description += f"\n\n{output.value}"
+            description += f"\n\nCode output:\n{output.value}"
 
         else:
             print("Invalid output type:", output.type)

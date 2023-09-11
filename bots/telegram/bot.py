@@ -2,40 +2,42 @@
 # pylint: disable=C0116
 
 import base64
+import inspect
 import json
 import os
 import pickle
-import app
+import tempfile
+
+import chartgpt_client
 import dataframe_image as dfi
-import inspect
+import pandas as pd
 import plotly.graph_objects as go
 import sqlparse
-import pandas as pd
-import tempfile
-import chartgpt_client
 from chartgpt_client.models import OutputType
-from telegram import Update, InputMediaPhoto
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from dotenv import load_dotenv
+from telegram import InputMediaPhoto, Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+import app
 from bots.api import ask_chartgpt
 
-
-# Import environment variables from .env file
-from dotenv import load_dotenv
-
-load_dotenv("bots/telegram/.env")
+load_dotenv("bots/.env")
 
 TELEGRAM_ADMIN_USERNAME = os.environ["TELEGRAM_ADMIN_USERNAME"]
 # Your token obtained from BotFather
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 
 
-def error_handler(update, context):
+async def error_handler(update, context):
     """Log the error and send a telegram message to notify the developer."""
     # Log the error before we do anything else, so we can see it even if something breaks.
     app.logger.error(f"Update {update} caused error {context.error}")
 
     # Optionally, send a message to an admin or group to notify them of the error.
-    context.bot.send_message(chat_id=TELEGRAM_ADMIN_USERNAME, text="An error occurred.")
+    await context.bot.send_message(
+        chat_id=TELEGRAM_ADMIN_USERNAME, text="An error occurred."
+    )
+    await update.message.reply_text("Sorry, I couldn't answer your question.")
 
 
 async def update_message(
@@ -72,18 +74,19 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     message_text = inspect.cleandoc(
         f"""
-        Here is the result:
+        *Question:* {response.prompt}
 
         Response time: {response.finished_at - response.created_at:.0f} seconds
-
-        *Question:* {response.prompt}
 
         """
     )
     message = await update_message(update, context, message, message_text)
 
     for output in response.outputs:
-        if output.type == OutputType.PLOTLY_CHART.value:
+        if not output.value:
+            print("Output value is empty for type:", output.type)
+
+        elif output.type == OutputType.PLOTLY_CHART.value:
             # if output.description:
             #     await update.message.reply_text(inspect.cleandoc(output.description))
             with tempfile.TemporaryDirectory() as tmpdirname:
@@ -95,7 +98,7 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
                 with open(f"{tmpdirname}/chart.png", "rb") as f:
                     await update.message.reply_photo(photo=f)
 
-        elif output.type == OutputType.SQL_QUERY.value and output.value:
+        elif output.type == OutputType.SQL_QUERY.value:
             await update.message.reply_text(
                 f"{output.description}\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```",
                 # parse_mode="Markdown"
@@ -148,8 +151,10 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
                 parse_mode="Markdown",
             )
 
-        elif output.type == OutputType.PYTHON_OUTPUT.value and output.value:
-            await update.message.reply_text(inspect.cleandoc(output.value))
+        elif output.type == OutputType.PYTHON_OUTPUT.value:
+            await update.message.reply_text(
+                inspect.cleandoc("Code output:\n" + output.value)
+            )
 
         else:
             print("Invalid output type:", output.type)

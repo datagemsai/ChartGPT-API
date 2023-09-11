@@ -1,9 +1,9 @@
-from app.config import Dataset
-
+from app.config.datasets import Dataset
 
 datasets = [
     Dataset(
         name="MetaQuants NFT Finance Aggregator",
+        project="chartgpt-production",
         id="metaquants_nft_finance_aggregator",
         description="""
         Leverage the MetaQuants NFT Finance Aggregator to gain valuable insights into NFT loan history, outstanding loan indicators, and activity on both P2Peer and P2Pool protocols. The dataset currently includes a range of leading providers, including X2Y2, Pine, BendDAO, ***REMOVED***, Arcade, and JPEGD.        

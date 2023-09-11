@@ -1,11 +1,12 @@
+import json
+import os
 from typing import Any, Callable, Dict, List, Optional, Union
+
+from google.api_core.exceptions import BadRequest
+from google.cloud import bigquery
+from google.oauth2 import service_account
 from guardrails import Validator, register_validator
 from guardrails.validators import EventDetail
-from google.cloud import bigquery
-import os
-from google.oauth2 import service_account
-import json
-from google.api_core.exceptions import BadRequest
 
 
 @register_validator(name="bug-free-bigquery-sql", data_type="sql")

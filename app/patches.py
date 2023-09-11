@@ -1,14 +1,13 @@
 import datetime
-import plotly.io as pio
-import pandas as pd
-from plotly.graph_objs._figure import Figure
-from pandas.io.formats import (
-    format as fmt,
-)
 from io import StringIO
-from app.utils import copy_url_to_clipboard
-from app import logger, db_charts, ENV
 
+import pandas as pd
+import plotly.io as pio
+from pandas.io.formats import format as fmt
+from plotly.graph_objs._figure import Figure
+
+from app import ENV, db_charts, logger
+from app.utils import copy_url_to_clipboard
 
 # Set plotly as the default plotting backend for pandas
 pd.options.plotting.backend = "plotly"

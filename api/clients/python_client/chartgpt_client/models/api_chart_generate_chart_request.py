@@ -13,34 +13,42 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
-
 from typing import Optional
+
 from pydantic import BaseModel, Field, StrictStr, validator
+
 
 class ApiChartGenerateChartRequest(BaseModel):
     """
     ApiChartGenerateChartRequest
     """
-    question: Optional[StrictStr] = Field(None, description="The question based on which the chart will be generated.")
-    type: Optional[StrictStr] = Field('json', description="The format in which the chart should be returned. Accepted values are `json` or `png`.")
+
+    question: Optional[StrictStr] = Field(
+        None, description="The question based on which the chart will be generated."
+    )
+    type: Optional[StrictStr] = Field(
+        "json",
+        description="The format in which the chart should be returned. Accepted values are `json` or `png`.",
+    )
     __properties = ["question", "type"]
 
-    @validator('type')
+    @validator("type")
     def type_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in ('json', 'png'):
+        if value not in ("json", "png"):
             raise ValueError("must be one of enum values ('json', 'png')")
         return value
 
     class Config:
         """Pydantic configuration"""
+
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -59,10 +67,7 @@ class ApiChartGenerateChartRequest(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
         return _dict
 
     @classmethod
@@ -74,10 +79,10 @@ class ApiChartGenerateChartRequest(BaseModel):
         if not isinstance(obj, dict):
             return ApiChartGenerateChartRequest.parse_obj(obj)
 
-        _obj = ApiChartGenerateChartRequest.parse_obj({
-            "question": obj.get("question"),
-            "type": obj.get("type") if obj.get("type") is not None else 'json'
-        })
+        _obj = ApiChartGenerateChartRequest.parse_obj(
+            {
+                "question": obj.get("question"),
+                "type": obj.get("type") if obj.get("type") is not None else "json",
+            }
+        )
         return _obj
-
-

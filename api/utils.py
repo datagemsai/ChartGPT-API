@@ -1,21 +1,56 @@
+import base64
 import re
+import uuid
 from typing import List, Optional
+
 from google.cloud import bigquery
+
+import app
+
+
+def generate_uuid() -> str:
+    r_uuid = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf-8")
+    return r_uuid.replace("=", "")
+
+
+def parse_data_source_url(data_source_url) -> tuple[str, str, str, Optional[str]]:
+    # Regular expression pattern
+    pattern = r"^(?:([a-z]+)/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)(?:/([a-zA-Z0-9_-]+))?)?$"
+
+    match = re.match(pattern, data_source_url)
+    if not match:
+        raise ValueError(f"Invalid data source URL format: {data_source_url}")
+
+    # Extracting values from the matched groups
+    data_source = match.group(1)
+    project = match.group(2)
+    collection = match.group(3)
+    entity = match.group(4)  # This will be None if not provided
+
+    return data_source, project, collection, entity
 
 
 def get_tables_summary(
     client: bigquery.Client,
-    datasets: List[bigquery.Dataset],
-    dataset_ids: Optional[List[str]] = None,
-    table_ids: Optional[List[str]] = None,
+    data_source_url: str,
 ) -> str:
     markdown_summary = ""
 
-    # Filter bigquery.Dataset objects by dataset_ids
-    if dataset_ids:
+    _data_source, project, dataset_id, table_id = parse_data_source_url(data_source_url)
+    if not project:
+        project = client.project
+
+    if dataset_id:
+        # Filter bigquery.Dataset objects by dataset_id
         datasets = [
-            dataset for dataset in datasets if dataset.dataset_id in dataset_ids
+            dataset
+            for dataset in list(client.list_datasets(project=project))
+            if dataset.dataset_id == dataset_id
         ]
+    else:
+        datasets = list(client.list_datasets(project=project))
+
+    table_ids = [table_id] if table_id else None
 
     for dataset in datasets:
         dataset_id = dataset.dataset_id
@@ -33,11 +68,13 @@ def get_tables_summary(
 
         for table in tables:
             table_id = table.table_id
-            table_ref = client.dataset(dataset_id).table(table_id)
+            table_ref = client.dataset(dataset_id, project=project).table(table_id)
             table = client.get_table(table_ref)
 
             # SQL-like CREATE TABLE statement
-            create_table_statement = f"CREATE TABLE {dataset_id}.{table_id} (\n"
+            create_table_statement = (
+                f"CREATE TABLE `{project}.{dataset_id}.{table_id}` (\n"
+            )
 
             for field in table.schema:
                 create_table_statement += f'"{field.name}" {field.field_type}'
@@ -55,6 +92,11 @@ def get_tables_summary(
 
             markdown_summary += f"### {dataset_id}.{table_id}\n"
             markdown_summary += f"```\n{create_table_statement}\n```\n"
+
+    if not markdown_summary:
+        app.logger.error(
+            "Could not find any tables for data source: %s", data_source_url
+        )
 
     return markdown_summary
 

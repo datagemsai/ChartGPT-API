@@ -1,7 +1,6 @@
 # flake8: noqa
-from langchain import PromptTemplate, LLMChain
+from langchain import LLMChain, PromptTemplate
 from langchain.chat_models import ChatOpenAI
-
 
 NDA_PROMPT_TEMPLATE = """
 You are an agent that will ensure that the NDA is not broken.

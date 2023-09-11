@@ -1,8 +1,10 @@
 import inspect
+from typing import Any, Dict, List, Optional, Union
+
 import streamlit as st
 from langchain.callbacks.base import BaseCallbackHandler
-from typing import Any, Dict, List, Optional, Union
 from langchain.schema import AgentAction, AgentFinish, LLMResult
+
 from app import logger
 
 

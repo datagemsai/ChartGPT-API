@@ -1,11 +1,12 @@
+import logging
 import re
 from typing import Union
+
 import streamlit as st
 from langchain.agents.agent import AgentOutputParser
-from chartgpt.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 from langchain.schema import AgentAction, AgentFinish, OutputParserException
 
-import logging
+from chartgpt.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,21 @@
+# LLMs
+langchain==0.0.223
+# git+https://github.com/hwchase17/langchain.git@master#egg=langchain
+openai~=0.27.8
+
+# API
+connexion[swagger-ui]==2.14.2
+flask>=2.0.3
+flask-cors==4.0.0
+
+# Google Cloud Platform
+google-cloud-firestore==2.11.1
+google-cloud-bigquery[pandas]==3.11.1
+
+# Data science
+plotly~=5.16.0
+pandas~=2.0.3
+
+# Assorted
+python-dotenv~=1.0.0
+ipykernel==6.25.1

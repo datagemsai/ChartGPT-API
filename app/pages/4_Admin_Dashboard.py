@@ -1,13 +1,13 @@
-import pandas as pd
-import streamlit as st
 import json
-import plotly.express as px
-from app.auth import is_user_admin, requires_auth
 
-from app.users import UserCredits, get_users, get_user_queries, get_user_charts
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
+from app.auth import is_user_admin, requires_auth
 from app.charts import get_chart
 from app.components.notices import Notices
-
+from app.users import UserCredits, get_user_charts, get_user_queries, get_users
 
 # Show notices
 Notices()
@@ -21,7 +21,9 @@ def main(user_id, user_email):
         st.stop()
 
     with st.spinner("Loading..."):
-        user_analytics_tab, user_tab, chart_tab = st.tabs(["User Analytics", "User", "Chart"])
+        user_analytics_tab, user_tab, chart_tab = st.tabs(
+            ["User Analytics", "User", "Chart"]
+        )
 
         with user_analytics_tab:
             # Allow user to select a user, and display the user email instead of the ID
@@ -35,23 +37,22 @@ def main(user_id, user_email):
             df_users["number_of_charts"] = df_users["id"].apply(
                 lambda user_id: len(get_user_charts(user_id))
             )
-            df_users["active"] = (
-                (df_users["number_of_queries"] > 0)
-                | (df_users["number_of_charts"] > 0)
+            df_users["active"] = (df_users["number_of_queries"] > 0) | (
+                df_users["number_of_charts"] > 0
             )
             # Sort by number of queries
             df_users = df_users.sort_values(
                 by=["number_of_queries"], ascending=False
             ).reset_index(drop=True)
 
-            user_analytics_csv = df_users.to_csv(index=False).encode('utf-8')
+            user_analytics_csv = df_users.to_csv(index=False).encode("utf-8")
 
             st.download_button(
                 "Download user analytics as CSV",
                 user_analytics_csv,
                 "user_analytics.csv",
                 "text/csv",
-                key='download-csv'
+                key="download-csv",
             )
 
             # Display user analytics
@@ -61,9 +62,7 @@ def main(user_id, user_email):
             st.markdown(
                 f"Total number of queries: {df_users['number_of_queries'].sum()}"
             )
-            st.markdown(
-                f"Total number of charts: {df_users['number_of_charts'].sum()}"
-            )
+            st.markdown(f"Total number of charts: {df_users['number_of_charts'].sum()}")
 
             # Create a Pandas dataframe of all users
             st.dataframe(df_users)
@@ -89,7 +88,9 @@ def main(user_id, user_email):
             with st.form("user_credits"):
                 st.write("Set number of free credits")
                 current_free_credits = user_credits.free_credits
-                updated_free_credits = st.number_input('Free credits', value=current_free_credits)
+                updated_free_credits = st.number_input(
+                    "Free credits", value=current_free_credits
+                )
                 submitted = st.form_submit_button("Save")
                 if submitted:
                     user_credits.free_credits = updated_free_credits

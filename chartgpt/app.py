@@ -1,17 +1,18 @@
-from typing import List, Optional
-from google.cloud import bigquery
-from app.config import Dataset
-from chartgpt.agents.agent_toolkits.bigquery.utils import get_dataset_ids
-from langchain.chat_models import ChatOpenAI
-from chartgpt.agents.agent_toolkits import create_bigquery_agent
-from google.oauth2 import service_account
-from chartgpt.callback_handler import CustomCallbackHandler
-from langchain.callbacks.manager import CallbackManager
-from langchain.memory import ConversationBufferMemory
-import os
 import json
-import app
+import os
+from typing import List, Optional
 
+from google.cloud import bigquery
+from google.oauth2 import service_account
+from langchain.callbacks.manager import CallbackManager
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
+
+import app
+from app.config.datasets import Dataset
+from chartgpt.agents.agent_toolkits import create_bigquery_agent
+from chartgpt.agents.agent_toolkits.bigquery.utils import get_dataset_ids
+from chartgpt.callback_handler import CustomCallbackHandler
 
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
 

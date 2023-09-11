@@ -1,5 +1,5 @@
-from streamlit.components.v1 import html
 import streamlit as st
+from streamlit.components.v1 import html
 
 
 def copy_url_to_clipboard(url):

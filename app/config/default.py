@@ -1,9 +1,9 @@
-from app.config import Dataset
-
+from app.config.datasets import Dataset
 
 datasets = [
     Dataset(
         name="Decentralized Exchange Trades",
+        project="chartgpt-staging",
         id="dex_trades",
         description="A dataset of decentralized exchange (DEX) transactions across L1 and L2 blockchains.",
         sample_questions=[
@@ -17,6 +17,7 @@ datasets = [
     ),
     Dataset(
         name="NFT Lending Protocol Aggregate Borrow Volume",
+        project="chartgpt-staging",
         id="nft_lending_aggregated_borrow",
         description="A dataset of the aggregate borrow volume for different NFT lending protocols.",
         sample_questions=[
@@ -30,6 +31,7 @@ datasets = [
     ),
     Dataset(
         name="Growjo - Fastest Growing Companies",
+        project="chartgpt-staging",
         id="growjo_fastest_growing_companies",
         description="Analyse the fastest growing companies in the AI & Analytics space according to Growjo.",
         sample_questions=[
@@ -43,6 +45,7 @@ datasets = [
     ),
     Dataset(
         name="NFT Lending Aggregated by NFT Collection",
+        project="chartgpt-staging",
         id="nft_lending_aggregated_nft_collection",
         description="Borrowed dollar amounts and number of NFTs locked for each NFT collection",
         sample_questions=[

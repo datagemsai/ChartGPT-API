@@ -1,7 +1,8 @@
 import locale
 import re
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 
 def format_bigquery_column_names(df):

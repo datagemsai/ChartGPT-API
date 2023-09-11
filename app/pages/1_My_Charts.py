@@ -1,13 +1,12 @@
+import plotly.io as pio
 import streamlit as st
 from firebase_admin import firestore
-import plotly.io as pio
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 import app
 from app.auth import requires_auth
-from app.utils import copy_url_to_clipboard
 from app.components.notices import Notices
-
+from app.utils import copy_url_to_clipboard
 
 # Show notices
 Notices()

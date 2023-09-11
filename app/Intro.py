@@ -1,7 +1,7 @@
 import streamlit as st
 from PIL import Image
-from app.config.content import *
 
+from app.config.content import *
 
 st.set_page_config(
     page_title="cadGPT",

@@ -13,23 +13,26 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
-
 from typing import Optional
+
 from pydantic import BaseModel, Field, StrictStr
+
 
 class ApiSqlGenerateSql200Response(BaseModel):
     """
     ApiSqlGenerateSql200Response
     """
+
     query: Optional[StrictStr] = Field(None, description="The generated SQL query.")
     __properties = ["query"]
 
     class Config:
         """Pydantic configuration"""
+
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -48,10 +51,7 @@ class ApiSqlGenerateSql200Response(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
         return _dict
 
     @classmethod
@@ -63,9 +63,5 @@ class ApiSqlGenerateSql200Response(BaseModel):
         if not isinstance(obj, dict):
             return ApiSqlGenerateSql200Response.parse_obj(obj)
 
-        _obj = ApiSqlGenerateSql200Response.parse_obj({
-            "query": obj.get("query")
-        })
+        _obj = ApiSqlGenerateSql200Response.parse_obj({"query": obj.get("query")})
         return _obj
-
-

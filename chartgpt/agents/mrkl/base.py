@@ -1,18 +1,17 @@
-from typing import Dict, List, Optional, Tuple, Union, Sequence
-from pydantic import Field
+import logging
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-from langchain.tools.base import BaseTool
+from langchain.agents.agent import AgentOutputParser
+from langchain.agents.mrkl.base import ZeroShotAgent
 from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
-from langchain.agents.agent import AgentOutputParser
-from pydantic import root_validator
-from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from langchain.schema import AgentAction, BaseMessage
+from langchain.tools.base import BaseTool
+from pydantic import Field, root_validator
+
+from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 from chartgpt.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
-import logging
-from langchain.agents.mrkl.base import ZeroShotAgent
-
 
 logger = logging.getLogger(__name__)
 

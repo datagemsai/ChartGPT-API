@@ -42,7 +42,7 @@ watchdog
 # wolframalpha
 python-dotenv~=1.0.0
 # google-search-results
-ipykernel
+ipykernel==6.25.1
 # jupyterlab
 pytest~=7.4.0
 pytest-xdist
@@ -78,8 +78,18 @@ gunicorn
 connexion[swagger-ui]==2.14.2
 api/clients/python_client/
 flask>=2.0.3
-flask-cors
+flask-cors==4.0.0
 authlib>=1.0
+typeguard==4.1.3
+
+# Caching
+gptcache
+# redis
+# redis_om
+# transformers
+# onnxruntime
+# tensorflow==2.13.0
+torch
 
 # FastAPI
 # fastapi==0.45.0
@@ -104,3 +114,8 @@ slack_bolt
 
 # Telegram bot
 python-telegram-bot
+
+# Code linting and formatting
+flake8
+isort==5.12.0
+black

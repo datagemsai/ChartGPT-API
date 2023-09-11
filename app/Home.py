@@ -1,30 +1,31 @@
 # pylint: disable=C0103
 # pylint: disable=C0116
 
+import datetime
+import re
 from dataclasses import dataclass
 from enum import Enum
-import re
-import streamlit as st
-import chartgpt
-from chartgpt.app import client
-from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
-from app.config import Dataset
-from langchain.schema import OutputParserException
-from langchain.callbacks.base import BaseCallbackHandler
-from google.cloud.bigquery import Client
-import datetime
-from langchain.callbacks import get_openai_callback
+
 import plotly.io as pio
+import streamlit as st
+from google.cloud.bigquery import Client
+from langchain.callbacks import get_openai_callback
+from langchain.callbacks.base import BaseCallbackHandler
+from langchain.schema import OutputParserException
 
 import app
 import app.patches
-from app import db_queries, db_charts
-from app.auth import check_user_credits, requires_auth
-from app.components.sidebar import Sidebar
-from app.components.notices import Notices
-from app.utils import copy_url_to_clipboard
 import app.settings
+import chartgpt
 from api.guards import is_nda_broken
+from app import datasets, db_charts, db_queries
+from app.auth import check_user_credits, requires_auth
+from app.components.notices import Notices
+from app.components.sidebar import Sidebar
+from app.config.datasets import Dataset
+from app.utils import copy_url_to_clipboard
+from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
+from chartgpt.app import client
 
 # from st_pages import Page, show_pages, hide_pages
 
@@ -93,8 +94,8 @@ def main(user_id, _user_email):
     st.markdown("### 1. Select a dataset 📊")
 
     dataset: Dataset = st.selectbox(
-        "Select a dataset:", app.datasets, index=0, label_visibility="collapsed"
-    ) or Dataset(name="", id="", description="", sample_questions=[])
+        "Select a dataset:", datasets, index=0, label_visibility="collapsed"
+    ) or Dataset(name="", project="", id="", description="", sample_questions=[])
     st.markdown(dataset.description)
 
     # Monkey patching of BigQuery list_datasets()
@@ -106,6 +107,9 @@ def main(user_id, _user_email):
 
     # tables = list(client.list_tables(dataset.id))
     # Client.list_tables = lambda *kwargs: tables
+
+    print(datasets)
+    print(dataset)
 
     @st.cache_data
     def display_sample_dataframes(dataset: Dataset) -> None:
@@ -210,14 +214,14 @@ def main(user_id, _user_email):
             st.session_state["empty_container"].markdown(st.session_state["text"])
 
     # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-    if "agent" not in st.session_state:
-        stream_handler = StreamHandler()
-        st.session_state["agent"] = chartgpt.get_agent(
-            secure_execution=True,
-            temperature=sidebar.model_temperature,
-            datasets=[dataset],
-            callbacks=[stream_handler],
-        )
+    # if "agent" not in st.session_state:
+    stream_handler = StreamHandler()
+    st.session_state["agent"] = chartgpt.get_agent(
+        secure_execution=True,
+        temperature=sidebar.model_temperature,
+        datasets=[dataset],
+        callbacks=[stream_handler],
+    )
 
     if question:
         if sidebar.stop:
@@ -232,7 +236,7 @@ def main(user_id, _user_email):
             "env": app.ENV,
             "timestamp_start": timestamp_start,
             "query": question,
-            "dataset_id": dataset.id,
+            "dataset_id": f"{dataset.project}.{dataset.id}",
             "status": QueryStatus.SUBMITTED.name,
             "model_temperature": sidebar.model_temperature,
         }
@@ -330,6 +334,13 @@ def main(user_id, _user_email):
                     )
             finally:
                 st.session_state.question = ""
+                # st.markdown("How was the analysis?")
+                # col1, col2 = st.columns([.1, 1])
+                # positive_review = col1.button("👍")
+                # negative_review = col2.button("👎")
+                # if positive_review or negative_review:
+                #     user_rating = 1 if positive_review else 0
+                #     query_ref.update({'user_rating': user_rating})
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
-import app
 import streamlit as st
 from PIL import Image
+
+import app
 import app.settings
 
 

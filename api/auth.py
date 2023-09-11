@@ -1,15 +1,17 @@
-from connexion.exceptions import OAuthProblem
 import secrets
 from typing import List
+
+from connexion.exceptions import OAuthProblem
 from google.cloud.firestore import ArrayRemove, ArrayUnion
-from app import db_users
+
+from app import db, db_users
+
+db_api_keys = db.collection("api_keys")
 
 
 def apikey_auth(token, required_scopes):
     """Secure an endpoint with an API key"""
-    # TODO Enable API key authentication
-    # valid = check_api_key(token)
-    valid = True
+    valid = check_api_key(token)
 
     if not valid:
         raise OAuthProblem("Invalid token")
@@ -17,27 +19,52 @@ def apikey_auth(token, required_scopes):
     return {"uid": "anonymous"}
 
 
-def create_api_key(user_id) -> None:
+def create_api_key(user_id) -> bool:
     """Create an API key for a user's account"""
-    user_ref = db_users.document(user_id)
-    api_key = secrets.token_hex(16)
-    user_ref.update({"api_keys": ArrayUnion([api_key])})
+    if db_users.document(user_id).get():
+        api_key = secrets.token_hex(16)
+        db_api_keys.document(api_key).set(
+            {
+                "user_id": user_id,
+                "creation_date": db.SERVER_TIMESTAMP,
+                "expiration_date": db.SERVER_TIMESTAMP + db.timedelta(days=365),
+                "status": "ACTIVE",
+            }
+        )
+        return True
+    else:
+        return False
 
 
-def delete_api_key(user_id, api_key) -> None:
+def delete_api_key(user_id, api_key) -> bool:
     """Delete an API key from a user's account"""
-    user_ref = db_users.document(user_id)
-    user_ref.update({"api_keys": ArrayRemove([api_key])})
+    if db_users.document(user_id).get():
+        db_api_keys.document(api_key).set(
+            {
+                "status": "INACTIVE",
+            }
+        )
+        return True
+    else:
+        return False
 
 
 def get_api_keys(user_id) -> List[str]:
     """Get all API keys for a user's account"""
-    user_ref = db_users.document(user_id)
-    user = user_ref.get()
-    return user.to_dict().get("api_keys", [])
+    if db_users.document(user_id).get():
+        api_keys = (
+            db_api_keys.where("user_id", "==", user_id)
+            .where("status", "==", "ACTIVE")
+            .get()
+        )
+        return [api_key.id for api_key in api_keys]
+    else:
+        return []
 
 
 def check_api_key(api_key) -> bool:
     """Check if an API key is valid"""
-    valid = db_users.where("api_keys", "array_contains", api_key)
-    return bool(valid)
+    if db_api_keys.document(api_key).get():
+        return True
+    else:
+        return False

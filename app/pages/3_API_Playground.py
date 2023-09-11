@@ -1,14 +1,21 @@
+import base64
 import inspect
 import json
+import os
+import pickle
 import time
+
+import chartgpt_client
+import pandas as pd
 import sqlparse
 import streamlit as st
-import openapi_client
-from app.auth import requires_auth
-from chartgpt.app import client
-from api.auth import create_api_key, get_api_keys
-from app.components.notices import Notices
+from chartgpt_client.models import OutputType
 
+import app
+from api.auth import create_api_key, get_api_keys
+from app.auth import requires_auth
+from app.components.notices import Notices
+from chartgpt.app import client
 
 # Show notices
 Notices()
@@ -29,7 +36,7 @@ def main(user_id, user_email):
 
     # Defining the host is optional and defaults to https://api.chartgpt.***REMOVED***
     # See configuration.py for a list of all supported configuration parameters.
-    configuration = openapi_client.Configuration(
+    configuration = chartgpt_client.Configuration(
         # TODO Fetch from environment variable
         host="http://0.0.0.0:8081"
     )
@@ -46,124 +53,94 @@ def main(user_id, user_email):
     #     cols[1].button("Delete API key", key=api_key, on_click=(lambda api_key=api_key: delete_api_key(user_id=user_id, api_key=api_key)))
 
     # api_key = st.text_input("API key", value=(api_keys[0] if api_keys else ""))
+    api_key = os.environ["CHARTGPT_API_KEY"]
 
     with st.form(key="chart_api_request"):
-        st.markdown("### API endpoint: `/chart`")
+        st.markdown("### API endpoint: `/v1/ask_chartgpt`")
         question = st.text_input(
-            "question",
+            "prompt",
             value="Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
         )
-        submitted = st.form_submit_button("Submit")
-
-        if submitted:
-            # TODO Enable API key authentication
-            # configuration.api_key['ApiKeyAuth'] = api_key
-            configuration.api_key["ApiKeyAuth"] = "abc"
-            # Enter a context with an instance of the API client
-            with openapi_client.ApiClient(configuration) as api_client:
-                with st.spinner("Generating chart..."):
-                    # Create an instance of the API class
-                    api_instance = openapi_client.DefaultApi(api_client)
-                    try:
-                        start_time = time.time()
-                        # Generate a Plotly chart from a question
-                        api_response = api_instance.api_chart_generate_chart(
-                            {
-                                "question": question,
-                                "type": "json",
-                            }
-                        )
-                        end_time = time.time()
-                        sql_query = api_response.query
-                        python_code = api_response.code
-                        formatted_sql_query = sqlparse.format(
-                            sql_query, reindent=True, keyword_case="upper"
-                        )
-                        figure_json_string = api_response.chart
-                        figure_json = json.loads(figure_json_string, strict=False)
-
-                        st.markdown("**API response:**")
-                        st.json(
-                            {
-                                "query": sql_query,
-                                "code": python_code,
-                                "chart": "<Plotly chart JSON string>",
-                            },
-                            expanded=False,
-                        )
-                        st.markdown(
-                            f"**API response time:** {end_time - start_time:.2f} seconds"
-                        )
-
-                        st.markdown("**Validated SQL query:**")
-                        st.markdown(
-                            inspect.cleandoc(
-                                f"""```sql
-                        {formatted_sql_query}
-                        """
-                            )
-                        )
-                        st.markdown("\n")
-
-                        query_job = client.query(sql_query)
-                        results = query_job.result()
-                        df = results.to_dataframe()
-                        st.dataframe(df)
-
-                        st.markdown("**Validated Python code:**")
-                        st.markdown(
-                            inspect.cleandoc(
-                                f"""```python
-                        {python_code}
-                        """
-                            )
-                        )
-
-                        st.markdown("**Generated chart:**")
-                        st.plotly_chart(figure_json)
-                    except openapi_client.ApiException as e:
-                        st.warning("API call failed")
-
-    with st.form(key="sql_api_request"):
-        st.markdown("### API endpoint: `/sql`")
-        question = st.text_input(
-            "question",
-            value="Get the average APR for the ***REMOVED*** protocol in the past 6 months.",
+        output_type = st.selectbox(
+            "output_type",
+            options=["any", "plotly_chart", "pandas_dataframe", "int", "float", "bool"],
+            index=0,
         )
         submitted = st.form_submit_button("Submit")
 
         if submitted:
             # TODO Enable API key authentication
-            # configuration.api_key['ApiKeyAuth'] = api_key
-            configuration.api_key["ApiKeyAuth"] = "abc"
-
+            configuration.api_key["ApiKeyAuth"] = api_key
             # Enter a context with an instance of the API client
-            with openapi_client.ApiClient(configuration) as api_client:
-                with st.spinner("Generating SQL query..."):
+            with chartgpt_client.ApiClient(configuration) as api_client:
+                with st.spinner("Performing query..."):
                     # Create an instance of the API class
-                    api_instance = openapi_client.DefaultApi(api_client)
+                    api_instance = chartgpt_client.DefaultApi(api_client)
                     try:
-                        # Generate an SQL query from a question
-                        api_response = api_instance.api_sql_generate_sql(
-                            {
-                                "question": question,
-                            }
+                        # Generate a Plotly chart from a question
+                        api_request_ask_chartgpt_request = chartgpt_client.ApiRequestAskChartgptRequest(
+                            prompt=question,
+                            output_type=output_type,
+                            data_source_url="bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow",
                         )
-                        sql_query = api_response.query
-                        formatted_sql_query = sqlparse.format(
-                            sql_query, reindent=True, keyword_case="upper"
-                        )
-                        st.markdown("**API response:**")
-                        st.json({"query": sql_query}, expanded=False)
-                        st.markdown("**Validated SQL query:**")
-                        st.markdown(
-                            inspect.cleandoc(
-                                f"""```sql
-                        {formatted_sql_query}
-                        """
+                        response: chartgpt_client.Response = (
+                            api_instance.api_request_ask_chartgpt(
+                                api_request_ask_chartgpt_request
                             )
                         )
-                    except openapi_client.ApiException as e:
+
+                        st.markdown(
+                            f"**API response time:** {response.finished_at - response.created_at:.0f} seconds"
+                        )
+
+                        for output in response.outputs:
+                            if not output.value:
+                                print("Output value is empty for type:", output.type)
+
+                            elif output.type == OutputType.PLOTLY_CHART.value:
+                                figure_json_string = output.value
+                                figure_json = json.loads(
+                                    figure_json_string, strict=False
+                                )
+                                st.plotly_chart(figure_json, use_container_width=True)
+
+                            elif output.type == OutputType.SQL_QUERY.value:
+                                st.markdown(
+                                    inspect.cleandoc(
+                                        f"{output.description}\n\n```sql{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```"
+                                    )
+                                )
+
+                            elif output.type == OutputType.PANDAS_DATAFRAME.value:
+                                try:
+                                    dataframe: pd.DataFrame = pickle.loads(
+                                        base64.b64decode(output.value.encode())
+                                    )
+                                except Exception as e:
+                                    app.logger.error(
+                                        f"Exception when converting DataFrame to markdown: {e}"
+                                    )
+                                    dataframe = pd.DataFrame()
+                                if not dataframe.empty:
+                                    st.dataframe(dataframe)
+
+                            elif output.type == OutputType.PYTHON_CODE.value:
+                                st.markdown(
+                                    inspect.cleandoc(
+                                        f"{output.description}\n\n```python\n{output.value}\n```"
+                                    )
+                                )
+
+                            # elif output.type in [
+                            #     OutputType.PYTHON_OUTPUT.value,
+                            #     OutputType.STRING.value,
+                            #     OutputType.INT.value,
+                            #     OutputType.FLOAT.value,
+                            #     OutputType.BOOL.value,
+                            # ]:
+                            #     st.markdown(inspect.cleandoc("Code output:\n" + output.value))
+
+                    except chartgpt_client.ApiException as e:
                         st.warning("API call failed")
 
 

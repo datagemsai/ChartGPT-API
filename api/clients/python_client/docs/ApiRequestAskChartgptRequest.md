@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **prompt** | **str** | The prompt based on which the response will be generated. | [optional] 
-**dataset_id** | **str** | The dataset ID based on which the response will be generated. | [optional] [default to '']
+**data_source_url** | **str** | The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used. | [optional] [default to '']
 **output_type** | [**OutputType**](OutputType.md) |  | [optional] 
 **max_outputs** | **int** | The maximum number of outputs to generate. | [optional] [default to 10]
 **max_attempts** | **int** | The maximum number of attempts to generate an output. | [optional] [default to 10]

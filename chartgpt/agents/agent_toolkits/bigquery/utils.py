@@ -1,10 +1,11 @@
 import inspect
 from io import StringIO
-from typing import Dict, List, Tuple, Union, Optional
-from google.cloud import bigquery
-import pandas as pd
+from typing import Dict, List, Optional, Tuple, Union
 
-from app.config import Dataset
+import pandas as pd
+from google.cloud import bigquery
+
+from app.config.datasets import Dataset
 
 
 class StreamlitDict(dict):
@@ -42,9 +43,10 @@ def get_tables_summary(
     tables_summary = StreamlitDict()
     for dataset in datasets:
         dataset_id = dataset.id
+        project = dataset.project
         tables_summary[dataset_id] = {}
         for table_id in dataset.tables:
-            table_ref = client.dataset(dataset_id).table(table_id)
+            table_ref = client.dataset(dataset_id, project=project).table(table_id)
             table = client.get_table(table_ref)
             tables_summary[dataset_id][table_id] = [
                 (
@@ -70,11 +72,10 @@ def get_example_query(
     # Generate example_query for all tables in datasets
     example_query = ""
     for dataset in datasets:
-        dataset_id = dataset.id
         for table_id in dataset.tables:
             example_query += inspect.cleandoc(
                 f"""
-            SELECT * FROM `{dataset_id}.{table_id}` LIMIT 100
+            SELECT * FROM `{dataset.project}.{dataset.id}.{table_id}` LIMIT 100
             """
             )
     return example_query
@@ -87,7 +88,7 @@ def get_sample_dataframes(
     # Generate sample_dfs for all tables in dataset
     sample_dfs = {}
     for table_id in dataset.tables:
-        query = f"SELECT * FROM `{client.project}.{dataset.id}.{table_id}` LIMIT 100"
+        query = f"SELECT * FROM `{dataset.project}.{dataset.id}.{table_id}` LIMIT 100"
         df = client.query(query).to_dataframe()
         sample_dfs[table_id] = df
     return sample_dfs

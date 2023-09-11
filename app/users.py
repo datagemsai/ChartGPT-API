@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-import plotly.express as px
+
 import pandas as pd
+import plotly.express as px
 import streamlit as st
-
-from fireo.models import Model
 from fireo.fields import IDField, NumberField
+from fireo.models import Model
 
-from app import db_users, db_queries, db_charts
+from app import db_charts, db_queries, db_users
 
 
 class UserCredits(Model):
