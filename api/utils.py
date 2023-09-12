@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from google.cloud import bigquery
 
-import app
+from api import logger
 
 
 def generate_uuid() -> str:
@@ -28,6 +28,42 @@ def parse_data_source_url(data_source_url) -> tuple[str, str, str, Optional[str]
     entity = match.group(4)  # This will be None if not provided
 
     return data_source, project, collection, entity
+
+
+# TODO Complete method `check_bigquery_data_exists`
+# def check_bigquery_data_exists(client: bigquery.Client, data_source_url: str) -> bool:
+#     _data_source, project, dataset_id, table_id = parse_data_source_url(data_source_url)
+
+#     if not project:
+#         project = client.project
+
+#     if dataset_id:
+#         # Filter bigquery.Dataset objects by dataset_id
+#         datasets = [
+#             dataset
+#             for dataset in list(client.list_datasets(project=project))
+#             if dataset.dataset_id == dataset_id
+#         ]
+#     else:
+#         datasets = list(client.list_datasets(project=project))
+
+#     if not datasets:
+#         return False
+
+#     if table_id:
+#         # Filter bigquery.Table objects by table_id
+#         tables = [
+#             table
+#             for table in list(client.list_tables(datasets[0]))
+#             if table.table_id == table_id
+#         ]
+#     else:
+#         tables = list(client.list_tables(datasets[0]))
+
+#     if not tables:
+#         return False
+#     else:
+#         return True
 
 
 def get_tables_summary(
@@ -94,9 +130,7 @@ def get_tables_summary(
             markdown_summary += f"```\n{create_table_statement}\n```\n"
 
     if not markdown_summary:
-        app.logger.error(
-            "Could not find any tables for data source: %s", data_source_url
-        )
+        logger.error("Could not find any tables for data source: %s", data_source_url)
 
     return markdown_summary
 

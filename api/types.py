@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import plotly
@@ -34,12 +33,6 @@ accepted_output_types = [
     str,
     bool,
 ]
-
-
-# AnyOutputType = Union[
-#     List[Union[tuple(accepted_output_types)]],
-#     Union[tuple(accepted_output_types)]
-# ]
 
 
 def matches_types(value, types: List[Any] = [Any]) -> bool:

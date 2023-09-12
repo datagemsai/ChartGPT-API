@@ -3,6 +3,7 @@ import time
 from chartgpt_client import ApiRequestAskChartgptRequest as Request
 from chartgpt_client import Response, Usage
 
+from api import logger
 from api.chartgpt import answer_user_query
 from api.errors import ContextLengthError
 from api.guards import is_nda_broken
@@ -13,15 +14,21 @@ from api.utils import generate_uuid, parse_data_source_url
 def ask_chartgpt(body) -> Response:
     request: Request = Request.from_dict(body)
     if is_nda_broken(request.prompt):
-        return {"error": "Could not complete analysis: insecure request"}, 400
+        message = "Could not complete analysis: insecure request"
+        logger.error(message)
+        return {"error": message}, 400
 
     data_source, _, _, _ = parse_data_source_url(request.data_source_url)
 
     if not request.prompt:
-        return {"error": "Could not complete analysis: prompt is empty"}, 400
+        message = "Could not complete analysis: prompt is empty"
+        logger.error(message)
+        return {"error": message}, 400
 
     if data_source != "bigquery":
-        return {"error": "Could not complete analysis: data source not supported"}, 400
+        message = "Could not complete analysis: data source not supported"
+        logger.error(message)
+        return {"error": message}, 400
 
     try:
         job_uuid = f"ask-{generate_uuid()}"
@@ -45,6 +52,10 @@ def ask_chartgpt(body) -> Response:
             200,
         )
     except ContextLengthError:
-        return {"error": "Could not complete analysis: ran out of context"}, 400
+        message = "Could not complete analysis: ran out of context"
+        logger.error(message)
+        return {"error": message}, 400
     except Exception as ex:
-        return {"error": f"Could not complete analysis: {ex}"}, 400
+        message = f"Could not complete analysis: {ex}"
+        logger.error(message)
+        return {"error": message}, 400

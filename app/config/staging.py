@@ -32,43 +32,57 @@ datasets = [
         ],
     ),
     Dataset(
-        name="US Residential Real Estate Sample Data",
-        project="housecanary-com",
-        id="sample",
-        description="Time series of median home value per block designated as single family residential (SFD), condominium (CND), or townhouse (TH).",
+        name="USA Real Estate Listings",
+        project="chartgpt-staging",
+        id="real_estate",
+        description="""
+        Real Estate listings (900k+) in the US categorised by State and zip code.
+
+        Source: https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset
+        """,
         tables=[
-            "block_value_ts",
-        ],
-        sample_questions=[
-            "Plot the average value over time for single family residential properties."
+            "usa_real_estate_listings",
         ],
     ),
-    Dataset(
-        name="Google Analytics Sample Data",
-        project="bigquery-public-data",
-        id="google_analytics_sample",
-        description=get_table_description(
-            "bigquery-public-data", "google_analytics_sample", "ga_sessions_20170801"
-        ),
-        tables=["ga_sessions_20170801"],
-        sample_questions=[
-            "Which Google Analytics channel provides the highest number of visitors?",
-            "Which device accounts for the highest number of visitors?",
-        ],
-    ),
-    Dataset(
-        name="Ethereum Blockchain Transactions Sample Data",
-        project="bigquery-public-data",
-        id="crypto_ethereum",
-        description=get_table_description(
-            "bigquery-public-data", "crypto_ethereum", "transactions"
-        ),
-        tables=[
-            # "token_transfers",
-            "transactions"
-        ],
-        sample_questions=[
-            "Plot the number of transactions over time for transactions with a value over 0 Wei."
-        ],
-    ),
+    # Dataset(
+    #     name="US Residential Real Estate Sample Data",
+    #     project="housecanary-com",
+    #     id="sample",
+    #     description="Time series of median home value per block designated as single family residential (SFD), condominium (CND), or townhouse (TH).",
+    #     tables=[
+    #         "block_value_ts",
+    #     ],
+    #     sample_questions=[
+    #         "Plot the average property value over time for single family residential properties.",
+    #         "Plot the average property value over time for all property types.",
+    #     ],
+    # ),
+    # Dataset(
+    #     name="Google Analytics Sample Data",
+    #     project="bigquery-public-data",
+    #     id="google_analytics_sample",
+    #     description=get_table_description(
+    #         "bigquery-public-data", "google_analytics_sample", "ga_sessions_20170801"
+    #     ),
+    #     tables=["ga_sessions_20170801"],
+    #     sample_questions=[
+    #         "Which Google Analytics channel provides the highest number of visitors?",
+    #         "Which device accounts for the highest number of visitors?",
+    #     ],
+    # ),
+    # Dataset(
+    #     name="Ethereum Blockchain Transactions Sample Data",
+    #     project="bigquery-public-data",
+    #     id="crypto_ethereum",
+    #     description=get_table_description(
+    #         "bigquery-public-data", "crypto_ethereum", "transactions"
+    #     ),
+    #     tables=[
+    #         # "token_transfers",
+    #         "transactions"
+    #     ],
+    #     sample_questions=[
+    #         "Plot the number of transactions over time for transactions with a value over 0 Wei."
+    #     ],
+    # ),
 ]

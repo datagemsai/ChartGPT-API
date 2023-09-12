@@ -1,6 +1,5 @@
 import connexion
 
-
 # Create a new Connexion app instance
 app = connexion.App(__name__, specification_dir="openapi/")
 
