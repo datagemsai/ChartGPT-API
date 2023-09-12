@@ -27,6 +27,7 @@ from plotly.graph_objs import Figure
 from typeguard import TypeCheckError, check_type, typechecked
 
 from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
+from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError
 from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
                          CODE_GENERATION_IMPORTS,
@@ -38,7 +39,6 @@ from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
     SQLExecutionResult, SQLQueryGenerationConfig, accepted_output_types,
     assert_matches_accepted_type, map_type_to_output_type)
 from api.utils import apply_lower_to_where, get_tables_summary
-from chartgpt.app import client
 from chartgpt.tools.python.secure_ast import assert_secure_code
 
 pio.templates.default = "plotly"
@@ -96,7 +96,7 @@ functions = [
 def validate_sql_query(query: str) -> List[str]:
     """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
     try:
-        query_job = client.query(
+        query_job = bigquery_client.query(
             query, job_config=bigquery.QueryJobConfig(dry_run=True)
         )
         errors = (
@@ -192,7 +192,7 @@ def print_errors_and_attempts(query, errors, attempts, max_attempts):
 
 
 def execute_sql_query(query: str) -> pd.DataFrame:
-    query_job = client.query(query)
+    query_job = bigquery_client.query(query)
     results = query_job.result()
     return results.to_dataframe()
 
@@ -201,7 +201,7 @@ def get_valid_sql_query(
     user_query: str, config: SQLQueryGenerationConfig
 ) -> SQLExecutionResult:
     tables_summary = get_tables_summary(
-        client=client,
+        client=bigquery_client,
         data_source_url=config.data_source_url,
     )
     print("Tables summary:", tables_summary)

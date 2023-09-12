@@ -2,11 +2,8 @@ import secrets
 from typing import List
 
 from connexion.exceptions import OAuthProblem
-from google.cloud.firestore import ArrayRemove, ArrayUnion
 
-from app import db, db_users
-
-db_api_keys = db.collection("api_keys")
+from api.connectors.firestore import db_api_keys, db_users
 
 
 def apikey_auth(token, required_scopes):
