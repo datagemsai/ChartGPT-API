@@ -43,6 +43,8 @@ data "external" "git" {
   ]
 }
 
+# ChartGPT App
+
 resource "google_cloud_run_v2_service" "chartgpt_app_service" {
   project  = var.project_id
   name     = "chartgpt-app"
@@ -103,6 +105,71 @@ resource "google_cloud_run_domain_mapping" "chartgpt_app_service" {
     route_name = google_cloud_run_v2_service.chartgpt_app_service.name
   }
 }
+
+# ChartGPT API
+
+resource "google_cloud_run_v2_service" "chartgpt_api_service" {
+  project  = var.project_id
+  name     = "chartgpt-api"
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  template {
+    scaling {
+      max_instance_count = 5
+    }
+
+    containers {
+      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api:${data.external.git.result.sha}"
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "2048Mi"
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.secrets
+        content {
+          name = env.key
+          value_source {
+            secret_key_ref {
+              secret  = env.key
+              version = "latest"
+            }
+          }
+        }
+      }
+    }
+    service_account = "chartgpt-api-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
+  }
+
+  traffic {
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+    tag     = "git-${data.external.git.result.sha}"
+  }
+
+  # Waits for the Cloud Run API to be enabled
+  depends_on = [google_project_service.run_api, module.secret-manager]
+}
+
+resource "google_cloud_run_domain_mapping" "chartgpt_api_service" {
+  project  = var.project_id
+  location = var.region
+  name     = "chartgpt-api-${var.deployment}.***REMOVED***"
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.chartgpt_api_service.name
+  }
+}
+
+# Caddy
 
 resource "google_cloud_run_v2_service" "caddy_service" {
   project  = var.project_id
@@ -201,7 +268,29 @@ resource "google_cloud_run_domain_mapping" "caddy_service_app" {
   }
 }
 
+resource "google_cloud_run_domain_mapping" "caddy_service_api" {
+  project  = var.project_id
+  location = var.region
+  name     = "api.${var.base_domain}"
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.caddy_service.name
+  }
+}
+
 # Allow unauthenticated users to invoke the service
+resource "google_cloud_run_service_iam_member" "run_all_users_caddy" {
+  project  = var.project_id
+  service  = google_cloud_run_v2_service.caddy_service.name
+  location = google_cloud_run_v2_service.caddy_service.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 resource "google_cloud_run_service_iam_member" "run_all_users_chartgpt_app" {
   project  = var.project_id
   service  = google_cloud_run_v2_service.chartgpt_app_service.name
@@ -210,10 +299,10 @@ resource "google_cloud_run_service_iam_member" "run_all_users_chartgpt_app" {
   member   = "allUsers"
 }
 
-resource "google_cloud_run_service_iam_member" "run_all_users_caddy" {
+resource "google_cloud_run_service_iam_member" "run_all_users_chartgpt_api" {
   project  = var.project_id
-  service  = google_cloud_run_v2_service.caddy_service.name
-  location = google_cloud_run_v2_service.caddy_service.location
+  service  = google_cloud_run_v2_service.chartgpt_api_service.name
+  location = google_cloud_run_v2_service.chartgpt_api_service.location
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
