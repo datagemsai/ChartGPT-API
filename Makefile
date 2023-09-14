@@ -68,10 +68,16 @@ build_app_production: project_production
 	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_caddy_staging: project_staging
-	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_staging.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_caddy_production: project_production
-	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild_production.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+
+build_api_staging: project_staging
+	cd api/ && gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+
+build_api_production: project_production
+	cd api/ && gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 # Planning
 

@@ -11,7 +11,15 @@ http://app.{$base_domain} {
         dns cloudflare {$cloudflare_api_token}
     }
     reverse_proxy https://chartgpt-app-{$deployment}.cadlabs.org {
-        # Proxy to ChartGPT app container
+        header_up Host {upstream_hostport}
+    }
+}
+
+http://api.{$base_domain} {
+    tls {
+        dns cloudflare {$cloudflare_api_token}
+    }
+    reverse_proxy https://chartgpt-api-{$deployment}.cadlabs.org {
         header_up Host {upstream_hostport}
     }
 }
@@ -21,24 +29,6 @@ http://{$base_domain} {
         dns cloudflare {$cloudflare_api_token}
     }
     reverse_proxy https://chartgpt-landing.cadlabs.org {
-        # Proxy to ChartGPT app container
         header_up Host {upstream_hostport}
     }
 }
-
-# :{$PORT} {
-    # handle_path /app/* {
-    #     reverse_proxy  https://chartgpt-app-staging.cadlabs.org {
-    #         # Proxy to ChartGPT app container
-    #         header_up Host {upstream_hostport}
-    #     }
-    # }
-    # reverse_proxy /app*  https://chartgpt-app-staging.cadlabs.org {
-    #     # Proxy to ChartGPT app container
-    #     header_up Host {upstream_hostport}
-    # }
-	# reverse_proxy https://chartgpt-landing.cadlabs.org {
-	# 	# Proxy to Webflow landing page
-	# 	header_up Host {upstream_hostport}
-	# }
-# }
