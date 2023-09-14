@@ -14,12 +14,15 @@
 
 
 # import models into model package
-from chartgpt_client.models.api_request_ask_chartgpt_request import \
-    ApiRequestAskChartgptRequest
+from chartgpt_client.models.api_request_ask_chartgpt_request import ApiRequestAskChartgptRequest
+from chartgpt_client.models.api_request_ask_chartgpt_request_messages_inner import ApiRequestAskChartgptRequestMessagesInner
 from chartgpt_client.models.attempt import Attempt
 from chartgpt_client.models.error import Error
 from chartgpt_client.models.output import Output
 from chartgpt_client.models.output_type import OutputType
 from chartgpt_client.models.response import Response
+from chartgpt_client.models.response_messages_inner import ResponseMessagesInner
 from chartgpt_client.models.response_usage import ResponseUsage
+from chartgpt_client.models.role import Role
+from chartgpt_client.models.status import Status
 from chartgpt_client.models.usage import Usage

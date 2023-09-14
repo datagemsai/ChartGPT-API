@@ -13,31 +13,26 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
+import json
+
+
 from typing import Optional
-
 from pydantic import BaseModel, Field, StrictInt, StrictStr
-
 
 class Error(BaseModel):
     """
     Error
     """
-
     index: Optional[StrictInt] = Field(None, description="The index of the error.")
-    created_at: Optional[StrictInt] = Field(
-        None, description="The timestamp of when the error was created."
-    )
+    created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the error was created.")
     type: Optional[StrictStr] = Field(None, description="The type of the error.")
     value: Optional[StrictStr] = Field(None, description="The value of the error.")
     __properties = ["index", "created_at", "type", "value"]
 
     class Config:
         """Pydantic configuration"""
-
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -56,7 +51,10 @@ class Error(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
+        _dict = self.dict(by_alias=True,
+                          exclude={
+                          },
+                          exclude_none=True)
         return _dict
 
     @classmethod
@@ -68,12 +66,12 @@ class Error(BaseModel):
         if not isinstance(obj, dict):
             return Error.parse_obj(obj)
 
-        _obj = Error.parse_obj(
-            {
-                "index": obj.get("index"),
-                "created_at": obj.get("created_at"),
-                "type": obj.get("type"),
-                "value": obj.get("value"),
-            }
-        )
+        _obj = Error.parse_obj({
+            "index": obj.get("index"),
+            "created_at": obj.get("created_at"),
+            "type": obj.get("type"),
+            "value": obj.get("value")
+        })
         return _obj
+
+

@@ -20,17 +20,17 @@ import json
 
 from typing import Optional
 from pydantic import BaseModel, Field, StrictInt, StrictStr
+from chartgpt_client.models.role import Role
 
-class Output(BaseModel):
+class ResponseMessagesInner(BaseModel):
     """
-    Output
+    The message of the request.
     """
-    index: Optional[StrictInt] = Field(None, description="The index of the output.")
-    created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the output was created.")
-    description: Optional[StrictStr] = Field(None, description="The description of the output.")
-    type: Optional[StrictStr] = Field(None, description="The type of the output.")
-    value: Optional[StrictStr] = Field(None, description="The value of the output.")
-    __properties = ["index", "created_at", "description", "type", "value"]
+    id: Optional[StrictStr] = Field(None, description="The ID of the message.")
+    created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the message was created.")
+    content: Optional[StrictStr] = Field(None, description="The content of the message.")
+    role: Optional[Role] = None
+    __properties = ["id", "created_at", "content", "role"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +46,8 @@ class Output(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Output:
-        """Create an instance of Output from a JSON string"""
+    def from_json(cls, json_str: str) -> ResponseMessagesInner:
+        """Create an instance of ResponseMessagesInner from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -59,20 +59,19 @@ class Output(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Output:
-        """Create an instance of Output from a dict"""
+    def from_dict(cls, obj: dict) -> ResponseMessagesInner:
+        """Create an instance of ResponseMessagesInner from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return Output.parse_obj(obj)
+            return ResponseMessagesInner.parse_obj(obj)
 
-        _obj = Output.parse_obj({
-            "index": obj.get("index"),
+        _obj = ResponseMessagesInner.parse_obj({
+            "id": obj.get("id"),
             "created_at": obj.get("created_at"),
-            "description": obj.get("description"),
-            "type": obj.get("type"),
-            "value": obj.get("value")
+            "content": obj.get("content"),
+            "role": obj.get("role")
         })
         return _obj
 
