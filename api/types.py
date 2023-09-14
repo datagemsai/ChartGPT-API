@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+import enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+import numpy
 
 import pandas as pd
 import plotly
@@ -10,9 +12,15 @@ from plotly.graph_objs import Figure
 def map_type_to_output_type(output: Any) -> OutputType:
     if isinstance(output, bool):
         return OutputType.BOOL
+    elif isinstance(output, numpy.bool_):
+        return OutputType.BOOL
     elif isinstance(output, int):
         return OutputType.INT
+    elif isinstance(output, numpy.int64):
+        return OutputType.INT
     elif isinstance(output, float):
+        return OutputType.FLOAT
+    elif isinstance(output, numpy.float64):
         return OutputType.FLOAT
     elif isinstance(output, str):
         return OutputType.STRING
@@ -29,9 +37,12 @@ accepted_output_types = [
     plotly.graph_objs.Figure,
     pd.DataFrame,
     int,
+    numpy.int64,
     float,
+    numpy.float64,
     str,
     bool,
+    numpy.bool_,
 ]
 
 
@@ -41,20 +52,48 @@ def matches_types(value, types: List[Any] = [Any]) -> bool:
 
 def assert_matches_accepted_type(value, types: List[Any] = [Any]) -> None:
     mismatches = []
-    if isinstance(value, List):
+    if isinstance(value, List) or isinstance(value, Tuple):
         for index, item in enumerate(value):
             if not matches_types(item, types=types):
                 mismatches.append(
-                    f"Value of type {type(item)} at position {index} does not match any of the accepted output types: {accepted_output_types}"
+                    f"Value of type {type(item)} at position {index} does not match any of the accepted output types: {types}"
+                )
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            if not matches_types(item, types=types):
+                mismatches.append(
+                    f"Value of type {type(item)} at key {key} does not match any of the accepted output types: {types}"
                 )
     else:
         if not matches_types(value, types=types):
             raise TypeError(
-                f"Value of type {type(value)} does not match any of the accepted output types: {accepted_output_types}"
+                f"Value of type {type(value)} does not match any of the accepted output types: {types}"
             )
 
     if mismatches:
         raise TypeError("\n".join(mismatches))
+
+
+class Role(enum.Enum):
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+    FUNCTION = "function"
+
+
+class Message:
+    id: Optional[str]
+    created_at: Optional[int]
+    content: str
+    role: Role
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "created_at": self.created_at,
+            "content": self.content,
+            "role": self.role.value,
+        }
 
 
 class SQLQueryGenerationConfig:
@@ -86,6 +125,7 @@ class SQLExecutionResult:
     description: str
     query: str
     dataframe: pd.DataFrame
+    messages: List[Message]
 
 
 @dataclass
@@ -96,6 +136,7 @@ class PythonExecutionResult:
     local_variables: Dict[str, any] = field(default_factory=dict)
     io: str = ""
     error: str = None
+    messages: List[Message] = field(default_factory=list)
 
 
 @dataclass

@@ -13,70 +13,41 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Optional
+import json
 
+
+from typing import List, Optional
+from pydantic import BaseModel, Field, StrictBool, StrictInt, conlist, constr, validator
+from chartgpt_client.models.api_request_ask_chartgpt_request_messages_inner import ApiRequestAskChartgptRequestMessagesInner
 from chartgpt_client.models.output_type import OutputType
-from pydantic import (BaseModel, Field, StrictBool, StrictInt, StrictStr,
-                      constr, validator)
-
 
 class ApiRequestAskChartgptRequest(BaseModel):
     """
     ApiRequestAskChartgptRequest
     """
-
-    prompt: Optional[StrictStr] = Field(
-        None, description="The prompt based on which the response will be generated."
-    )
-    data_source_url: Optional[constr(strict=True)] = Field(
-        "",
-        description="The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used.",
-    )
+    messages: Optional[conlist(ApiRequestAskChartgptRequestMessagesInner)] = Field(None, description="The messages based on which the response will be generated.")
+    data_source_url: Optional[constr(strict=True)] = Field('', description="The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used.")
     output_type: Optional[OutputType] = None
-    max_outputs: Optional[StrictInt] = Field(
-        10, description="The maximum number of outputs to generate."
-    )
-    max_attempts: Optional[StrictInt] = Field(
-        10, description="The maximum number of attempts to generate an output."
-    )
-    max_tokens: Optional[StrictInt] = Field(
-        10, description="The maximum number of tokens to use for generating an output."
-    )
-    stream: Optional[StrictBool] = Field(
-        False, description="Whether to stream the response."
-    )
-    __properties = [
-        "prompt",
-        "data_source_url",
-        "output_type",
-        "max_outputs",
-        "max_attempts",
-        "max_tokens",
-        "stream",
-    ]
+    max_outputs: Optional[StrictInt] = Field(10, description="The maximum number of outputs to generate.")
+    max_attempts: Optional[StrictInt] = Field(10, description="The maximum number of attempts to generate an output.")
+    max_tokens: Optional[StrictInt] = Field(10, description="The maximum number of tokens to use for generating an output.")
+    stream: Optional[StrictBool] = Field(False, description="Whether to stream the response.")
+    __properties = ["messages", "data_source_url", "output_type", "max_outputs", "max_attempts", "max_tokens", "stream"]
 
-    @validator("data_source_url")
+    @validator('data_source_url')
     def data_source_url_validate_regular_expression(cls, value):
         """Validates the regular expression"""
         if value is None:
             return value
 
-        if not re.match(
-            r"^(?:([a-z]+)\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?)?$",
-            value,
-        ):
-            raise ValueError(
-                r"must validate the regular expression /^(?:([a-z]+)\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?)?$/"
-            )
+        if not re.match(r"^(?:([a-z]+)\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?)?$", value):
+            raise ValueError(r"must validate the regular expression /^(?:([a-z]+)\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?)?$/")
         return value
 
     class Config:
         """Pydantic configuration"""
-
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -95,7 +66,17 @@ class ApiRequestAskChartgptRequest(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
+        _dict = self.dict(by_alias=True,
+                          exclude={
+                          },
+                          exclude_none=True)
+        # override the default output from pydantic by calling `to_dict()` of each item in messages (list)
+        _items = []
+        if self.messages:
+            for _item in self.messages:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict['messages'] = _items
         return _dict
 
     @classmethod
@@ -107,23 +88,15 @@ class ApiRequestAskChartgptRequest(BaseModel):
         if not isinstance(obj, dict):
             return ApiRequestAskChartgptRequest.parse_obj(obj)
 
-        _obj = ApiRequestAskChartgptRequest.parse_obj(
-            {
-                "prompt": obj.get("prompt"),
-                "data_source_url": obj.get("data_source_url")
-                if obj.get("data_source_url") is not None
-                else "",
-                "output_type": obj.get("output_type"),
-                "max_outputs": obj.get("max_outputs")
-                if obj.get("max_outputs") is not None
-                else 10,
-                "max_attempts": obj.get("max_attempts")
-                if obj.get("max_attempts") is not None
-                else 10,
-                "max_tokens": obj.get("max_tokens")
-                if obj.get("max_tokens") is not None
-                else 10,
-                "stream": obj.get("stream") if obj.get("stream") is not None else False,
-            }
-        )
+        _obj = ApiRequestAskChartgptRequest.parse_obj({
+            "messages": [ApiRequestAskChartgptRequestMessagesInner.from_dict(_item) for _item in obj.get("messages")] if obj.get("messages") is not None else None,
+            "data_source_url": obj.get("data_source_url") if obj.get("data_source_url") is not None else '',
+            "output_type": obj.get("output_type"),
+            "max_outputs": obj.get("max_outputs") if obj.get("max_outputs") is not None else 10,
+            "max_attempts": obj.get("max_attempts") if obj.get("max_attempts") is not None else 10,
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 10,
+            "stream": obj.get("stream") if obj.get("stream") is not None else False
+        })
         return _obj
+
+

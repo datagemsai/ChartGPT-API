@@ -117,15 +117,11 @@ async def handle_response(
             description += (
                 f"{output.description}"
                 f"\n\n```sql\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```"
-                if output.value
-                else ""
             )
 
         elif output.type == OutputType.PANDAS_DATAFRAME.value:
             try:
-                dataframe: pd.DataFrame = pickle.loads(
-                    base64.b64decode(output.value.encode())
-                )
+                dataframe: pd.DataFrame = pd.read_json(output.value)
             except Exception as e:
                 print(
                     f"Exception when converting DataFrame to markdown: {e}"
@@ -157,13 +153,20 @@ async def handle_response(
         elif output.type == OutputType.PYTHON_CODE.value:
             description += f"\n\n{output.description}\n\n```python\n{output.value}\n```"
 
-        elif output.type == OutputType.PYTHON_OUTPUT.value:
+        elif output.type in [
+            OutputType.PYTHON_OUTPUT.value,
+            OutputType.STRING.value,
+            OutputType.INT.value,
+            OutputType.FLOAT.value,
+            OutputType.BOOL.value,
+        ]:
             description += f"\n\nCode output:\n{output.value}"
 
         else:
             print("Invalid output type:", output.type)
 
-    embed.description = description
+    # Limit description to "Must be 4096 or fewer in length."
+    embed.description = description[:4000] + "..." if len(description) > 4000 else description
     await msg.edit(embed=embed)
     if files:
         await interaction.channel.send("Here are the results!", files=files)

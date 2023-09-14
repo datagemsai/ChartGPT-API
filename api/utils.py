@@ -140,7 +140,7 @@ def apply_lower_to_where(sql):
     Applies the LOWER function to all string comparisons in the WHERE clause of a SQL query.
     """
     # Regular expression to find the WHERE clause
-    where_clause = re.search(r"\bWHERE\b(.*)", sql, flags=re.IGNORECASE)
+    where_clause = re.search(r"\bWHERE\b(.*)", str(sql), flags=re.IGNORECASE)
 
     # If no WHERE clause is found, return the original SQL
     if where_clause is None:

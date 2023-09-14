@@ -101,12 +101,16 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [ApiRequestAskChartgptRequest](docs/ApiRequestAskChartgptRequest.md)
+ - [ApiRequestAskChartgptRequestMessagesInner](docs/ApiRequestAskChartgptRequestMessagesInner.md)
  - [Attempt](docs/Attempt.md)
  - [Error](docs/Error.md)
  - [Output](docs/Output.md)
  - [OutputType](docs/OutputType.md)
  - [Response](docs/Response.md)
+ - [ResponseMessagesInner](docs/ResponseMessagesInner.md)
  - [ResponseUsage](docs/ResponseUsage.md)
+ - [Role](docs/Role.md)
+ - [Status](docs/Status.md)
  - [Usage](docs/Usage.md)
 
 

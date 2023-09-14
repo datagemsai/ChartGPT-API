@@ -21,10 +21,24 @@ paths:
             schema:
               type: object
               properties:
-                prompt:
-                  type: string
-                  description: "The prompt based on which the response will be generated."
-                  example: "Plot the average APR for the ***REMOVED*** protocol in the past 6 months."
+                messages:
+                  type: array
+                  description: "The messages based on which the response will be generated."
+                  items:
+                    type: object
+                    description: "The message based on which the response will be generated."
+                    properties:
+                      id:
+                        type: string
+                        description: "The ID of the message."
+                      created_at:
+                        type: integer
+                        description: "The timestamp of when the message was created."
+                      content:
+                        type: string
+                        description: "The content of the message."
+                      role:
+                        $ref: '#/components/schemas/Role'
                 data_source_url:
                   type: string
                   description: "The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used."
@@ -85,6 +99,9 @@ components:
   schemas:
     Response:
       type: object
+      # TODO Determine which parameters should always be required
+      # required:
+      # - id
       properties:
         id:
           type: string
@@ -96,11 +113,25 @@ components:
           type: integer
           description: "The timestamp of when the request was finished."
         status:
-          type: string
-          description: "The status of the request."
-        prompt:
-          type: string
-          description: "The prompt of the request."
+          $ref: "#/components/schemas/Status"
+        messages:
+          type: array
+          description: "The messages of the request."
+          items:
+            type: object
+            description: "The message of the request."
+            properties:
+              id:
+                type: string
+                description: "The ID of the message."
+              created_at:
+                type: integer
+                description: "The timestamp of when the message was created."
+              content:
+                type: string
+                description: "The content of the message."
+              role:
+                $ref: '#/components/schemas/Role'
         dataset_id:
           type: string
           description: "The dataset ID of the request."
@@ -186,6 +217,13 @@ components:
         tokens:
           type: integer
           description: "The number of tokens used for the request."
+    Status:
+      type: string
+      description: "The status of the request."
+      enum:
+        - succeeded
+        - failed
+        - stream  # For streaming response
     OutputType:
       description: "The output type of the response."
       type: string
@@ -204,3 +242,11 @@ components:
         - sql_query
         - python_code
         - python_output
+    Role:
+      description: "The role of the message."
+      type: string
+      enum:
+        - system
+        - user
+        - assistant
+        - function

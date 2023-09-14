@@ -74,7 +74,7 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     message_text = inspect.cleandoc(
         f"""
-        *Question:* {response.prompt}
+        *Question:* {response.messages[0].content}
 
         Response time: {response.finished_at - response.created_at:.0f} seconds
 
@@ -106,9 +106,7 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         elif output.type == OutputType.PANDAS_DATAFRAME.value:
             try:
-                dataframe: pd.DataFrame = pickle.loads(
-                    base64.b64decode(output.value.encode())
-                )
+                dataframe: pd.DataFrame = pd.read_json(output.value)
             except Exception as e:
                 app.logger.error(
                     f"Exception when converting DataFrame to markdown: {e}"
@@ -151,7 +149,13 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
                 parse_mode="Markdown",
             )
 
-        elif output.type == OutputType.PYTHON_OUTPUT.value:
+        elif output.type in [
+            OutputType.PYTHON_OUTPUT.value,
+            OutputType.STRING.value,
+            OutputType.INT.value,
+            OutputType.FLOAT.value,
+            OutputType.BOOL.value,
+        ]:
             await update.message.reply_text(
                 inspect.cleandoc("Code output:\n" + output.value)
             )

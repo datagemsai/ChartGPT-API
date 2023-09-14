@@ -79,7 +79,12 @@ def main(user_id, user_email):
                     try:
                         # Generate a Plotly chart from a question
                         api_request_ask_chartgpt_request = chartgpt_client.ApiRequestAskChartgptRequest(
-                            prompt=question,
+                            messages=[
+                                {
+                                    "content": question,
+                                    "role": "user",
+                                }
+                            ],
                             output_type=output_type,
                             data_source_url="bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow",
                         )
@@ -113,9 +118,7 @@ def main(user_id, user_email):
 
                             elif output.type == OutputType.PANDAS_DATAFRAME.value:
                                 try:
-                                    dataframe: pd.DataFrame = pickle.loads(
-                                        base64.b64decode(output.value.encode())
-                                    )
+                                    dataframe: pd.DataFrame = pd.read_json(output.value)
                                 except Exception as e:
                                     app.logger.error(
                                         f"Exception when converting DataFrame to markdown: {e}"

@@ -44,6 +44,87 @@ datasets = [
             "usa_real_estate_listings",
         ],
     ),
+    Dataset(
+        name="Ethereum Blockchain Transactions",
+        project="bigquery-public-data",
+        id="crypto_ethereum",
+        description=get_table_description(
+            "bigquery-public-data", "crypto_ethereum", "transactions"
+        ),
+        tables=[
+            # "token_transfers",
+            "transactions"
+        ],
+        sample_questions=[
+            "Plot the number of transactions over time for transactions with a value over 0 Wei."
+        ],
+    ),
+    Dataset(
+        name="Ethereum Classic Blockchain Transactions",
+        project="bigquery-public-data",
+        id="crypto_ethereum_classic",
+        description=get_table_description(
+            "bigquery-public-data", "crypto_ethereum_classic", "transactions"
+        ),
+        tables=[
+            # "token_transfers",
+            "transactions"
+        ],
+        sample_questions=[
+            "Plot the number of transactions over time for transactions with a value over 0 Wei."
+        ],
+    ),
+    Dataset(
+        name="Bitcoin Blockchain Transactions",
+        project="bigquery-public-data",
+        id="crypto_bitcoin",
+        description=get_table_description(
+            "bigquery-public-data", "crypto_bitcoin", "transactions"
+        ),
+        tables=[
+            # "token_transfers",
+            "transactions"
+        ],
+        sample_questions=[
+            "Plot the number of transactions over time for transactions with a value over 0 Wei."
+        ],
+    ),
+    Dataset(
+        name="Polygon Blockchain Transactions",
+        project="public-data-finance",
+        id="crypto_polygon",
+        description=get_table_description(
+            "public-data-finance", "crypto_polygon", "transactions"
+        ),
+        tables=[
+            "transactions"
+        ],
+        sample_questions=[
+            "Plot the number of transactions over time for transactions with a value over 0 Wei."
+        ],
+    ),
+    Dataset(
+        name="Dash Blockchain Transactions",
+        project="bigquery-public-data",
+        id="crypto_dash",
+        description=get_table_description(
+            "bigquery-public-data", "crypto_dash", "transactions"
+        ),
+        tables=[
+            "transactions"
+        ],
+    ),
+    Dataset(
+        name="Dogecoin Blockchain Transactions",
+        project="bigquery-public-data",
+        id="crypto_dogecoin",
+        description=get_table_description(
+            "bigquery-public-data", "crypto_dogecoin", "transactions"
+        ),
+        tables=[
+            "transactions"
+        ],
+    ),
     # Dataset(
     #     name="US Residential Real Estate Sample Data",
     #     project="housecanary-com",
@@ -68,21 +149,6 @@ datasets = [
     #     sample_questions=[
     #         "Which Google Analytics channel provides the highest number of visitors?",
     #         "Which device accounts for the highest number of visitors?",
-    #     ],
-    # ),
-    # Dataset(
-    #     name="Ethereum Blockchain Transactions Sample Data",
-    #     project="bigquery-public-data",
-    #     id="crypto_ethereum",
-    #     description=get_table_description(
-    #         "bigquery-public-data", "crypto_ethereum", "transactions"
-    #     ),
-    #     tables=[
-    #         # "token_transfers",
-    #         "transactions"
-    #     ],
-    #     sample_questions=[
-    #         "Plot the number of transactions over time for transactions with a value over 0 Wei."
     #     ],
     # ),
 ]

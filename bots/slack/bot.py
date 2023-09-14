@@ -50,7 +50,7 @@ def handle_ask_chartgpt(ack, body, respond):
     initial_response = app.client.chat_postMessage(
         text=inspect.cleandoc(
             f"""
-*Question:* {response.prompt}
+*Question:* {response.messages[0].content}
 
 <@{body['user_id']}> Here is the result 🧵
 
@@ -94,8 +94,6 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
                 text=(
                     f"{output.description}"
                     f"\n\n```\n{sqlparse.format(output.value, reindent=True, keyword_case='upper')}\n```"
-                    if output.value
-                    else ""
                 ),
                 channel=channel_id,
                 thread_ts=thread_ts,
@@ -103,9 +101,7 @@ Response time: {response.finished_at - response.created_at:.0f} seconds
 
         elif output.type == OutputType.PANDAS_DATAFRAME.value:
             try:
-                dataframe: pd.DataFrame = pickle.loads(
-                    base64.b64decode(output.value.encode())
-                )
+                dataframe: pd.DataFrame = pd.read_json(output.value)
             except Exception as e:
                 app.logger.error(
                     f"Exception when converting DataFrame to markdown: {e}"
