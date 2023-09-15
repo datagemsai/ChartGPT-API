@@ -1,6 +1,18 @@
 version: '3'
 
 services:
+    api:
+        # platform: linux/amd64
+        image: chartgpt-api
+        build:
+            dockerfile: ./api/Dockerfile
+            context: .
+        ports:
+            - "8080:8080"
+        env_file:
+            - .env
+        environment:
+            - PORT=8080
     discord-bot:
         image: discord-bot
         build:

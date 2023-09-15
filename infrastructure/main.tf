@@ -142,7 +142,7 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
         }
       }
     }
-    service_account = "chartgpt-api-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
+    service_account = "chartgpt-app-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
   }
 
   traffic {

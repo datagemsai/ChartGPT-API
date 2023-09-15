@@ -1,15 +1,20 @@
 # Use the official lightweight Python image.
 # https://hub.docker.com/_/python
-FROM python:3.9.12-slim
+FROM python:3.11.4-slim
 
 # Allow statements and log messages to immediately appear in the logs
 ENV PYTHONUNBUFFERED True
 
-# Copy local code to the container image.
-ENV APP_HOME /app
-WORKDIR $APP_HOME
+# Install requirements
+WORKDIR /app
 
-COPY . ./
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ./api ./api
+COPY requirements.txt .
 
 # Install production dependencies.
 RUN pip install --no-cache-dir -r requirements.txt
@@ -19,4 +24,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # For environments with multiple CPU cores, increase the number of workers
 # to be equal to the cores available.
 # Timeout is set to 0 to disable the timeouts of the workers to allow Cloud Run to handle instance scaling.
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 api.run:app
+EXPOSE $PORT
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 --log-level 'debug' --preload api.run:app
