@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-api:$_IMAGE_TAG', '.' ]
+  args: [ 'build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-api:$_IMAGE_TAG', '-f', 'api/Dockerfile', '.' ]
 substitutions:
   _IMAGE_TAG: "latest"
 images:

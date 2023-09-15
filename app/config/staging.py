@@ -8,6 +8,10 @@ datasets = [
         id="metaquants_nft_finance_aggregator",
         description="""
         Leverage the MetaQuants NFT Finance Aggregator to gain valuable insights into NFT loan history, outstanding loan indicators, and activity on both P2Peer and P2Pool protocols. The dataset currently includes a range of leading providers, including X2Y2, Pine, BendDAO, NFTfi, Arcade, and JPEGD.        
+        
+        Data source: https://metaquants.xyz/
+
+        Updated daily at 12AM CET.
         """,
         tables=[
             "p2p_and_p2pool_loan_data_borrow",
@@ -38,7 +42,7 @@ datasets = [
         description="""
         Real Estate listings (900k+) in the US categorised by State and zip code.
 
-        Source: https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset
+        Data source: https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset
         """,
         tables=[
             "usa_real_estate_listings",
