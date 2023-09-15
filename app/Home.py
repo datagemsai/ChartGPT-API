@@ -65,6 +65,17 @@ if "chart_id" in query_params:
         st.error("Chart not found")
         st.stop()
 
+@st.cache_data
+def display_sample_dataframes(dataset: Dataset, display=True) -> None:
+    sample_dataframes = get_sample_dataframes(client, dataset)
+    for table_id, df in sample_dataframes.items():
+        if display:
+            with st.expander(f"**\`{table_id}\` table sample data**"):
+                st.dataframe(df.head())
+
+# Hydrate sample dataframes
+# for dataset in datasets:
+#     display_sample_dataframes(dataset, display=False)
 
 @requires_auth
 def main(user_id, _user_email):
@@ -108,25 +119,15 @@ def main(user_id, _user_email):
     # tables = list(client.list_tables(dataset.id))
     # Client.list_tables = lambda *kwargs: tables
 
-    print(datasets)
-    print(dataset)
-
-    @st.cache_data
-    def display_sample_dataframes(dataset: Dataset) -> None:
-        sample_dataframes = get_sample_dataframes(client, dataset)
-        for table_id, df in sample_dataframes.items():
-            with st.expander(f"**\`{table_id}\` table sample data**"):
-                st.dataframe(df.head())
-
     display_sample_dataframes(dataset)
 
-    st.info(
-        """
-    Datasets are updated daily at 12AM CET.
+    # st.info(
+    #     """
+    # Datasets are updated daily at 12AM CET.
 
-    If you have a request for a specific dataset or use case, [please reach out!](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)
-    """
-    )
+    # If you have a request for a specific dataset or use case, [please reach out!](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)
+    # """
+    # )
 
     st.markdown("### 2. Ask a question 🤔")
 
