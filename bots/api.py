@@ -4,14 +4,16 @@ from typing import Optional
 import chartgpt_client
 from chartgpt_client.exceptions import ApiException
 
-import app
+from bots import logger
+
+from dotenv import load_dotenv
+
+load_dotenv('bots/.env')
 
 configuration = chartgpt_client.Configuration(
-    # TODO Fetch from environment variable
-    host="http://0.0.0.0:8081"
+    host=os.environ["CHARTGPT_API_HOST"]
 )
 configuration.api_key["ApiKeyAuth"] = os.environ["CHARTGPT_API_KEY"]
-
 
 def ask_chartgpt(question) -> Optional[chartgpt_client.Response]:
     with chartgpt_client.ApiClient(configuration) as api_client:
@@ -32,10 +34,10 @@ def ask_chartgpt(question) -> Optional[chartgpt_client.Response]:
             )
             return api_response
         except ApiException as e:
-            app.logger.error(
+            logger.error(
                 f"Exception when calling DefaultApi->api_chart_generate_chart: {e}"
             )
             return None
         except Exception as e:
-            app.logger.error(f"Exception: {e}")
+            logger.error(f"Exception: {e}")
             return None

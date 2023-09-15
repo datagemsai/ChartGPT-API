@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 COPY api ./api
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY requirements.txt requirements.txt
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY app ./app

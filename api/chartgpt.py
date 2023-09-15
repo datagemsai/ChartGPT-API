@@ -43,7 +43,7 @@ from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
     Role, Message
 )
 from api.utils import apply_lower_to_where, get_tables_summary
-from chartgpt.tools.python.secure_ast import assert_secure_code
+from api.security.secure_ast import assert_secure_code
 from api import logger
 
 pio.templates.default = "plotly"

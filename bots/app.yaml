@@ -1,0 +1,2 @@
+runtime: python39
+instance_class: F2  # You can adjust this based on your needs.
