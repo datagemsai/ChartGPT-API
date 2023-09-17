@@ -12,13 +12,16 @@ Utilize ONLY these tools for analysis, following their expected formatting instr
 """
 
 SUFFIX = """
-# Datasets
-Access these datasets, tables, and columns:
+# BigQuery Database Schema
+The GoogleSQL query should be constructed based on the following database schema:
+
+{database_schema}
+
+Validate column names using `tables_summary[dataset_id][table_id]`:
+
 ```
 tables_summary = {tables_summary}
 ```
-
-Validate column names using: tables_summary[dataset_id][table_id].
 
 # Example SQL Query
 

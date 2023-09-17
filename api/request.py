@@ -14,12 +14,15 @@ from api.errors import ContextLengthError
 from api.guards import is_nda_broken
 from api.types import QueryResult
 from api.utils import generate_uuid, parse_data_source_url
-from api import logger
+from api.logging import logger
+
 
 def ask_chartgpt(body) -> Response:
     request: Request = Request.from_dict(body)
     stream: bool = request.stream
-    print(request)
+    job_uuid = f"ask-{generate_uuid()}"
+    created_at = int(time.time())
+    logger.debug("Request %s: %s", job_uuid, request.to_dict())
 
     if not request.messages:
         message = "Could not complete analysis: messages is empty"
@@ -41,8 +44,6 @@ def ask_chartgpt(body) -> Response:
         return {"error": message}, 400
 
     try:
-        job_uuid = f"ask-{generate_uuid()}"
-        created_at = int(time.time())
         if stream:
             def generate_response(request: Request) -> Iterator[Response]:
                 for output in answer_user_query(
