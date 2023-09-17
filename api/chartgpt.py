@@ -44,7 +44,7 @@ from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
 )
 from api.utils import apply_lower_to_where, get_tables_summary
 from api.security.secure_ast import assert_secure_code
-from api import logger
+from api.logging import logger
 
 pio.templates.default = "plotly"
 

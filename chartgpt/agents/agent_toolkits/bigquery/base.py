@@ -7,6 +7,7 @@ from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from langchain.schema import BaseMemory
+from google.cloud import bigquery
 
 from app import logger
 from app.config.datasets import Dataset
@@ -16,11 +17,12 @@ from chartgpt.agents.agent_toolkits.bigquery.utils import (get_example_query,
 from chartgpt.agents.mrkl.base import CustomAgent
 from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 from chartgpt.tools.python.tool import PythonAstREPLTool
+import api.utils as utils
 
 
 def create_bigquery_agent(
     llm: BaseLLM,
-    bigquery_client: Any,
+    bigquery_client: bigquery.Client,
     datasets: List[Dataset],
     callback_manager: Optional[BaseCallbackManager] = None,
     prefix: str = PREFIX,
@@ -72,6 +74,7 @@ def create_bigquery_agent(
 
     if input_variables is None:
         input_variables = [
+            "database_schema",
             "tables_summary",
             "example_query",
             "input",
@@ -86,8 +89,19 @@ def create_bigquery_agent(
         suffix=suffix,
         input_variables=input_variables,
     )
+
+    dataset_schemas = []
+    for dataset in datasets:
+        table_id = dataset.tables[0] if dataset.tables else ""
+        schema = utils.get_tables_summary(
+            client=bigquery_client,
+            data_source_url=f"bigquery/{dataset.project}/{dataset.id}/{table_id}",
+        )
+        dataset_schemas.append(schema)
+
     tables_summary_escaped = "{" + str(dict(tables_summary)) + "}"
     partial_prompt = prompt.partial(
+        database_schema="\n\n".join(dataset_schemas),
         tables_summary=tables_summary_escaped,
         example_query=example_query,
     )

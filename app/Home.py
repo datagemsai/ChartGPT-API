@@ -8,6 +8,7 @@ from enum import Enum
 
 import plotly.io as pio
 import streamlit as st
+import google.cloud.bigquery
 from google.cloud.bigquery import Client
 from langchain.callbacks import get_openai_callback
 from langchain.callbacks.base import BaseCallbackHandler
@@ -25,27 +26,8 @@ from app.components.sidebar import Sidebar
 from app.config.datasets import Dataset
 from app.utils import copy_url_to_clipboard
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
-from chartgpt.app import client
+from api.connectors.bigquery import bigquery_client as client
 
-# from st_pages import Page, show_pages, hide_pages
-
-
-# # add_page_title()
-# show_pages(
-#     [
-#         Page("app/Home.py", "ChartGPT"),
-#         Page("app/pages/1_My_Charts.py", "My Charts"),
-#     ]
-# )
-
-# hide_pages(
-#     [
-#         # Page("app/pages/1_My_Charts.py", "My Charts"),
-#         Page("app/pages/2_Chart_Gallery.py", "Chart Gallery"),
-#         Page("app/pages/3_API_Playground.py", "API Playground"),
-#         Page("app/pages/4_Admin_Dashboard.py", "Admin Dashboard"),
-#     ]
-# )
 
 # Show notices
 Notices()
@@ -104,30 +86,26 @@ def main(user_id, _user_email):
 
     st.markdown("### 1. Select a dataset 📊")
 
+    def clear_state() -> None:
+        st.session_state["messages"] = []
+        st.session_state.question = ""
+        st.session_state.sample_question = ""
+
     dataset: Dataset = st.selectbox(
-        "Select a dataset:", datasets, index=0, label_visibility="collapsed"
+        "Select a dataset:",
+        datasets,
+        index=0,
+        label_visibility="collapsed",
+        on_change=clear_state,
     ) or Dataset(name="", project="", id="", description="", sample_questions=[])
     st.markdown(dataset.description)
 
-    # Monkey patching of BigQuery list_datasets()
-    @dataclass
-    class MockBQDataset:
-        dataset_id: str
-
-    Client.list_datasets = lambda *kwargs: [MockBQDataset(dataset.id)]  # type: ignore
-
-    # tables = list(client.list_tables(dataset.id))
-    # Client.list_tables = lambda *kwargs: tables
+    # Monkey patching of BigQuery list_datasets() and list_tables() methods
+    # to filter datasets and tables by allowed_datasets and allowed_tables
+    client.allowed_datasets = [dataset.id]
+    client.allowed_tables = dataset.tables
 
     display_sample_dataframes(dataset)
-
-    # st.info(
-    #     """
-    # Datasets are updated daily at 12AM CET.
-
-    # If you have a request for a specific dataset or use case, [please reach out!](https://ne6tibkgvu7.typeform.com/to/jZnnMGjh)
-    # """
-    # )
 
     st.markdown("### 2. Ask a question 🤔")
 
@@ -160,7 +138,8 @@ def main(user_id, _user_email):
     )
 
     if sidebar.clear:
-        st.session_state.question = ""
+        clear_state()
+
     question = st.session_state.get("question", "")
 
     class QueryStatus(Enum):
@@ -172,14 +151,26 @@ def main(user_id, _user_email):
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
 
+    def clean_markdown_content(markdown_text):
+        # Remove spaces around multiline code delimiters
+        # The regex below accounts for the optional language identifier
+        markdown_text = re.sub(r'\n *``` *([a-zA-Z0-9]*) *\n', r'\n```\1\n', markdown_text)
+        markdown_text = re.sub(r'\n *```', r'\n```', markdown_text)
+        markdown_text = re.sub(r'``` *\n', r'```\n', markdown_text)
+
+        # This regex pattern matches multiline code blocks that are empty
+        # or contain only whitespace characters.
+        pattern = r'```[a-zA-Z0-9]*\n\s*```'
+        markdown_text = re.sub(pattern, '', markdown_text)
+
+        return markdown_text
+
     # Display chat messages from history on app rerun
-    if sidebar.clear:
-        st.session_state["messages"] = []
     for message in st.session_state["messages"]:
-        with st.chat_message(message["role"]):
-            if message.get("type", None) == "chart":
-                chart = message["content"]
-                st.plotly_chart(chart, use_container_width=True)
+        if message.get("type", None) == "chart":
+            with st.chat_message(message["role"]):
+                message_content = message["content"]
+                st.plotly_chart(message_content, use_container_width=True)
                 # TODO Re-enable sharing of charts
                 # chart_id = message["chart_id"]
                 # st.button(
@@ -189,8 +180,11 @@ def main(user_id, _user_email):
                 #     on_click=copy_url_to_clipboard,
                 #     args=(f"/?chart_id={chart_id}",),
                 # )
-            else:
-                st.markdown(message["content"])
+        else:
+            message_content = clean_markdown_content(message["content"])
+            if message_content:
+                with st.chat_message(message["role"]):
+                    st.markdown(message_content)
 
     class StreamHandler(BaseCallbackHandler):
         def on_llm_new_token(self, token: str, **kwargs) -> None:
@@ -198,10 +192,18 @@ def main(user_id, _user_email):
                 # NOTE This is necessary because of a bug in Streamlit state after st.stop()
                 return
             st.session_state["text"] += token
-            # Using regex, find ``` followed by a word and add a newline after ``` unless the word is "python"
-            st.session_state["text"] = re.sub(
-                r"```(?=\w)(?!python)", "```\n\n", st.session_state["text"]
-            )
+            
+            def add_newlines(text):
+                # Add a newline before ```python
+                text = re.sub(r'```python', '\n\n```python', text)
+
+                # Add a newline after ``` when it's not followed by the word "python"
+                text = re.sub(r'```(?=\w)(?!python)', '```\n\n', text)
+
+                return text
+            
+            st.session_state["text"] = add_newlines(st.session_state["text"])
+
             # Using regex, find and remove `Action Input:` etc.
             st.session_state["text"] = re.sub(
                 r"Action Input:\s*", "", st.session_state["text"], flags=re.IGNORECASE

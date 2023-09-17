@@ -2,10 +2,12 @@ import base64
 import re
 import uuid
 from typing import List, Optional
+from cachetools import cached
+from cachetools.keys import hashkey
 
 from google.cloud import bigquery
 
-from api import logger
+from api.logging import logger
 
 
 def generate_uuid() -> str:
@@ -65,14 +67,20 @@ def parse_data_source_url(data_source_url) -> tuple[str, str, str, Optional[str]
 #     else:
 #         return True
 
-
+@cached(cache={}, key=lambda client, data_source_url: hashkey(data_source_url))
 def get_tables_summary(
     client: bigquery.Client,
-    data_source_url: str,
+    data_source_url: str = "",
 ) -> str:
     markdown_summary = ""
 
-    _data_source, project, dataset_id, table_id = parse_data_source_url(data_source_url)
+    if data_source_url:
+        _data_source, project, dataset_id, table_id = parse_data_source_url(data_source_url)
+    else:
+        project = None
+        dataset_id = None
+        table_id = None
+
     if not project:
         project = client.project
 
@@ -80,11 +88,11 @@ def get_tables_summary(
         # Filter bigquery.Dataset objects by dataset_id
         datasets = [
             dataset
-            for dataset in list(client.list_datasets(project=project))
+            for dataset in list(client.list_datasets(project))
             if dataset.dataset_id == dataset_id
         ]
     else:
-        datasets = list(client.list_datasets(project=project))
+        datasets = list(client.list_datasets(project))
 
     table_ids = [table_id] if table_id else None
 

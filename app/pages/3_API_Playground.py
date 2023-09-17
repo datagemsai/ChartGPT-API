@@ -15,7 +15,6 @@ import app
 from api.auth import create_api_key, get_api_keys
 from app.auth import requires_auth
 from app.components.notices import Notices
-from chartgpt.app import client
 
 # Show notices
 Notices()
