@@ -1,5 +1,5 @@
-from app.config.datasets import (Dataset, get_dataset_description,
-                                 get_table_description)
+from app.config.datasets import Dataset
+
 
 datasets = [
     Dataset(

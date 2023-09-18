@@ -7,8 +7,6 @@ from cachetools.keys import hashkey
 
 from google.cloud import bigquery
 
-from api.logging import logger
-
 
 def generate_uuid() -> str:
     r_uuid = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf-8")
@@ -136,9 +134,6 @@ def get_tables_summary(
 
             markdown_summary += f"### {dataset_id}.{table_id}\n"
             markdown_summary += f"```\n{create_table_statement}\n```\n"
-
-    if not markdown_summary:
-        logger.error("Could not find any tables for data source: %s", data_source_url)
 
     return markdown_summary
 

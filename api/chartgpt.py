@@ -487,7 +487,10 @@ def answer_user_query(
         client=bigquery_client,
         data_source_url=request.data_source_url,
     )
-    logger.debug(f"Tables summary: {tables_summary}")
+    if not tables_summary:
+        logger.error("Could not find any tables for data source: %s", request.data_source_url)
+    else:
+        logger.debug(f"Tables summary: {tables_summary}")
 
     sql_query_generation_prompt = SQL_QUERY_GENERATION_PROMPT_TEMPLATE.format(
         sql_query_instruction=(
