@@ -1,10 +1,29 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-app:$_IMAGE_TAG', '.' ]
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull ${_IMAGE_URL}:latest || exit 0']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-app:$_IMAGE_TAG', 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-app:latest']
-substitutions:
-  _IMAGE_TAG: "latest"
+  args: [
+    'build',
+    '-t',
+    '${_IMAGE_URL}:${_IMAGE_TAG}',
+    '--cache-from',
+    '${_IMAGE_URL}:latest',
+    '.'
+  ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'tag',
+    '${_IMAGE_URL}:${_IMAGE_TAG}',
+    '${_IMAGE_URL}:latest'
+  ]
 images:
-- 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-app:$_IMAGE_TAG'
-- 'europe-west3-docker.pkg.dev/$PROJECT_ID/$PROJECT_ID/chartgpt-app:latest'
+- '${_IMAGE_URL}:${_IMAGE_TAG}'
+- '${_IMAGE_URL}:latest'
+substitutions:
+  _DOCKER_REGISTRY: 'europe-west3-docker.pkg.dev'
+  _IMAGE_NAME: 'chartgpt-app'
+  _IMAGE_URL: '${_DOCKER_REGISTRY}/${PROJECT_ID}/${PROJECT_ID}/${_IMAGE_NAME}'
+  _IMAGE_TAG: 'latest'
+options:
+  dynamicSubstitutions: true
