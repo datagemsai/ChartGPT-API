@@ -3,7 +3,7 @@ variable "region" {}
 variable "base_domain" {}
 variable "docker_registry" {}
 variable "deployment" {}
-variable "git_sha" {}
+variable "docker_image" {}
 variable "secrets" {
   type = map(string)
 }
@@ -20,7 +20,8 @@ resource "google_cloud_run_v2_service" "caddy_service" {
     }
 
     containers {
-      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy"
+      image = var.docker_image
+
       volume_mounts {
         name       = "caddy_data"
         mount_path = "/data"

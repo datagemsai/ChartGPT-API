@@ -24,7 +24,10 @@ variable "docker_registry" {
 }
 
 locals {
-  secrets = lookup(yamldecode(file("../app_secrets_${var.deployment}.yaml")), "env_variables", {})
+  secrets                   = lookup(yamldecode(file("../app_secrets_${var.deployment}.yaml")), "env_variables", {})
+  chartgpt_api_image_latest = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api@${data.docker_registry_image.chartgpt_api_image.sha256_digest}"
+  chartgpt_app_image_latest = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app@${data.docker_registry_image.chartgpt_app_image.sha256_digest}"
+  caddy_image_latest        = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy@${data.docker_registry_image.caddy_image.sha256_digest}"
 }
 
 resource "google_project_service" "run_api" {
@@ -58,6 +61,44 @@ module "secret-manager" {
   ]
 }
 
+// See
+// https://github.com/terraform-providers/terraform-provider-google/issues/6706#issuecomment-652009984
+// https://github.com/terraform-providers/terraform-provider-google/issues/6635#issuecomment-647858867
+
+data "google_client_config" "default" {}
+
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "3.0.2"
+    }
+  }
+}
+
+provider "docker" {
+  registry_auth {
+    address  = "europe-west3-docker.pkg.dev"
+    username = "oauth2accesstoken"
+    password = data.google_client_config.default.access_token
+  }
+}
+
+# ChartGPT API Docker image
+data "docker_registry_image" "chartgpt_api_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api"
+}
+
+# ChartGPT App Docker image
+data "docker_registry_image" "chartgpt_app_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app"
+}
+
+# Caddy Docker image
+data "docker_registry_image" "caddy_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy"
+}
+
 # Resources
 module "chartgpt_api" {
   source          = "./api"
@@ -65,19 +106,19 @@ module "chartgpt_api" {
   region          = var.region
   docker_registry = var.docker_registry
   deployment      = var.deployment
-  git_sha         = data.external.git.result.sha
   secrets         = local.secrets
+  docker_image    = local.chartgpt_api_image_latest
   depends_on      = [google_project_service.run_api, module.secret-manager]
 }
 
 module "chartgpt_app" {
-  source          = "./api"
+  source          = "./app"
   project_id      = var.project_id
   region          = var.region
   docker_registry = var.docker_registry
   deployment      = var.deployment
-  git_sha         = data.external.git.result.sha
   secrets         = local.secrets
+  docker_image    = local.chartgpt_app_image_latest
   depends_on      = [google_project_service.run_api, module.secret-manager]
 }
 
@@ -88,7 +129,7 @@ module "caddy" {
   base_domain     = var.base_domain
   docker_registry = var.docker_registry
   deployment      = var.deployment
-  git_sha         = data.external.git.result.sha
   secrets         = local.secrets
+  docker_image    = local.caddy_image_latest
   depends_on      = [google_project_service.run_api, module.secret-manager]
 }
