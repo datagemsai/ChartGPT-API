@@ -17,7 +17,6 @@ from langchain.schema import OutputParserException
 import app
 import app.patches
 import app.settings
-import chartgpt
 from api.guards import is_nda_broken
 from app import datasets, db_charts, db_queries
 from app.auth import check_user_credits, requires_auth
@@ -25,6 +24,7 @@ from app.components.notices import Notices
 from app.components.sidebar import Sidebar
 from app.config.datasets import Dataset
 from app.utils import copy_url_to_clipboard
+from chartgpt.app import get_agent
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
 from api.connectors.bigquery import bigquery_client as client
 
@@ -87,6 +87,7 @@ def main(user_id, _user_email):
     st.markdown("### 1. Select a dataset 📊")
 
     def clear_state() -> None:
+        st.session_state["agent"] = None
         st.session_state["messages"] = []
         st.session_state.question = ""
         st.session_state.sample_question = ""
@@ -106,6 +107,46 @@ def main(user_id, _user_email):
     client.allowed_tables = dataset.tables
 
     display_sample_dataframes(dataset)
+
+    class StreamHandler(BaseCallbackHandler):
+        def on_llm_new_token(self, token: str, **kwargs) -> None:
+            if "text" not in st.session_state:
+                # NOTE This is necessary because of a bug in Streamlit state after st.stop()
+                return
+            st.session_state["text"] += token
+            
+            def add_newlines(text):
+                # Add a newline before ```python
+                text = re.sub(r'```python', '\n\n```python', text)
+
+                # Add a newline after ``` when it's not followed by the word "python"
+                text = re.sub(r'```(?=\w)(?!python)', '```\n\n', text)
+
+                return text
+            
+            st.session_state["text"] = add_newlines(st.session_state["text"])
+
+            # Using regex, find and remove `Action Input:` etc.
+            st.session_state["text"] = re.sub(
+                r"Action Input:\s*", "", st.session_state["text"], flags=re.IGNORECASE
+            )
+            st.session_state["text"] = re.sub(
+                r"Analysis Complete:\s*",
+                "",
+                st.session_state["text"],
+                flags=re.IGNORECASE,
+            )
+            st.session_state["empty_container"].markdown(st.session_state["text"])
+
+    # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
+    # if "agent" not in st.session_state:
+    stream_handler = StreamHandler()
+    st.session_state["agent"] = get_agent(
+        secure_execution=True,
+        temperature=sidebar.model_temperature,
+        datasets=[dataset],
+        callbacks=[stream_handler],
+    )
 
     st.markdown("### 2. Ask a question 🤔")
 
@@ -128,13 +169,19 @@ def main(user_id, _user_email):
             st.session_state.chat_input or st.session_state.sample_question
         )
 
-    st.chat_input("Enter a question...", key="chat_input", on_submit=set_question)
+    st.chat_input(
+        "Enter a question...",
+        key="chat_input",
+        on_submit=set_question,
+        disabled=(not st.session_state.get("agent"))
+    )
 
     st.selectbox(
         label="Select a sample question (optional):",
         options=sample_questions_for_dataset,
         key="sample_question",
         on_change=set_question,
+        disabled=(not st.session_state.get("agent"))
     )
 
     if sidebar.clear:
@@ -185,46 +232,6 @@ def main(user_id, _user_email):
             if message_content:
                 with st.chat_message(message["role"]):
                     st.markdown(message_content)
-
-    class StreamHandler(BaseCallbackHandler):
-        def on_llm_new_token(self, token: str, **kwargs) -> None:
-            if "text" not in st.session_state:
-                # NOTE This is necessary because of a bug in Streamlit state after st.stop()
-                return
-            st.session_state["text"] += token
-            
-            def add_newlines(text):
-                # Add a newline before ```python
-                text = re.sub(r'```python', '\n\n```python', text)
-
-                # Add a newline after ``` when it's not followed by the word "python"
-                text = re.sub(r'```(?=\w)(?!python)', '```\n\n', text)
-
-                return text
-            
-            st.session_state["text"] = add_newlines(st.session_state["text"])
-
-            # Using regex, find and remove `Action Input:` etc.
-            st.session_state["text"] = re.sub(
-                r"Action Input:\s*", "", st.session_state["text"], flags=re.IGNORECASE
-            )
-            st.session_state["text"] = re.sub(
-                r"Analysis Complete:\s*",
-                "",
-                st.session_state["text"],
-                flags=re.IGNORECASE,
-            )
-            st.session_state["empty_container"].markdown(st.session_state["text"])
-
-    # get_agent() is cached by Streamlit, where the cache is invalidated if dataset_ids changes
-    # if "agent" not in st.session_state:
-    stream_handler = StreamHandler()
-    st.session_state["agent"] = chartgpt.get_agent(
-        secure_execution=True,
-        temperature=sidebar.model_temperature,
-        datasets=[dataset],
-        callbacks=[stream_handler],
-    )
 
     if question:
         if sidebar.stop:
