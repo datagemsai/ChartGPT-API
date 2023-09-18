@@ -2,7 +2,7 @@ variable "project_id" {}
 variable "region" {}
 variable "docker_registry" {}
 variable "deployment" {}
-variable "git_sha" {}
+variable "docker_image" {}
 variable "secrets" {
   type = map(string)
 }
@@ -19,7 +19,7 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
     }
 
     containers {
-      image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api:${var.git_sha}"
+      image = var.docker_image
 
       resources {
         limits = {
@@ -47,7 +47,6 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
   traffic {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
-    tag     = "git-${var.git_sha}"
   }
 }
 

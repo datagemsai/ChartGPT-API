@@ -79,6 +79,10 @@ build_api_staging: project_staging
 build_api_production: project_production
 	gcloud builds submit --region=europe-west1 --config api/cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
+build_staging: build_app_staging build_caddy_staging build_api_staging
+
+build_production: build_app_production build_caddy_production build_api_production
+
 # Planning
 
 terraform_plan_staging: project_staging
