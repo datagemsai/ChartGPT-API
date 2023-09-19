@@ -13,7 +13,7 @@ config = CodeGenerationConfig(
     output_variable="result",
 )
 
-def test_execute_python_code():
+def test_execute_python_function():
     code = """
 def answer_question(df: pd.DataFrame) -> int:
     print("Hello World!")
@@ -38,3 +38,21 @@ def test_unexpected_output_type():
     result = pd.Series([1, 2, 3])
     with pytest.raises(TypeError):
         assert_matches_accepted_type(result, accepted_output_types)
+
+
+def test_execute_python_code():
+    code = """
+print("Hello World!")
+1 + 1
+"""
+    result = execute_python_code(
+        code,
+        docstring="",
+        imports=CODE_GENERATION_IMPORTS,
+        local_variables={},
+        config=config,
+    )
+    assert result.result == 2
+    assert result.error is None
+    assert result.io == "Hello World!\nOut[1]: 2\n"
+    # assert "df" in result.local_variables
