@@ -52,12 +52,8 @@ def display_sample_dataframes(dataset: Dataset, display=True) -> None:
     sample_dataframes = get_sample_dataframes(client, dataset)
     for table_id, df in sample_dataframes.items():
         if display:
-            with st.expander(f"**\`{table_id}\` table sample data**"):
+            with st.expander(f"\`{table_id}\` table sample data"):
                 st.dataframe(df.head())
-
-# Hydrate sample dataframes
-# for dataset in datasets:
-#     display_sample_dataframes(dataset, display=False)
 
 @requires_auth
 def main(user_id, _user_email):
