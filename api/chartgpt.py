@@ -211,13 +211,13 @@ def generate_valid_sql_query(
         )
 
         corrected_response = openai_chat_completion(
-            PYTHON_GPT_MODEL,
+            SQL_GPT_MODEL,
             messages,
             functions=[
                 # function_respond_to_user,
-                function_execute_python_code
+                function_validate_sql_query
             ],
-            function_call={"name": "execute_python_code"},
+            function_call={"name": "validate_sql_query"},
         )
         (
             message,
