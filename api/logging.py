@@ -1,5 +1,7 @@
 import logging
-from api.run import app
+from flask import Flask
 
-logger = app.app.logger
+
+app = Flask(__name__)
+logger = app.logger
 logger.setLevel(logging.DEBUG)
