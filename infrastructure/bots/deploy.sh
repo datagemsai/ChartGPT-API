@@ -1,0 +1,15 @@
+gcloud compute instances create chartgpt-bots-staging \
+    --project=chartgpt-staging \
+    --zone=europe-west4-a \
+    --machine-type=e2-medium \
+    --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=default \
+    --maintenance-policy=MIGRATE \
+    --provisioning-model=STANDARD \
+    --service-account=chartgpt-app-staging@chartgpt-staging.iam.gserviceaccount.com \
+    --scopes=https://www.googleapis.com/auth/cloud-platform \
+    --create-disk=auto-delete=yes,boot=yes,device-name=chartgpt-bots-staging,image=projects/debian-cloud/global/images/debian-11-bullseye-v20230912,mode=rw,size=10,type=projects/chartgpt-staging/zones/us-central1-a/diskTypes/pd-balanced \
+    --no-shielded-secure-boot \
+    --shielded-vtpm \
+    --shielded-integrity-monitoring \
+    --labels=goog-ec-src=vm_add-gcloud \
+    --reservation-affinity=any

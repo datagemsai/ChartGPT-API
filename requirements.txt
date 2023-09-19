@@ -32,7 +32,7 @@ scikit-learn
 numpy~=1.25.2
 statsmodels
 dataframe_image
-matplotlib
+matplotlib==3.7.2
 
 # Miscellaneous
 
