@@ -366,10 +366,11 @@ def execute_python_code(
 
         with io.capture_output() as captured:
             logger.debug("Executing code")
-            r: ExecutionResult = shell.run_cell(code, store_history=True)
-            r.raise_error()
+            execution_result: ExecutionResult = shell.run_cell(code, store_history=True)
+            execution_result.raise_error()
 
         answer_fn = shell.user_ns.get("answer_question")
+        function_result = None
         if callable(answer_fn):
             logger.debug("Found function `answer_question`")
             with io.capture_output() as captured:
@@ -381,9 +382,9 @@ def execute_python_code(
 
         output = captured.stdout
         result = (
-            r.result
+            execution_result.result
             or shell.user_ns.get(config.output_variable)
-            or function_result.result
+            or (function_result.result if function_result else None)
         )
 
         if result:
@@ -505,7 +506,6 @@ def answer_user_query(
         sql_query_instruction=(
             "Develop a step-by-step plan and write a GoogleSQL query compatible with BigQuery",
             "to fetch the data necessary for your analysis and visualization.",
-            # "Use Python Pandas functions rather than GoogleSQL queries wherever possible.",
         ),
         python_code_instruction=(
             "Implement Python code to analyze the data using Pandas and visualize the findings using Plotly."
