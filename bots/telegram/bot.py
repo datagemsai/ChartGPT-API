@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from telegram import InputMediaPhoto, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-import app
+from bots import logger
 from bots.api import ask_chartgpt
 
 load_dotenv("bots/.env")
@@ -31,7 +31,7 @@ TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 async def error_handler(update, context):
     """Log the error and send a telegram message to notify the developer."""
     # Log the error before we do anything else, so we can see it even if something breaks.
-    app.logger.error(f"Update {update} caused error {context.error}")
+    logger.error(f"Update {update} caused error {context.error}")
 
     # Optionally, send a message to an admin or group to notify them of the error.
     await context.bot.send_message(
@@ -108,7 +108,7 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
             try:
                 dataframe: pd.DataFrame = pd.read_json(output.value)
             except Exception as e:
-                app.logger.error(
+                logger.error(
                     f"Exception when converting DataFrame to markdown: {e}"
                 )
                 dataframe = pd.DataFrame()

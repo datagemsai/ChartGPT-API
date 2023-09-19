@@ -9,7 +9,7 @@ steps:
     '${_IMAGE_URL}:${_IMAGE_TAG}',
     '--cache-from',
     '${_IMAGE_URL}:latest',
-    '.'
+    'infrastructure/caddy'
   ]
 - name: 'gcr.io/cloud-builders/docker'
   args: [

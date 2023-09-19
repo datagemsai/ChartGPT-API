@@ -14,17 +14,17 @@ services:
         environment:
             - PORT=8080
     discord-bot:
-        image: discord-bot
+        image: chartgpt-discord-bot
         build:
             dockerfile: ./bots/discord/Dockerfile
             context: .
     slack-bot:
-        image: slack-bot
+        image: chartgpt-slack-bot
         build:
             dockerfile: ./bots/slack/Dockerfile
             context: .
     telegram-bot:
-        image: telegram-bot
+        image: chartgpt-telegram-bot
         build:
             dockerfile: ./bots/telegram/Dockerfile
             context: .

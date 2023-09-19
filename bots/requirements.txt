@@ -1,0 +1,19 @@
+# All bots
+api/clients/python_client/
+kaleido==0.2.1
+frozendict==2.3.8
+sqlparse~=0.4.4
+dataframe_image==0.2.0
+plotly~=5.16.0
+pandas~=2.0.3
+python-dotenv~=1.0.0
+matplotlib==3.7.2
+
+# Discord bot
+discord~=2.3.2
+
+# Slack bot
+slack_bolt==1.18.0
+
+# Telegram bot
+python-telegram-bot==20.5

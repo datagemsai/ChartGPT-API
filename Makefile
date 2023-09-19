@@ -61,27 +61,37 @@ project_production:
 # Build
 GIT_HASH = $(shell git rev-parse --short HEAD)
 
-build_app_staging: project_staging
+_build_app:
 	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
-build_app_production: project_production
-	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+build_app_staging: project_staging _build_app
+build_app_production: project_production _build_app
 
-build_caddy_staging: project_staging
-	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+_build_caddy:
+	gcloud builds submit --region=europe-west1 --config infrastructure/caddy/cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
-build_caddy_production: project_production
-	cd infrastructure/caddy/ && gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+build_caddy_staging: project_staging _build_caddy
+build_caddy_production: project_production _build_caddy
 
-build_api_staging: project_staging
+_build_api:
 	gcloud builds submit --region=europe-west1 --config api/cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
-build_api_production: project_production
-	gcloud builds submit --region=europe-west1 --config api/cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
+build_api_staging: project_staging _build_api
+build_api_production: project_production _build_api
 
-build_staging: build_app_staging build_caddy_staging build_api_staging
+_build_bots:
+	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-slack-bot,_DIR=bots/slack
+	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-telegram-bot,_DIR=bots/telegram
+	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-discord-bot,_DIR=bots/discord
 
-build_production: build_app_production build_caddy_production build_api_production
+build_bots_staging: project_staging _build_bots
+build_bots_production: project_production _build_bots
+
+build_staging: build_app_staging build_caddy_staging build_api_staging build_bots_staging
+build_production: build_app_production build_caddy_production build_api_production build_bots_production
 
 # Planning
 

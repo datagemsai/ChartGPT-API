@@ -9,6 +9,8 @@ steps:
     '${_IMAGE_URL}:${_IMAGE_TAG}',
     '--cache-from',
     '${_IMAGE_URL}:latest',
+    '-f',
+    'api/Dockerfile',
     '.'
   ]
 - name: 'gcr.io/cloud-builders/docker'

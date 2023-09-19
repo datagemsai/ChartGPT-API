@@ -24,10 +24,14 @@ variable "docker_registry" {
 }
 
 locals {
-  secrets                   = lookup(yamldecode(file("../app_secrets_${var.deployment}.yaml")), "env_variables", {})
-  chartgpt_api_image_latest = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api@${data.docker_registry_image.chartgpt_api_image.sha256_digest}"
-  chartgpt_app_image_latest = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app@${data.docker_registry_image.chartgpt_app_image.sha256_digest}"
-  caddy_image_latest        = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy@${data.docker_registry_image.caddy_image.sha256_digest}"
+  secrets                            = lookup(yamldecode(file("../app_secrets_${var.deployment}.yaml")), "env_variables", {})
+  bot_secrets                        = lookup(yamldecode(file("../bots/secrets_${var.deployment}.yaml")), "env_variables", {})
+  chartgpt_api_image_latest          = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api@${data.docker_registry_image.chartgpt_api_image.sha256_digest}"
+  chartgpt_app_image_latest          = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app@${data.docker_registry_image.chartgpt_app_image.sha256_digest}"
+  caddy_image_latest                 = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy@${data.docker_registry_image.caddy_image.sha256_digest}"
+  chartgpt_slack_bot_image_latest    = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-slack-bot@${data.docker_registry_image.chartgpt_slack_bot_image.sha256_digest}"
+  chartgpt_telegram_bot_image_latest = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-telegram-bot@${data.docker_registry_image.chartgpt_telegram_bot_image.sha256_digest}"
+  chartgpt_discord_bot_image_latest  = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-discord-bot@${data.docker_registry_image.chartgpt_discord_bot_image.sha256_digest}"
 }
 
 resource "google_project_service" "run_api" {
@@ -52,7 +56,7 @@ module "secret-manager" {
   version    = "~> 0.1"
   project_id = var.project_id
   secrets = [
-    for name, secret in local.secrets :
+    for name, secret in merge(local.secrets, local.bot_secrets) :
     {
       name                  = name
       automatic_replication = true
@@ -99,6 +103,21 @@ data "docker_registry_image" "caddy_image" {
   name = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy"
 }
 
+# ChartGPT Slack Bot Docker image
+data "docker_registry_image" "chartgpt_slack_bot_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-slack-bot"
+}
+
+# ChartGPT Telegram Bot Docker image
+data "docker_registry_image" "chartgpt_telegram_bot_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-telegram-bot"
+}
+
+# ChartGPT Discord Bot Docker image
+data "docker_registry_image" "chartgpt_discord_bot_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-discord-bot"
+}
+
 # Resources
 module "chartgpt_api" {
   source          = "./api"
@@ -132,4 +151,17 @@ module "caddy" {
   secrets         = local.secrets
   docker_image    = local.caddy_image_latest
   depends_on      = [google_project_service.run_api, module.secret-manager]
+}
+
+module "bots" {
+  source                = "./bots"
+  project_id            = var.project_id
+  region                = var.region
+  docker_registry       = var.docker_registry
+  deployment            = var.deployment
+  secrets               = local.bot_secrets
+  slack_docker_image    = local.chartgpt_slack_bot_image_latest
+  telegram_docker_image = local.chartgpt_telegram_bot_image_latest
+  discord_docker_image  = local.chartgpt_discord_bot_image_latest
+  depends_on            = [google_project_service.run_api, module.secret-manager]
 }
