@@ -27,6 +27,7 @@ from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
 from IPython.utils import io
 from plotly.graph_objs import Figure
 from typeguard import TypeCheckError, check_type, typechecked
+from google.api_core.exceptions import InternalServerError
 
 from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
 from api.connectors.bigquery import bigquery_client
@@ -129,6 +130,8 @@ def validate_sql_query(query: str) -> List[str]:
             if query_job.errors
             else []
         )
+        logger.debug(f"BigQuery dry-run job errors: {errors}")
+        logger.debug(f"BigQuery dry-run job bytes processed: {query_job.total_bytes_processed}")
     except Exception as e:
         errors = [str(e)]
     return errors
@@ -241,14 +244,20 @@ def generate_valid_sql_query(
 
 
 def log_errors_and_attempts(query, errors, attempts, max_attempts):
-    logger.debug(f"Query:\n{query}")
+    logger.debug(f"Query: {query}")
     logger.debug(f"Errors in query: {errors}")
     logger.debug(f"Attempt: {attempts} of {max_attempts}")
 
 
 def execute_sql_query(query: str) -> pd.DataFrame:
-    query_job = bigquery_client.query(query)
-    results = query_job.result()
+    try:
+        query_job = bigquery_client.query(query)
+        results = query_job.result()
+        logger.debug(f"BigQuery job bytes billed: {query_job.total_bytes_billed}")
+    except InternalServerError as exc:
+        # Typically raised when maximum bytes processed limit is exceeded
+        logger.error(f"BigQuery InternalServerError for query {query}")
+        raise exc
     return results.to_dataframe()
 
 
@@ -276,13 +285,13 @@ def get_valid_sql_query(
 
 
 def log_initial_queries(description, query):
-    logger.debug(f"Initial SQL query description:\n{description}")
-    logger.debug(f"Initial SQL query:\n{query}")
+    logger.debug(f"Initial SQL query description: {description}")
+    logger.debug(f"Initial SQL query: {query}")
 
 
 def log_final_queries(description, query):
-    logger.debug(f"Final SQL query description:\n{description}")
-    logger.debug(f"Valid SQL query:\n{query}")
+    logger.debug(f"Final SQL query description: {description}")
+    logger.debug(f"Valid SQL query: {query}")
 
 
 def extract_respond_to_user_data(response):
@@ -643,7 +652,6 @@ def answer_user_query(
 
     Figure.show = original_show_method
 
-    logger.debug("\n")
     logger.debug(f"Final error: {code_generation_result.error}")
 
     created_at = int(time.time())
