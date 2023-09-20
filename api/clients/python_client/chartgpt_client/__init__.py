@@ -31,7 +31,6 @@ from chartgpt_client.exceptions import ApiAttributeError
 from chartgpt_client.exceptions import ApiException
 
 # import models into sdk package
-from chartgpt_client.models.api_request_ask_chartgpt200_response import ApiRequestAskChartgpt200Response
 from chartgpt_client.models.api_request_ask_chartgpt_request import ApiRequestAskChartgptRequest
 from chartgpt_client.models.api_request_ask_chartgpt_request_messages_inner import ApiRequestAskChartgptRequestMessagesInner
 from chartgpt_client.models.attempt import Attempt
