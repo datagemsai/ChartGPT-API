@@ -39,15 +39,20 @@ async def on_ready():
     print(f"We have logged in as {client.user}")
 
 
-@tasks.loop(seconds=1)
+ongoing_tasks = {}
+
 async def embed_progress_bar(embed: discord.Embed, embed_message: discord.Message):
     load_char = "✨"
     max_chars = 5
-
     chars = (embed.description.count(load_char) if embed.description else 0) + 1
-    embed.description = "Thinking" + (load_char * min(chars, max_chars))
-
-    await embed_message.edit(embed=embed)
+    
+    while True:  # Keep this running until you manually break out of it
+        embed.description = "Thinking" + (load_char * min(chars, max_chars))
+        await embed_message.edit(embed=embed)
+        await asyncio.sleep(1)  # This replaces your loop's seconds=1
+        chars += 1
+        if chars > max_chars:
+            chars = 1
 
 
 @tree.command(name="ask_chartgpt", description="Ask ChartGPT an analytics question")
@@ -60,7 +65,8 @@ async def handle_ask_chartgpt(interaction: discord.Interaction, question: str):
         embed=embed, file=discord.File("media/logo_chartgpt.png", filename="logo.png")
     )
 
-    embed_progress_bar.start(embed, msg)
+    task = asyncio.create_task(embed_progress_bar(embed, msg))
+    ongoing_tasks[msg.id] = task
 
     response: chartgpt_client.Response = await asyncio.to_thread(ask_chartgpt, question)
 
@@ -81,7 +87,9 @@ def create_embed(question: str) -> discord.Embed:
 
 
 async def handle_no_response(embed: discord.Embed, msg: discord.Message):
-    embed_progress_bar.cancel()
+    task_to_cancel = ongoing_tasks.pop(msg.id, None)
+    if task_to_cancel:
+        task_to_cancel.cancel()
     embed.description = "Sorry, I couldn't answer your question."
     await msg.edit(embed=embed)
 
@@ -92,7 +100,10 @@ async def handle_response(
     interaction: discord.Interaction,
     response: dict,
 ):
-    embed_progress_bar.cancel()
+    task_to_cancel = ongoing_tasks.pop(msg.id, None)
+    if task_to_cancel:
+        task_to_cancel.cancel()
+
     description = (
         f"Response time: {response.finished_at - response.created_at:.0f} seconds\n\n"
     )
