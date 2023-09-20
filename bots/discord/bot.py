@@ -143,8 +143,9 @@ async def handle_response(
                 with tempfile.TemporaryDirectory() as tmpdirname:
                     # Define the data and filenames
                     data_and_files = [
-                        (dataframe, "df_head.png"),
-                        (dataframe.describe(), "df_describe.png"),
+                        (dataframe, "df_sample_rows.png"),
+                        # TODO Return table description from API, with full dataset
+                        # (dataframe.describe(), "df_describe.png"),
                     ]
 
                     # Export the dataframes as images and upload them
