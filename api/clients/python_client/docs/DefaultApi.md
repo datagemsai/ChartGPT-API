@@ -8,7 +8,7 @@ Method | HTTP request | Description
 
 
 # **api_request_ask_chartgpt**
-> Response api_request_ask_chartgpt(api_request_ask_chartgpt_request)
+> ApiRequestAskChartgpt200Response api_request_ask_chartgpt(api_request_ask_chartgpt_request)
 
 Ask ChartGPT a question
 
@@ -21,8 +21,8 @@ This endpoint takes a question and returns a response.
 import time
 import os
 import chartgpt_client
+from chartgpt_client.models.api_request_ask_chartgpt200_response import ApiRequestAskChartgpt200Response
 from chartgpt_client.models.api_request_ask_chartgpt_request import ApiRequestAskChartgptRequest
-from chartgpt_client.models.response import Response
 from chartgpt_client.rest import ApiException
 from pprint import pprint
 
@@ -68,7 +68,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**Response**](Response.md)
+[**ApiRequestAskChartgpt200Response**](ApiRequestAskChartgpt200Response.md)
 
 ### Authorization
 
