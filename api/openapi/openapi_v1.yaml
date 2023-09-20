@@ -69,7 +69,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                oneOf:
+                - $ref: '#/components/schemas/Response'
+                - type: string
+                  description: "Raw streaming data as string"
         '400':
           description: "Bad request"
         '401':

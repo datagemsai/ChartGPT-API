@@ -100,6 +100,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [ApiRequestAskChartgpt200Response](docs/ApiRequestAskChartgpt200Response.md)
  - [ApiRequestAskChartgptRequest](docs/ApiRequestAskChartgptRequest.md)
  - [ApiRequestAskChartgptRequestMessagesInner](docs/ApiRequestAskChartgptRequestMessagesInner.md)
  - [Attempt](docs/Attempt.md)

@@ -19,8 +19,8 @@ import warnings
 from pydantic import validate_arguments, ValidationError
 from typing_extensions import Annotated
 
+from chartgpt_client.models.api_request_ask_chartgpt200_response import ApiRequestAskChartgpt200Response
 from chartgpt_client.models.api_request_ask_chartgpt_request import ApiRequestAskChartgptRequest
-from chartgpt_client.models.response import Response
 
 from chartgpt_client.api_client import ApiClient
 from chartgpt_client.api_response import ApiResponse
@@ -43,7 +43,7 @@ class DefaultApi(object):
         self.api_client = api_client
 
     @validate_arguments
-    def api_request_ask_chartgpt(self, api_request_ask_chartgpt_request : ApiRequestAskChartgptRequest, **kwargs) -> Response:  # noqa: E501
+    def api_request_ask_chartgpt(self, api_request_ask_chartgpt_request : ApiRequestAskChartgptRequest, **kwargs) -> ApiRequestAskChartgpt200Response:  # noqa: E501
         """Ask ChartGPT a question  # noqa: E501
 
         This endpoint takes a question and returns a response.  # noqa: E501
@@ -64,7 +64,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: Response
+        :rtype: ApiRequestAskChartgpt200Response
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -106,7 +106,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(Response, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ApiRequestAskChartgpt200Response, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -168,7 +168,7 @@ class DefaultApi(object):
         _auth_settings = ['ApiKeyAuth']  # noqa: E501
 
         _response_types_map = {
-            '200': "Response",
+            '200': "ApiRequestAskChartgpt200Response",
             '400': None,
             '401': None,
             '500': None,

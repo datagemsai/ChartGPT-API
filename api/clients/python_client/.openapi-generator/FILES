@@ -11,6 +11,7 @@ chartgpt_client/api_response.py
 chartgpt_client/configuration.py
 chartgpt_client/exceptions.py
 chartgpt_client/models/__init__.py
+chartgpt_client/models/api_request_ask_chartgpt200_response.py
 chartgpt_client/models/api_request_ask_chartgpt_request.py
 chartgpt_client/models/api_request_ask_chartgpt_request_messages_inner.py
 chartgpt_client/models/attempt.py
@@ -25,6 +26,7 @@ chartgpt_client/models/status.py
 chartgpt_client/models/usage.py
 chartgpt_client/py.typed
 chartgpt_client/rest.py
+docs/ApiRequestAskChartgpt200Response.md
 docs/ApiRequestAskChartgptRequest.md
 docs/ApiRequestAskChartgptRequestMessagesInner.md
 docs/Attempt.md
@@ -45,4 +47,5 @@ setup.cfg
 setup.py
 test-requirements.txt
 test/__init__.py
+test/test_api_request_ask_chartgpt200_response.py
 tox.ini
