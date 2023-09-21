@@ -407,9 +407,7 @@ def execute_python_code(
                 )
                 function_result.raise_error()
 
-        # output = clean_jupyter_shell_output(captured.stdout, remove_final_result=True)
         output = clean_jupyter_shell_output(captured_stdout.getvalue(), remove_final_result=True)
-        print(output)
 
         if function_result and function_result.result is not None:
             result = function_result.result
@@ -602,7 +600,6 @@ def answer_user_query(
     ):
         if isinstance(result, Attempt):
             sql_query_attempts.append(result)
-            logger.debug("Attempt:", result)
             if stream:
                 yield result
         elif isinstance(result, SQLExecutionResult):
@@ -774,11 +771,12 @@ def answer_user_query(
         if _type == OutputType.PLOTLY_CHART:
             _output = item.to_json()
         elif _type == OutputType.PANDAS_DATAFRAME:
-            n = 5
-            # Determine the start index for the tail slice
-            tail_start = max(n, len(df) - n)
-            result = pd.concat([df.iloc[:n], df.iloc[tail_start:]])
-            _output = result.to_json(orient='records')
+            # If the dataframe is larger than X rows, only return the first X rows
+            n = 20
+            if len(df) > n:
+                item = item.iloc[:n]
+            item = item.reset_index()
+            _output = item.to_json(orient='records', default_handler=str)
         else:
             _output = str(item)
 
