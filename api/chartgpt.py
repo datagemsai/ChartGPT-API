@@ -773,7 +773,7 @@ def answer_user_query(
         elif _type == OutputType.PANDAS_DATAFRAME:
             # If the dataframe is larger than X rows, only return the first X rows
             n = 20
-            if len(df) > n:
+            if len(item) > n:
                 item = item.iloc[:n]
             item = item.reset_index()
             _output = item.to_json(orient='records', default_handler=str)
