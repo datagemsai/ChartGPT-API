@@ -28,7 +28,7 @@ def main(user_id, user_email):
     # Display app name
     PAGE_NAME = "API Playground"
     st.markdown("# " + PAGE_NAME + " 🎢")
-    st.markdown("### Try out the ChartGPT API with the MetaQuants dataset")
+    st.markdown("### Try out the ChartGPT API")
 
     # st.info("Coming soon! 🚀")
     # st.stop()
@@ -36,8 +36,7 @@ def main(user_id, user_email):
     # Defining the host is optional and defaults to https://api.chartgpt.cadlabs.org
     # See configuration.py for a list of all supported configuration parameters.
     configuration = chartgpt_client.Configuration(
-        # TODO Fetch from environment variable
-        host="http://0.0.0.0:8081"
+        host=os.environ["CHARTGPT_API_HOST"]
     )
 
     # if st.button("Create API key"):
@@ -56,6 +55,14 @@ def main(user_id, user_email):
 
     with st.form(key="chart_api_request"):
         st.markdown("### API endpoint: `/v1/ask_chartgpt`")
+        data_source_url_options = {
+            "MetaQuants NFT Finance Aggregator": "bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow",
+            "bitsCrunch Unleash NFTs": "bigquery/chartgpt-staging/bitscrunch_unleash_nfts/nft_market_trends",
+        }
+        data_source_url_key = st.selectbox(
+            "data_source_url",
+            options=data_source_url_options.keys(),
+        )
         question = st.text_input(
             "prompt",
             value="Plot the average APR for the NFTfi protocol in the past 6 months.",
@@ -77,7 +84,7 @@ def main(user_id, user_email):
                     api_instance = chartgpt_client.DefaultApi(api_client)
                     try:
                         # Generate a Plotly chart from a question
-                        api_request_ask_chartgpt_request = chartgpt_client.ApiRequestAskChartgptRequest(
+                        api_request_ask_chartgpt_request = chartgpt_client.Request(
                             messages=[
                                 {
                                     "content": question,
@@ -85,7 +92,7 @@ def main(user_id, user_email):
                                 }
                             ],
                             output_type=output_type,
-                            data_source_url="bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow",
+                            data_source_url=data_source_url_options[data_source_url_key],
                         )
                         response: chartgpt_client.Response = (
                             api_instance.api_request_ask_chartgpt(
@@ -144,6 +151,10 @@ def main(user_id, user_email):
 
                     except chartgpt_client.ApiException as e:
                         st.warning("API call failed")
+    with st.form(key="chart_api_request_stream"):
+        st.markdown("### API endpoint: `/v1/ask_chartgpt/stream`")
+        st.info(f"Demo coming soon! 🚀 In the meantime check out the [ChartGPT OpenAPI spec]({os.environ['CHARTGPT_API_HOST']}/ui).")
+        _ = st.form_submit_button("Submit")
 
 
 if __name__ == "__main__":

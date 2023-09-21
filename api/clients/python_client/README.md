@@ -77,11 +77,11 @@ configuration.api_key['ApiKeyAuth'] = os.environ["API_KEY"]
 with chartgpt_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = chartgpt_client.DefaultApi(api_client)
-    api_request_ask_chartgpt_request = chartgpt_client.ApiRequestAskChartgptRequest() # ApiRequestAskChartgptRequest | 
+    request = chartgpt_client.Request() # Request | 
 
     try:
         # Ask ChartGPT a question
-        api_response = api_instance.api_request_ask_chartgpt(api_request_ask_chartgpt_request)
+        api_response = api_instance.api_request_ask_chartgpt(request)
         print("The response of DefaultApi->api_request_ask_chartgpt:\n")
         pprint(api_response)
     except ApiException as e:
@@ -96,16 +96,17 @@ All URIs are relative to *https://api.chartgpt.cadlabs.org*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DefaultApi* | [**api_request_ask_chartgpt**](docs/DefaultApi.md#api_request_ask_chartgpt) | **POST** /v1/ask_chartgpt | Ask ChartGPT a question
+*DefaultApi* | [**api_request_ask_chartgpt_stream**](docs/DefaultApi.md#api_request_ask_chartgpt_stream) | **POST** /v1/ask_chartgpt/stream | Ask ChartGPT a question
 
 
 ## Documentation For Models
 
- - [ApiRequestAskChartgptRequest](docs/ApiRequestAskChartgptRequest.md)
- - [ApiRequestAskChartgptRequestMessagesInner](docs/ApiRequestAskChartgptRequestMessagesInner.md)
  - [Attempt](docs/Attempt.md)
  - [Error](docs/Error.md)
  - [Output](docs/Output.md)
  - [OutputType](docs/OutputType.md)
+ - [Request](docs/Request.md)
+ - [RequestMessagesInner](docs/RequestMessagesInner.md)
  - [Response](docs/Response.md)
  - [ResponseMessagesInner](docs/ResponseMessagesInner.md)
  - [ResponseUsage](docs/ResponseUsage.md)

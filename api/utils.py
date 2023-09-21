@@ -4,8 +4,41 @@ import uuid
 from typing import List, Optional
 from cachetools import cached
 from cachetools.keys import hashkey
+import pandas as pd
 
 from google.cloud import bigquery
+
+
+def sort_dataframe(df):
+    # Check if the index is a DateTime index
+    if isinstance(df.index, pd.DatetimeIndex):
+        return df.sort_index()
+    
+    # Check if any of the columns have date-like values
+    for col in df.columns:
+        try:
+            # Try to convert the column to datetime format
+            df[col] = pd.to_datetime(df[col])
+            return df.sort_values(by=col)
+        except:
+            continue  # If conversion fails, continue to next column
+    
+    # If no date column is found, sort by index
+    return df.sort_index()
+
+
+def get_dataframe_summary(df: pd.DataFrame) -> dict[str, str]:
+    return {
+        column_name: f"{sample}: {dtype}"
+        for column_name, sample, dtype in zip(df.columns, df.iloc[0], df.dtypes)
+    }
+
+
+def clean_jupyter_shell_output(output: str, remove_final_result: bool = False) -> str:
+    if remove_final_result:
+        return re.sub(r'Out\[\d+\]:.*', '', output).rstrip()
+    else:
+        return re.sub(r'Out\[\d+\]:\s*', '', output)
 
 
 def generate_uuid() -> str:
