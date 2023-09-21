@@ -59,6 +59,7 @@ The `answer_question` function must be defined and return a variable of the spec
 # Instructions
 - Complete the following function code, replacing <COMPLETE THE FUNCTION CODE> with your own code.
 - Do not try to recreate the Pandas DataFrame `df` or generate sample data.
+- Always ensure the function returns a variable of the specified type.
 
 ```python
 {imports}
@@ -82,7 +83,7 @@ The `answer_question` function must be defined and return a variable of the spec
 # Examples
 
 ## Example 1
-What is 1 + 1?
+Analytics Question: What is 1 + 1?
 
 ```python
 def answer_question(df: pd.DataFrame) -> int:
@@ -90,7 +91,7 @@ def answer_question(df: pd.DataFrame) -> int:
 ```
 
 ## Example 2
-What is the average `age` of participants?
+Analytics Question: What is the average `age` of participants?
 
 ```python
 def answer_question(df: pd.DataFrame) -> float:
@@ -98,13 +99,39 @@ def answer_question(df: pd.DataFrame) -> float:
 ```
 
 ## Example 3
-Plot a chart of transaction volume over time.
+Analytics Question: Plot a chart of transaction volume over time.
 
 ```python
 def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
     df['date'] = pd.to_datetime(df['date'])
     fig = px.line(df, x='date', y='transaction_volume')
     return fig
+```
+
+## Example 4
+Analytics Question: Perform exploratory data analysis (EDA) on the DataFrame.
+
+Use common sense when deciding which chart types to use for which columns:
+- For time series data, use a line chart or scatter plot.
+- For categorial data, use a bar chart or pie chart.
+- For numeric data, use a histogram or scatter plot.
+
+```python
+def answer_question(df: pd.DataFrame) -> List[plotly.graph_objs.Figure]:
+    histogram = px.histogram(df, x='usd_value')
+    scatter = px.scatter(df, x='apr', y='usd_value')
+    line = px.line(df, x='date', y='transaction_volume')
+    return [histogram, scatter, line]
+```
+
+## Example 5
+Analytics Question: What data is available?
+
+If a user asks what data is available, return the DataFrame schema.
+    
+```python
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    return df.describe()
 ```
 
 # Analytics Question
