@@ -1,3 +1,9 @@
+# Variables
+
+GIT_HASH = $(shell git rev-parse --short HEAD)
+
+# Development
+
 setup: env install kernel
 
 env:
@@ -29,10 +35,7 @@ start_app_production:
 start_api:
 	. venv/bin/activate; python -m api
 
-start_discord_bot:
-	. venv/bin/activate; python -m app.discord_bot
-
-# GCloud setup
+# Google Cloud setup
 
 gcloud_setup_staging:
 	gcloud auth login
@@ -58,8 +61,7 @@ project_production:
 	gcloud config set project chartgpt-production
 	terraform -chdir=infrastructure workspace select production
 
-# Build
-GIT_HASH = $(shell git rev-parse --short HEAD)
+# Build App
 
 _build_app:
 	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
@@ -67,11 +69,15 @@ _build_app:
 build_app_staging: project_staging _build_app
 build_app_production: project_production _build_app
 
+# Build Caddy
+
 _build_caddy:
 	gcloud builds submit --region=europe-west1 --config infrastructure/caddy/cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_caddy_staging: project_staging _build_caddy
 build_caddy_production: project_production _build_caddy
+
+# Build API
 
 _build_api:
 	gcloud builds submit --region=europe-west1 --config api/cloudbuild.yaml --substitutions=_IMAGE_TAG=${GIT_HASH}
@@ -79,13 +85,21 @@ _build_api:
 build_api_staging: project_staging _build_api
 build_api_production: project_production _build_api
 
-_build_bots:
+# Build Bots
+
+_build_slack_bot:
 	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
 		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-slack-bot,_DIR=bots/slack
-	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
-		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-telegram-bot,_DIR=bots/telegram
+
+_build_discord_bot:
 	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
 		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-discord-bot,_DIR=bots/discord
+
+_build_telegram_bot:
+	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+		--substitutions=_IMAGE_TAG=${GIT_HASH},_IMAGE_NAME=chartgpt-telegram-bot,_DIR=bots/telegram
+
+_build_bots: _build_slack_bot _build_discord_bot _build_telegram_bot
 
 build_bots_staging: project_staging _build_bots
 build_bots_production: project_production _build_bots
@@ -93,7 +107,7 @@ build_bots_production: project_production _build_bots
 build_staging: build_app_staging build_caddy_staging build_api_staging build_bots_staging
 build_production: build_app_production build_caddy_production build_api_production build_bots_production
 
-# Planning
+# Terraform Planning
 
 terraform_plan_staging: project_staging
 	terraform -chdir=infrastructure fmt  # formatting
@@ -105,7 +119,7 @@ terraform_plan_production: project_production
 	terraform -chdir=infrastructure init # initializing terraform plugins
 	terraform -chdir=infrastructure plan -var-file="variables/production.tfvars"  # checking the plan 
 
-# Deployment
+# Terraform Deployment
 
 terraform_deploy_staging: project_staging
 	terraform -chdir=infrastructure workspace select staging
@@ -114,6 +128,8 @@ terraform_deploy_staging: project_staging
 terraform_deploy_production: project_production
 	terraform -chdir=infrastructure workspace select production
 	terraform -chdir=infrastructure apply --auto-approve -var-file="variables/production.tfvars"
+
+# Google App Engine Deployment
 
 # deploy_app_production:
 # 	gcloud app deploy --project=chartgpt-production app_production.yaml

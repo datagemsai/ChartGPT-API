@@ -19,7 +19,7 @@ def ask_chartgpt(question) -> Optional[chartgpt_client.Response]:
     with chartgpt_client.ApiClient(configuration) as api_client:
         api_instance = chartgpt_client.DefaultApi(api_client)
         try:
-            api_request_ask_chartgpt_request = chartgpt_client.ApiRequestAskChartgptRequest(
+            api_request_ask_chartgpt_request = chartgpt_client.Request(
                 messages=[
                     {
                         "content": question,
@@ -27,7 +27,7 @@ def ask_chartgpt(question) -> Optional[chartgpt_client.Response]:
                     }
                 ],
                 output_type="any",
-                data_source_url="bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow",
+                data_source_url=os.environ["CHARTGPT_DATA_SOURCE_URL"],
             )
             api_response = api_instance.api_request_ask_chartgpt(
                 api_request_ask_chartgpt_request

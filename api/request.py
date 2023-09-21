@@ -6,8 +6,7 @@ from flask import (
     stream_with_context
 )
 
-from chartgpt_client import ApiRequestAskChartgptRequest as Request
-from chartgpt_client import Response, Usage
+from chartgpt_client import Request, Response, Usage, Attempt, Error, Output, OutputType
 
 from api.chartgpt import answer_user_query
 from api.errors import ContextLengthError
@@ -17,9 +16,8 @@ from api.utils import generate_uuid, parse_data_source_url
 from api.logging import logger
 
 
-def ask_chartgpt(body) -> Response:
+def ask_chartgpt(body, stream=False) -> Response:
     request: Request = Request.from_dict(body)
-    stream: bool = request.stream
     job_uuid = f"ask-{generate_uuid()}"
     created_at = int(time.time())
     logger.debug("Request %s: %s", job_uuid, request.to_dict())
@@ -46,24 +44,61 @@ def ask_chartgpt(body) -> Response:
     try:
         if stream:
             def generate_response(request: Request) -> Iterator[Response]:
-                for output in answer_user_query(
+                for result in answer_user_query(
                     request=request,
+                    stream=True
                 ):
                     finished_at = int(time.time())
-                    yield "data: " + Response(
-                        id=job_uuid,
-                        created_at=created_at,
-                        finished_at=finished_at,
-                        status="stream",
-                        # TODO Update messages with each output
-                        messages=request.messages,
-                        data_source_url=request.data_source_url,
-                        # attempts=result.attempts,
-                        output_type=request.output_type,
-                        outputs=[output],
-                        # errors=result.errors,
-                        # usage=Usage(tokens=len(result.attempts)),
-                    ).to_json() + '<end>\n'
+                    if isinstance(result, Attempt):
+                        attempt = result
+                        yield "data: " + Response(
+                            id=job_uuid,
+                            created_at=created_at,
+                            finished_at=finished_at,
+                            status="stream",
+                            # TODO Update messages with each output
+                            messages=request.messages,
+                            data_source_url=request.data_source_url,
+                            attempts=[attempt],
+                            output_type=request.output_type,
+                            outputs=[],
+                            errors=[],
+                            # usage=Usage(tokens=len(result.attempts)),
+                        ).to_json() + '<end>\n'
+                    elif isinstance(result, Output):
+                        output = result
+                        yield "data: " + Response(
+                            id=job_uuid,
+                            created_at=created_at,
+                            finished_at=finished_at,
+                            status="stream",
+                            # TODO Update messages with each output
+                            messages=request.messages,
+                            data_source_url=request.data_source_url,
+                            attempts=[],
+                            output_type=request.output_type,
+                            outputs=[output],
+                            errors=[],
+                            # usage=Usage(tokens=len(result.attempts)),
+                        ).to_json() + '<end>\n'
+                    elif isinstance(result, QueryResult):
+                        query_result = result
+                        yield "data: " + Response(
+                            id=job_uuid,
+                            created_at=created_at,
+                            finished_at=finished_at,
+                            status="stream",
+                            # TODO Update messages
+                            messages=request.messages,
+                            data_source_url=request.data_source_url,
+                            attempts=query_result.attempts,
+                            output_type=request.output_type,
+                            outputs=query_result.outputs,
+                            errors=query_result.errors,
+                            usage=Usage(tokens=len(query_result.attempts)),
+                        ).to_json() + '<end>\n'
+                    else:
+                        logger.error("Unhandled result type: %s", type(result))
             return FlaskResponse(stream_with_context(generate_response(request=request)), content_type='text/event-stream')
         else:
             result: QueryResult = next(answer_user_query(
@@ -99,3 +134,7 @@ def ask_chartgpt(body) -> Response:
         message = f"Could not complete analysis: {ex}"
         logger.exception(message)
         return {"error": message}, 400
+
+
+def ask_chartgpt_stream(body) -> Response:
+    return ask_chartgpt(body, stream=True)
