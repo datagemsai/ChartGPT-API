@@ -24,7 +24,7 @@ def map_type_to_output_type(output: Any) -> OutputType:
         return OutputType.FLOAT
     elif isinstance(output, str):
         return OutputType.STRING
-    elif isinstance(output, pd.DataFrame):
+    elif isinstance(output, pd.DataFrame) or isinstance(output, pd.Series):
         return OutputType.PANDAS_DATAFRAME
     elif isinstance(output, Figure):
         return OutputType.PLOTLY_CHART
@@ -36,6 +36,7 @@ accepted_output_types = [
     # TODO Refactor this to be more structured
     plotly.graph_objs.Figure,
     pd.DataFrame,
+    # pd.Series,
     int,
     numpy.int64,
     float,
@@ -43,6 +44,7 @@ accepted_output_types = [
     str,
     bool,
     numpy.bool_,
+    # list,
 ]
 
 
@@ -112,11 +114,11 @@ class CodeGenerationConfig:
     def __init__(
         self,
         max_attempts=10,
-        output_type="plotly.graph_objs.Figure",
+        output_types=[plotly.graph_objs.Figure],
         output_variable="fig",
     ):
         self.max_attempts = max_attempts
-        self.output_type = output_type
+        self.output_types = output_types
         self.output_variable = output_variable
 
 

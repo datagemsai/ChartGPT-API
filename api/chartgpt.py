@@ -2,6 +2,7 @@
 # pylint: disable=C0116
 
 import base64
+import contextlib
 import enum
 import inspect
 import json
@@ -388,7 +389,8 @@ def execute_python_code(
 
         shell.push(local_variables)
 
-        with io.capture_output() as captured:
+        # with io.capture_output() as captured:
+        with contextlib.redirect_stdout(StringIO()) as captured_stdout:
             logger.debug("Executing code")
             execution_result: ExecutionResult = shell.run_cell(code, store_history=True)
             execution_result.raise_error()
@@ -397,14 +399,17 @@ def execute_python_code(
         function_result = None
         if callable(answer_fn):
             logger.debug("Found function `answer_question`")
-            with io.capture_output() as captured:
+            # with io.capture_output() as captured:
+            with contextlib.redirect_stdout(StringIO()) as captured_stdout:
                 logger.debug("Calling function `answer_question`")
                 function_result: ExecutionResult = shell.run_cell(
                     "answer_question(df.copy())", store_history=True
                 )
                 function_result.raise_error()
 
-        output = clean_jupyter_shell_output(captured.stdout, remove_final_result=True)
+        # output = clean_jupyter_shell_output(captured.stdout, remove_final_result=True)
+        output = clean_jupyter_shell_output(captured_stdout.getvalue(), remove_final_result=True)
+        print(output)
 
         if function_result and function_result.result is not None:
             result = function_result.result
@@ -419,13 +424,13 @@ def execute_python_code(
             logger.debug(f"Result: {str(result)[:100]}")
             try:
                 # check_type(result, config.output_type)
-                assert_matches_accepted_type(result, config.output_type)
+                assert_matches_accepted_type(result, config.output_types)
             except TypeCheckError as exc:
-                message = f"The code must return a variable of type `{config.output_type}`."
+                message = f"The code must return a variable of type `{config.output_types}`."
                 logger.warning(message)
                 raise TypeError(message) from exc
         else:
-            message = f"The variable `{config.output_variable}` or function `answer_question` was not found."
+            message = f"The variable `{config.output_variable}` was not defined, or the function `answer_question` does not exist or does not return a value."
             logger.warning(message)
             raise ValueError(message)
         return PythonExecutionResult(
@@ -439,8 +444,9 @@ def execute_python_code(
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         _, line_number, function_name, line_data = tb[-1]
-        error_msg = f"{type(e).__name__}: {str(e)}\nOn line {line_number}, function `{function_name}`, with code `{line_data}`"
-        logger.warning(error_msg)
+        error_msg = f"{type(e).__name__}: {str(e)}"
+        error_msg_trace = f"{type(e).__name__}: {str(e)}\nOn line {line_number}, function `{function_name}`, with code `{line_data}`"
+        logger.warning(error_msg_trace)
         return PythonExecutionResult(
             description=docstring,
             code=code,
@@ -596,7 +602,7 @@ def answer_user_query(
     ):
         if isinstance(result, Attempt):
             sql_query_attempts.append(result)
-            print("Attempt:", result)
+            logger.debug("Attempt:", result)
             if stream:
                 yield result
         elif isinstance(result, SQLExecutionResult):
@@ -608,13 +614,7 @@ def answer_user_query(
     log_final_queries(sql_generation_result.description, sql_generation_result.query)
 
     # Convert Period dtype to timestamp to ensure DataFrame is JSON serializable
-    df = df.astype(
-        {
-            col: "datetime64[ns]"
-            for col in df.columns
-            if pd.api.types.is_period_dtype(df[col])
-        }
-    )
+    df = utils.convert_period_dtype_to_timestamp(df)
     # Sort DataFrame by date column if it exists
     df = utils.sort_dataframe(df)
 
@@ -655,7 +655,7 @@ def answer_user_query(
     if request.output_type == OutputType.ANY.value:
         function_parameters = "df: pd.DataFrame"
         function_description = "Function to analyze the data and optionally return a list of results `result_list` or `None`."
-        output_type = accepted_output_types
+        output_types = accepted_output_types
         # output_type = Any
         output_description = "A list of any type of object or `None`."
         output_variable = "result_list"
@@ -665,7 +665,7 @@ def answer_user_query(
             # "Function to analyze the data and return a list of Plotly charts."
             "Function to analyze the data and return a Plotly chart."
         )
-        output_type = [plotly.graph_objs.Figure]
+        output_types = [plotly.graph_objs.Figure]
         output_description = "A Plotly figure object."
         output_variable = "fig"
     elif request.output_type == "optional_chart":
@@ -673,7 +673,7 @@ def answer_user_query(
         function_description = (
             "Function to analyze the data and optionally return a Plotly chart."
         )
-        output_type = [Optional[plotly.graph_objs.Figure]]
+        output_types = [Optional[plotly.graph_objs.Figure]]
         output_description = "A Plotly figure object or None."
         output_variable = "fig"
     else:
@@ -692,7 +692,7 @@ def answer_user_query(
         imports=CODE_GENERATION_IMPORTS,
         function_parameters=function_parameters,
         function_description=function_description,
-        output_type=output_type,
+        output_type=utils.create_type_string(output_types),
         output_description=output_description,
         output_variable=output_variable,
     )
@@ -713,7 +713,7 @@ def answer_user_query(
         messages=sql_generation_result.messages,
         local_variables={"df": df.copy()},
         config=CodeGenerationConfig(
-            output_type=output_type,
+            output_types=output_types,
             output_variable=output_variable,
         ),
     ):
@@ -761,7 +761,7 @@ def answer_user_query(
     else:
         outputs += [output_2, output_3]
 
-    if not code_generation_result.result:
+    if code_generation_result.result is None:
         code_generation_results = []
     elif not isinstance(code_generation_result.result, list):
         code_generation_results = [code_generation_result.result]

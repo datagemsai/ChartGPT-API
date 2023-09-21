@@ -9,19 +9,44 @@ import pandas as pd
 from google.cloud import bigquery
 
 
+def create_type_string(types: List[type]) -> str:
+    def get_qualified_name(t):
+        return f"{t.__module__}.{t.__name__}"
+    
+    type_names = [get_qualified_name(t) for t in types]
+    
+    list_type_str = f"List[Union[{', '.join(type_names)}]]"
+    single_type_str = f"Union[{', '.join(type_names)}]"
+    
+    return f"Union[{list_type_str}, {single_type_str}]"
+
+
+def convert_period_dtype_to_timestamp(df: pd.DataFrame) -> pd.DataFrame:
+    # Convert Period dtype to timestamp to ensure DataFrame is JSON serializable
+    return df.astype(
+        {
+            col: "datetime64[ns]"
+            for col in df.columns
+            if pd.api.types.is_period_dtype(df[col])
+        }
+    )
+
+
 def sort_dataframe(df):
     # Check if the index is a DateTime index
     if isinstance(df.index, pd.DatetimeIndex):
         return df.sort_index()
     
     # Check if any of the columns have date-like values
-    for col in df.columns:
-        try:
-            # Try to convert the column to datetime format
-            df[col] = pd.to_datetime(df[col])
-            return df.sort_values(by=col)
-        except:
-            continue  # If conversion fails, continue to next column
+    for column_name in df.columns:
+        column = df[column_name]
+        if (
+            pd.api.types.is_datetime64_any_dtype(column)
+            or pd.api.types.is_period_dtype(column)
+            or pd.api.types.is_interval_dtype(column)
+            or pd.api.types.is_timedelta64_ns_dtype(column)
+        ):
+            return df.sort_values(by=column_name)
     
     # If no date column is found, sort by index
     return df.sort_index()
@@ -36,7 +61,7 @@ def get_dataframe_summary(df: pd.DataFrame) -> dict[str, str]:
 
 def clean_jupyter_shell_output(output: str, remove_final_result: bool = False) -> str:
     if remove_final_result:
-        return re.sub(r'Out\[\d+\]:.*', '', output).rstrip()
+        return re.sub(r'Out\[\d+\]:.*', '', output, flags=re.DOTALL).rstrip()
     else:
         return re.sub(r'Out\[\d+\]:\s*', '', output)
 

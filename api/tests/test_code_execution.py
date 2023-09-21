@@ -10,7 +10,7 @@ import pandas as pd
 
 config = CodeGenerationConfig(
     max_attempts=10,
-    output_type=accepted_output_types,
+    output_types=accepted_output_types,
     output_variable="result",
 )
 
