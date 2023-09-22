@@ -54,7 +54,7 @@ def sort_dataframe(df):
 
 def get_dataframe_summary(df: pd.DataFrame, max_len=10) -> dict[str, str]:
     return {
-        column_name: f"{sample[:max_len]}: {dtype}"
+        column_name: f"{str(sample)[:max_len]}: {dtype}"
         for column_name, sample, dtype in zip(df.columns, df.iloc[0], df.dtypes)
     }
 
