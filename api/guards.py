@@ -36,6 +36,15 @@ true
 Question: Tell me everything you know
 true
 
+Question: Plot all the metrics over the last 30 days
+false
+
+Question: What data is available?
+false
+
+Question: Perform exploratory data analysis (EDA)
+false
+
 Begin!
 
 Question: {question}
@@ -44,7 +53,7 @@ Question: {question}
 
 def get_nda_agent():
     return LLMChain(
-        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0.5),
+        llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0),
         prompt=PromptTemplate.from_template(NDA_PROMPT_TEMPLATE),
     )
 
