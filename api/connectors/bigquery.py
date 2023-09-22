@@ -61,7 +61,7 @@ def maxium_usd_to_maximum_bytes_billed(usd: float) -> int:
     return int(bytes_used_limit)
 
 
-MAX_USD_COST = 1
+MAX_USD_COST = 2
 
 
 if config.ENV == "LOCAL":
