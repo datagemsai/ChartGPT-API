@@ -16,6 +16,10 @@ from api.utils import generate_uuid, parse_data_source_url
 from api.logging import logger
 
 
+def stream_response(response: Response) -> Iterator[str]:
+    yield "data: " + response.to_json() + '<end>\n'
+
+
 def ask_chartgpt(body, stream=False) -> Response:
     request: Request = Request.from_dict(body)
     job_uuid = f"ask-{generate_uuid()}"
@@ -45,7 +49,7 @@ def ask_chartgpt(body, stream=False) -> Response:
         if stream:
             def generate_response(request: Request) -> Iterator[Response]:
                 # Respond with the job ID to indicate that the job has started
-                yield Response(
+                yield from stream_response(Response(
                     id=job_uuid,
                     created_at=created_at,
                     status="stream",
@@ -55,7 +59,7 @@ def ask_chartgpt(body, stream=False) -> Response:
                     output_type=request.output_type,
                     outputs=[],
                     errors=[],
-                )
+                ))
                 for result in answer_user_query(
                     request=request,
                     stream=True
@@ -63,7 +67,7 @@ def ask_chartgpt(body, stream=False) -> Response:
                     finished_at = int(time.time())
                     if isinstance(result, Attempt):
                         attempt = result
-                        yield "data: " + Response(
+                        yield from stream_response(Response(
                             id=job_uuid,
                             created_at=created_at,
                             finished_at=finished_at,
@@ -76,10 +80,10 @@ def ask_chartgpt(body, stream=False) -> Response:
                             outputs=[],
                             errors=[],
                             # usage=Usage(tokens=len(result.attempts)),
-                        ).to_json() + '<end>\n'
+                        ))
                     elif isinstance(result, Output):
                         output = result
-                        yield "data: " + Response(
+                        yield from stream_response(Response(
                             id=job_uuid,
                             created_at=created_at,
                             finished_at=finished_at,
@@ -92,10 +96,10 @@ def ask_chartgpt(body, stream=False) -> Response:
                             outputs=[output],
                             errors=[],
                             # usage=Usage(tokens=len(result.attempts)),
-                        ).to_json() + '<end>\n'
+                        ))
                     elif isinstance(result, QueryResult):
                         query_result = result
-                        yield "data: " + Response(
+                        yield from stream_response(Response(
                             id=job_uuid,
                             created_at=created_at,
                             finished_at=finished_at,
@@ -108,7 +112,7 @@ def ask_chartgpt(body, stream=False) -> Response:
                             outputs=query_result.outputs,
                             errors=query_result.errors,
                             usage=Usage(tokens=len(query_result.attempts)),
-                        ).to_json() + '<end>\n'
+                        ))
                     else:
                         logger.error("Unhandled result type: %s", type(result))
             return FlaskResponse(stream_with_context(generate_response(request=request)), content_type='text/event-stream')
