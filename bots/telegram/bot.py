@@ -174,9 +174,9 @@ if __name__ == "__main__":
     )
 
     start_handler = CommandHandler("ask_chartgpt", handle_ask_chartgpt)
-    start_handler = CommandHandler("ask_ChartGPT", handle_ask_chartgpt)
-    start_handler = CommandHandler("chartgpt", handle_ask_chartgpt)
-    start_handler = CommandHandler("ChartGPT", handle_ask_chartgpt)
+    # start_handler = CommandHandler("ask_ChartGPT", handle_ask_chartgpt)
+    # start_handler = CommandHandler("chartgpt", handle_ask_chartgpt)
+    # start_handler = CommandHandler("ChartGPT", handle_ask_chartgpt)
     application.add_handler(start_handler)
     application.add_error_handler(error_handler)
 

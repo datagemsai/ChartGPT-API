@@ -14,6 +14,8 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
+    timeout = "900s"
+
     scaling {
       max_instance_count = 5
     }
@@ -22,9 +24,10 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
       image = var.docker_image
 
       resources {
+        cpu_idle = true
         limits = {
-          cpu    = "1"
-          memory = "2048Mi"
+          cpu    = "4"
+          memory = "4096Mi"
         }
       }
 
