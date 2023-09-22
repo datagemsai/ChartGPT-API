@@ -139,13 +139,17 @@ def validate_sql_query(query: str) -> List[str]:
 
 
 def openai_chat_completion(model, messages, functions, function_call):
-    return openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        functions=functions,
-        function_call=function_call,
-        temperature=GPT_TEMPERATURE,
-    )
+    try:
+        return openai.ChatCompletion.create(
+            model=model,
+            messages=messages,
+            functions=functions,
+            function_call=function_call,
+            temperature=GPT_TEMPERATURE,
+        )
+    except openai.InvalidRequestError as exc:
+        logger.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
+        raise exc
 
 
 def extract_sql_query_generation_response_data(response):
