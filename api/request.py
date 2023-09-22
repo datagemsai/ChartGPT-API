@@ -44,6 +44,18 @@ def ask_chartgpt(body, stream=False) -> Response:
     try:
         if stream:
             def generate_response(request: Request) -> Iterator[Response]:
+                # Respond with the job ID to indicate that the job has started
+                yield Response(
+                    id=job_uuid,
+                    created_at=created_at,
+                    status="stream",
+                    messages=request.messages,
+                    data_source_url=request.data_source_url,
+                    attempts=[],
+                    output_type=request.output_type,
+                    outputs=[],
+                    errors=[],
+                )
                 for result in answer_user_query(
                     request=request,
                     stream=True
