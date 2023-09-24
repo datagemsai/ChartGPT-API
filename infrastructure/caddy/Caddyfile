@@ -21,6 +21,7 @@ http://api.{$base_domain} {
     }
     reverse_proxy https://chartgpt-api-{$deployment}.cadlabs.org {
         header_up Host {upstream_hostport}
+        flush_interval -1
     }
 }
 
