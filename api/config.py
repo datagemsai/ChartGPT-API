@@ -17,11 +17,11 @@ GPT_TEMPERATURE = 0.0
 
 if ENV != "LOCAL":
     import sentry_sdk
-    from sentry_sdk.integrations.flask import FlaskIntegration
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
 
     sentry_sdk.init(
         dsn="https://1d51eab7039610dcf03fc2f96d7fe929@o4505696591544320.ingest.sentry.io/4505883970371584",
-        integrations=[FlaskIntegration()],
+        integrations=[FastApiIntegration()],
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production.

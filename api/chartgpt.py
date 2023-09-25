@@ -30,11 +30,11 @@ from plotly.graph_objs import Figure
 from typeguard import TypeCheckError, check_type, typechecked
 
 import api.utils
-from api import logging, utils
+from api import log, utils
 from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
 from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError
-from api.logging import logger
+from api.log import logger
 from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
                          CODE_GENERATION_IMPORTS,
                          CODE_GENERATION_PROMPT_TEMPLATE,
@@ -120,7 +120,7 @@ function_execute_python_code = {
 }
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def validate_sql_query(query: str) -> List[str]:
     """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
     try:
@@ -151,7 +151,7 @@ def openai_chat_completion(model, messages, functions, function_call):
             temperature=GPT_TEMPERATURE,
         )
     except openai.InvalidRequestError as exc:
-        logger.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
+        log.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
         raise exc
 
 
@@ -173,7 +173,7 @@ def extract_sql_query_generation_response_data(response):
         return message, function_args.get("description"), function_args.get("query")
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def get_initial_sql_query(messages) -> Tuple[str, str]:
     response = openai_chat_completion(
         SQL_GPT_MODEL,
@@ -189,7 +189,7 @@ def get_initial_sql_query(messages) -> Tuple[str, str]:
     return description, query
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def generate_valid_sql_query(
     query: str,
     description: str,
@@ -283,7 +283,7 @@ def log_errors_and_attempts(query, errors, attempts, max_attempts):
     logger.debug(f"Attempt: {len(attempts)} of {max_attempts}")
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def execute_sql_query(query: str) -> pd.DataFrame:
     try:
         query_job = bigquery_client.query(query)
@@ -291,12 +291,12 @@ def execute_sql_query(query: str) -> pd.DataFrame:
         logger.debug(f"BigQuery job bytes billed: {query_job.total_bytes_billed}")
     except InternalServerError as exc:
         # Typically raised when maximum bytes processed limit is exceeded
-        logger.error(f"BigQuery InternalServerError for query {query}")
+        log.error(f"BigQuery InternalServerError for query {query}")
         raise exc
     return results.to_dataframe()
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def get_valid_sql_query(
     messages: List[Message], config: SQLQueryGenerationConfig
 ) -> Iterator[Union[Attempt, SQLExecutionResult]]:
@@ -365,11 +365,11 @@ def execute_python_imports(imports: str) -> dict:
         exec(imports, global_variables)
         return global_variables
     except Exception as e:
-        logger.error(e)
+        log.error(e)
         return {}
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def execute_python_code(
     code: str,
     docstring: str,
@@ -480,7 +480,7 @@ def execute_python_code(
         shell.clear_instance()
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def get_initial_python_code(messages) -> Tuple[str, str]:
     response = openai_chat_completion(
         PYTHON_GPT_MODEL,
@@ -496,7 +496,7 @@ def get_initial_python_code(messages) -> Tuple[str, str]:
     return docstring, code
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def generate_valid_python_code(
     messages: List[Message],
     local_variables=None,
@@ -562,7 +562,7 @@ def generate_valid_python_code(
             _, docstring, corrected_code = extract_code_generation_response_data(
                 response
             )
-            code_diff = logging.get_unified_diff_changes(code, corrected_code)
+            code_diff = log.get_unified_diff_changes(code, corrected_code)
             logger.debug("Corrected code diff:\n%s", code_diff)
             code = corrected_code
         else:
@@ -573,19 +573,17 @@ def generate_valid_python_code(
     yield result
 
 
-@logging.wrap(logging.entering, logging.exiting)
+@log.wrap(log.entering, log.exiting)
 def answer_user_query(
     request: Request,
     stream=False,
 ) -> Iterator[Union[Attempt, Output, QueryResult]]:
-    logger.info(request)
-
     tables_summary = get_tables_summary(
         client=bigquery_client,
         data_source_url=request.data_source_url,
     )
     if not tables_summary:
-        logger.error(
+        log.error(
             "Could not find any tables for data source: %s", request.data_source_url
         )
     else:

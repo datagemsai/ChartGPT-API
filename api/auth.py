@@ -1,7 +1,7 @@
 import secrets
 from typing import List
 
-from connexion.exceptions import OAuthProblem
+from connexion.exceptions import AuthenticationProblem
 
 from api.connectors.firestore import db_api_keys, db_users
 
@@ -11,7 +11,7 @@ def apikey_auth(token, required_scopes):
     valid = check_api_key(token)
 
     if not valid:
-        raise OAuthProblem("Invalid token")
+        raise AuthenticationProblem("Invalid token")
 
     return {"uid": "anonymous"}
 
@@ -61,7 +61,7 @@ def get_api_keys(user_id) -> List[str]:
 
 def check_api_key(api_key) -> bool:
     """Check if an API key is valid"""
-    if db_api_keys.document(api_key).get():
+    if db_api_keys.document(api_key).get().exists:
         return True
     else:
         return False
