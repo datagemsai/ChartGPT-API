@@ -1,20 +1,23 @@
-from typing import List, Union, Tuple
+import json
+from typing import List, Tuple, Union
+
+import pandas as pd
 import pytest
 from typeguard import check_type
+
 from api import utils
-import json
-from api.utils import clean_jupyter_shell_output
 from api.chartgpt import execute_python_code
 from api.prompts import CODE_GENERATION_IMPORTS
-from api.types import CodeGenerationConfig, accepted_output_types, assert_matches_accepted_type
-import pandas as pd
-
+from api.types import (CodeGenerationConfig, accepted_output_types,
+                       assert_matches_accepted_type)
+from api.utils import clean_jupyter_shell_output
 
 config = CodeGenerationConfig(
     max_attempts=10,
     output_types=accepted_output_types,
     output_variable="result",
 )
+
 
 def test_clean_jupyter_shell_output():
     assert clean_jupyter_shell_output("Out[1]:") == ""
@@ -23,8 +26,14 @@ def test_clean_jupyter_shell_output():
     assert clean_jupyter_shell_output("Out[1]: 1") == "1"
 
     assert clean_jupyter_shell_output("Out[1]:", remove_final_result=True) == ""
-    assert clean_jupyter_shell_output("Hello World!", remove_final_result=True) == "Hello World!"
-    assert clean_jupyter_shell_output("Hello World!\nOut[1]: 1", remove_final_result=True) == "Hello World!"
+    assert (
+        clean_jupyter_shell_output("Hello World!", remove_final_result=True)
+        == "Hello World!"
+    )
+    assert (
+        clean_jupyter_shell_output("Hello World!\nOut[1]: 1", remove_final_result=True)
+        == "Hello World!"
+    )
     assert clean_jupyter_shell_output("Out[1]: 1", remove_final_result=True) == ""
 
 
@@ -71,6 +80,7 @@ print("Hello World!")
     assert result.io == "Hello World!"
     assert config.output_variable not in result.local_variables
 
+
 def test_execute_python_function_returning_string():
     code = """
 def answer_question(df: pd.DataFrame) -> str:
@@ -108,10 +118,12 @@ df_sample = pd.DataFrame({
 
 answer_question(df_sample)
 """
-    df = pd.DataFrame({
-        'protocol': ['Protocol A', 'Protocol B', 'Protocol C'],
-        'total_lending_volume': [1, 1, 1]
-    })
+    df = pd.DataFrame(
+        {
+            "protocol": ["Protocol A", "Protocol B", "Protocol C"],
+            "total_lending_volume": [1, 1, 1],
+        }
+    )
     result = execute_python_code(
         code,
         docstring="",
@@ -120,8 +132,12 @@ answer_question(df_sample)
         config=config,
     )
     assert result.result is not None
-    assert result.result['protocol'].tolist() == ['Protocol A', 'Protocol B', 'Protocol C']
-    assert result.result['total_lending_volume'].tolist() == [1, 1, 1]
+    assert result.result["protocol"].tolist() == [
+        "Protocol A",
+        "Protocol B",
+        "Protocol C",
+    ]
+    assert result.result["total_lending_volume"].tolist() == [1, 1, 1]
     assert result.error is None
     assert result.io == "Hello World!"
     assert config.output_variable not in result.local_variables
@@ -145,10 +161,12 @@ def answer_question(df: pd.DataFrame):
 
 answer_question(df)
 """
-    df = pd.DataFrame({
-        'apr': [0, 0, 0],
-        'date': ['2021-01-01', '2021-02-01', '2021-03-01'],
-    })
+    df = pd.DataFrame(
+        {
+            "apr": [0, 0, 0],
+            "date": ["2021-01-01", "2021-02-01", "2021-03-01"],
+        }
+    )
     result = execute_python_code(
         code,
         docstring="",
@@ -161,10 +179,10 @@ answer_question(df)
 
     # Check that Period types are successfully encoded
     # Avoids error "OverflowError: Maximum recursion level reached"
-    df['date'] = pd.to_datetime(df['date'])
-    df['date_periods'] = df['date'].dt.to_period('M')
+    df["date"] = pd.to_datetime(df["date"])
+    df["date_periods"] = df["date"].dt.to_period("M")
     # df = utils.convert_period_dtype_to_timestamp(df)
-    df.to_json(orient='records', default_handler=str)
+    df.to_json(orient="records", default_handler=str)
 
 
 def test_dataframe_index_mutation():
@@ -195,10 +213,12 @@ def answer_question(df: pd.DataFrame):
 
 answer_question(df)
 """
-    df = pd.DataFrame({
-        'apr': [0, 0, 0],
-        'date': ['2021-01-01', '2021-02-01', '2021-03-01'],
-    })
+    df = pd.DataFrame(
+        {
+            "apr": [0, 0, 0],
+            "date": ["2021-01-01", "2021-02-01", "2021-03-01"],
+        }
+    )
     result = execute_python_code(
         code,
         docstring="",

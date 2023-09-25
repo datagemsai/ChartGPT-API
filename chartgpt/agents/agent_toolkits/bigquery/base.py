@@ -2,13 +2,14 @@ import inspect
 import re
 from typing import Any, Dict, List, Optional
 
+from google.cloud import bigquery
 from langchain.agents.agent import AgentExecutor
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from langchain.schema import BaseMemory
-from google.cloud import bigquery
 
+import api.utils as utils
 from app import logger
 from app.config.datasets import Dataset
 from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
@@ -17,7 +18,6 @@ from chartgpt.agents.agent_toolkits.bigquery.utils import (get_example_query,
 from chartgpt.agents.mrkl.base import CustomAgent
 from chartgpt.agents.mrkl.output_parser import CustomOutputParser
 from chartgpt.tools.python.tool import PythonAstREPLTool
-import api.utils as utils
 
 
 def create_bigquery_agent(

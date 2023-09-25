@@ -6,9 +6,9 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+import google.cloud.bigquery
 import plotly.io as pio
 import streamlit as st
-import google.cloud.bigquery
 from google.cloud.bigquery import Client
 from langchain.callbacks import get_openai_callback
 from langchain.callbacks.base import BaseCallbackHandler
@@ -17,6 +17,7 @@ from langchain.schema import OutputParserException
 import app
 import app.patches
 import app.settings
+from api.connectors.bigquery import bigquery_client as client
 from api.guards import is_nda_broken
 from app import datasets, db_charts, db_queries
 from app.auth import check_user_credits, requires_auth
@@ -24,10 +25,8 @@ from app.components.notices import Notices
 from app.components.sidebar import Sidebar
 from app.config.datasets import Dataset
 from app.utils import copy_url_to_clipboard
-from chartgpt.app import get_agent
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
-from api.connectors.bigquery import bigquery_client as client
-
+from chartgpt.app import get_agent
 
 # Show notices
 Notices()
@@ -47,6 +46,7 @@ if "chart_id" in query_params:
         st.error("Chart not found")
         st.stop()
 
+
 @st.cache_data
 def display_sample_dataframes(dataset: Dataset, display=True) -> None:
     sample_dataframes = get_sample_dataframes(client, dataset)
@@ -54,6 +54,7 @@ def display_sample_dataframes(dataset: Dataset, display=True) -> None:
         if display:
             with st.expander(f"\`{table_id}\` table sample data"):
                 st.dataframe(df.head())
+
 
 @requires_auth
 def main(user_id, _user_email):
@@ -110,16 +111,16 @@ def main(user_id, _user_email):
                 # NOTE This is necessary because of a bug in Streamlit state after st.stop()
                 return
             st.session_state["text"] += token
-            
+
             def add_newlines(text):
                 # Add a newline before ```python
-                text = re.sub(r'```python', '\n\n```python', text)
+                text = re.sub(r"```python", "\n\n```python", text)
 
                 # Add a newline after ``` when it's not followed by the word "python"
-                text = re.sub(r'```(?=\w)(?!python)', '```\n\n', text)
+                text = re.sub(r"```(?=\w)(?!python)", "```\n\n", text)
 
                 return text
-            
+
             st.session_state["text"] = add_newlines(st.session_state["text"])
 
             # Using regex, find and remove `Action Input:` etc.
@@ -169,7 +170,7 @@ def main(user_id, _user_email):
         "Enter a question...",
         key="chat_input",
         on_submit=set_question,
-        disabled=(not st.session_state.get("agent"))
+        disabled=(not st.session_state.get("agent")),
     )
 
     st.selectbox(
@@ -177,7 +178,7 @@ def main(user_id, _user_email):
         options=sample_questions_for_dataset,
         key="sample_question",
         on_change=set_question,
-        disabled=(not st.session_state.get("agent"))
+        disabled=(not st.session_state.get("agent")),
     )
 
     if sidebar.clear:
@@ -197,14 +198,16 @@ def main(user_id, _user_email):
     def clean_markdown_content(markdown_text):
         # Remove spaces around multiline code delimiters
         # The regex below accounts for the optional language identifier
-        markdown_text = re.sub(r'\n *``` *([a-zA-Z0-9]*) *\n', r'\n```\1\n', markdown_text)
-        markdown_text = re.sub(r'\n *```', r'\n```', markdown_text)
-        markdown_text = re.sub(r'``` *\n', r'```\n', markdown_text)
+        markdown_text = re.sub(
+            r"\n *``` *([a-zA-Z0-9]*) *\n", r"\n```\1\n", markdown_text
+        )
+        markdown_text = re.sub(r"\n *```", r"\n```", markdown_text)
+        markdown_text = re.sub(r"``` *\n", r"```\n", markdown_text)
 
         # This regex pattern matches multiline code blocks that are empty
         # or contain only whitespace characters.
-        pattern = r'```[a-zA-Z0-9]*\n\s*```'
-        markdown_text = re.sub(pattern, '', markdown_text)
+        pattern = r"```[a-zA-Z0-9]*\n\s*```"
+        markdown_text = re.sub(pattern, "", markdown_text)
 
         return markdown_text
 

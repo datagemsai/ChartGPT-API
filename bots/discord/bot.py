@@ -41,11 +41,12 @@ async def on_ready():
 
 ongoing_tasks = {}
 
+
 async def embed_progress_bar(embed: discord.Embed, embed_message: discord.Message):
     load_char = "✨"
     max_chars = 5
     chars = (embed.description.count(load_char) if embed.description else 0) + 1
-    
+
     while True:  # Keep this running until you manually break out of it
         embed.description = "Thinking" + (load_char * min(chars, max_chars))
         await embed_message.edit(embed=embed)
@@ -178,7 +179,9 @@ async def handle_response(
             print("Invalid output type:", output.type)
 
     # Limit description to "Must be 4096 or fewer in length."
-    embed.description = description[:4000] + "..." if len(description) > 4000 else description
+    embed.description = (
+        description[:4000] + "..." if len(description) > 4000 else description
+    )
     await msg.edit(embed=embed)
     if files:
         await interaction.channel.send("Here are the results!", files=files)

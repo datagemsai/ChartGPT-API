@@ -13,28 +13,37 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
-
 from typing import List, Optional
-from pydantic import BaseModel, Field, StrictInt, conlist
+
 from chartgpt_client.models.error import Error
 from chartgpt_client.models.output import Output
+from pydantic import BaseModel, Field, StrictInt, conlist
+
 
 class Attempt(BaseModel):
     """
     Attempt
     """
+
     index: Optional[StrictInt] = Field(None, description="The index of the attempt.")
-    created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the attempt was created.")
-    outputs: Optional[conlist(Output)] = Field(None, description="The outputs of the attempt.")
-    errors: Optional[conlist(Error)] = Field(None, description="The errors of the attempt.")
+    created_at: Optional[StrictInt] = Field(
+        None, description="The timestamp of when the attempt was created."
+    )
+    outputs: Optional[conlist(Output)] = Field(
+        None, description="The outputs of the attempt."
+    )
+    errors: Optional[conlist(Error)] = Field(
+        None, description="The errors of the attempt."
+    )
     __properties = ["index", "created_at", "outputs", "errors"]
 
     class Config:
         """Pydantic configuration"""
+
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -53,24 +62,21 @@ class Attempt(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
         # override the default output from pydantic by calling `to_dict()` of each item in outputs (list)
         _items = []
         if self.outputs:
             for _item in self.outputs:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['outputs'] = _items
+            _dict["outputs"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in errors (list)
         _items = []
         if self.errors:
             for _item in self.errors:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['errors'] = _items
+            _dict["errors"] = _items
         return _dict
 
     @classmethod
@@ -82,12 +88,16 @@ class Attempt(BaseModel):
         if not isinstance(obj, dict):
             return Attempt.parse_obj(obj)
 
-        _obj = Attempt.parse_obj({
-            "index": obj.get("index"),
-            "created_at": obj.get("created_at"),
-            "outputs": [Output.from_dict(_item) for _item in obj.get("outputs")] if obj.get("outputs") is not None else None,
-            "errors": [Error.from_dict(_item) for _item in obj.get("errors")] if obj.get("errors") is not None else None
-        })
+        _obj = Attempt.parse_obj(
+            {
+                "index": obj.get("index"),
+                "created_at": obj.get("created_at"),
+                "outputs": [Output.from_dict(_item) for _item in obj.get("outputs")]
+                if obj.get("outputs") is not None
+                else None,
+                "errors": [Error.from_dict(_item) for _item in obj.get("errors")]
+                if obj.get("errors") is not None
+                else None,
+            }
+        )
         return _obj
-
-

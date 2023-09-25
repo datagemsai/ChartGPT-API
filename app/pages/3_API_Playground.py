@@ -35,9 +35,7 @@ def main(user_id, user_email):
 
     # Defining the host is optional and defaults to https://api.chartgpt.cadlabs.org
     # See configuration.py for a list of all supported configuration parameters.
-    configuration = chartgpt_client.Configuration(
-        host=os.environ["CHARTGPT_API_HOST"]
-    )
+    configuration = chartgpt_client.Configuration(host=os.environ["CHARTGPT_API_HOST"])
 
     # if st.button("Create API key"):
     #     create_api_key(user_id)
@@ -92,7 +90,9 @@ def main(user_id, user_email):
                                 }
                             ],
                             output_type=output_type,
-                            data_source_url=data_source_url_options[data_source_url_key],
+                            data_source_url=data_source_url_options[
+                                data_source_url_key
+                            ],
                         )
                         response: chartgpt_client.Response = (
                             api_instance.api_request_ask_chartgpt(
@@ -153,7 +153,9 @@ def main(user_id, user_email):
                         st.warning("API call failed")
     with st.form(key="chart_api_request_stream"):
         st.markdown("### API endpoint: `/v1/ask_chartgpt/stream`")
-        st.info(f"Demo coming soon! 🚀 In the meantime check out the [ChartGPT OpenAPI spec]({os.environ['CHARTGPT_API_HOST']}/ui).")
+        st.info(
+            f"Demo coming soon! 🚀 In the meantime check out the [ChartGPT OpenAPI spec]({os.environ['CHARTGPT_API_HOST']}/ui)."
+        )
         _ = st.form_submit_button("Submit")
 
 

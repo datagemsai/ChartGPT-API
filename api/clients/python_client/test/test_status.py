@@ -12,12 +12,13 @@
 """  # noqa: E501
 
 
-import unittest
 import datetime
+import unittest
 
 import chartgpt_client
 from chartgpt_client.models.status import Status  # noqa: E501
 from chartgpt_client.rest import ApiException
+
 
 class TestStatus(unittest.TestCase):
     """Status unit test stubs"""
@@ -32,5 +33,6 @@ class TestStatus(unittest.TestCase):
         """Test Status"""
         # inst = Status()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

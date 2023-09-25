@@ -12,12 +12,13 @@
 """  # noqa: E501
 
 
-import unittest
 import datetime
+import unittest
 
 import chartgpt_client
 from chartgpt_client.models.role import Role  # noqa: E501
 from chartgpt_client.rest import ApiException
+
 
 class TestRole(unittest.TestCase):
     """Role unit test stubs"""
@@ -32,5 +33,6 @@ class TestRole(unittest.TestCase):
         """Test Role"""
         # inst = Role()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

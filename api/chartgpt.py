@@ -21,37 +21,37 @@ import plotly
 import plotly.graph_objs as go
 # Override Streamlit styling
 import plotly.io as pio
-from chartgpt_client import Request, Attempt, Error, Output, OutputType
+from chartgpt_client import Attempt, Error, Output, OutputType, Request
+from google.api_core.exceptions import InternalServerError
 from google.cloud import bigquery
 from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
 from IPython.utils import io
 from plotly.graph_objs import Figure
 from typeguard import TypeCheckError, check_type, typechecked
-from google.api_core.exceptions import InternalServerError
-from api import utils
 
+import api.utils
+from api import logging, utils
 from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
 from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError
+from api.logging import logger
 from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
                          CODE_GENERATION_IMPORTS,
                          CODE_GENERATION_PROMPT_TEMPLATE,
                          SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
                          SQL_QUERY_GENERATION_PROMPT_TEMPLATE)
-from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
-    CodeGenerationConfig, PythonExecutionResult, QueryResult,
-    SQLExecutionResult, SQLQueryGenerationConfig, accepted_output_types,
-    assert_matches_accepted_type, map_type_to_output_type,
-    Role, Message
-)
-from api.utils import apply_lower_to_where, get_tables_summary, clean_jupyter_shell_output
 from api.security.secure_ast import assert_secure_code
-from api.logging import logger
+from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
+    CodeGenerationConfig, Message, PythonExecutionResult, QueryResult, Role,
+    SQLExecutionResult, SQLQueryGenerationConfig, accepted_output_types,
+    assert_matches_accepted_type, map_type_to_output_type)
+from api.utils import (apply_lower_to_where, clean_jupyter_shell_output,
+                       get_tables_summary)
 
 pio.templates.default = "plotly"
 
 
-function_respond_to_user =     {
+function_respond_to_user = {
     "name": "respond_to_user",
     "description": """
     Takes a message and responds to the user.
@@ -66,7 +66,7 @@ function_respond_to_user =     {
             "response": {
                 "type": "string",
                 "description": "The response to the user's message",
-            }
+            },
         },
         "required": ["message", "response"],
     },
@@ -120,6 +120,7 @@ function_execute_python_code = {
 }
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def validate_sql_query(query: str) -> List[str]:
     """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
     try:
@@ -132,7 +133,9 @@ def validate_sql_query(query: str) -> List[str]:
             else []
         )
         logger.debug(f"BigQuery dry-run job errors: {errors}")
-        logger.debug(f"BigQuery dry-run job bytes processed: {query_job.total_bytes_processed}")
+        logger.debug(
+            f"BigQuery dry-run job bytes processed: {query_job.total_bytes_processed}"
+        )
     except Exception as e:
         errors = [str(e)]
     return errors
@@ -160,7 +163,9 @@ def extract_sql_query_generation_response_data(response):
         return extract_respond_to_user_data(response)
     else:
         finish_reason = response["choices"][0]["finish_reason"]
-        function_args = json.loads(str(message["function_call"]["arguments"]), strict=False)
+        function_args = json.loads(
+            str(message["function_call"]["arguments"]), strict=False
+        )
 
         if finish_reason == "length":
             raise ContextLengthError
@@ -168,6 +173,7 @@ def extract_sql_query_generation_response_data(response):
         return message, function_args.get("description"), function_args.get("query")
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def get_initial_sql_query(messages) -> Tuple[str, str]:
     response = openai_chat_completion(
         SQL_GPT_MODEL,
@@ -183,6 +189,7 @@ def get_initial_sql_query(messages) -> Tuple[str, str]:
     return description, query
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def generate_valid_sql_query(
     query: str,
     description: str,
@@ -251,8 +258,9 @@ def generate_valid_sql_query(
                     created_at=created_at,
                     type="SQLValidationError",
                     value=error,
-                ) for index, error in enumerate(errors)
-            ]
+                )
+                for index, error in enumerate(errors)
+            ],
         )
         attempts.append(attempt)
         yield attempt
@@ -261,14 +269,11 @@ def generate_valid_sql_query(
             description=updated_description,
             messages=messages,
             attempts=attempts,
-            config=config
+            config=config,
         )
     else:
         yield SQLExecutionResult(
-            description=description,
-            query=query,
-            dataframe=df,
-            messages=messages
+            description=description, query=query, dataframe=df, messages=messages
         )
 
 
@@ -278,6 +283,7 @@ def log_errors_and_attempts(query, errors, attempts, max_attempts):
     logger.debug(f"Attempt: {len(attempts)} of {max_attempts}")
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def execute_sql_query(query: str) -> pd.DataFrame:
     try:
         query_job = bigquery_client.query(query)
@@ -290,9 +296,9 @@ def execute_sql_query(query: str) -> pd.DataFrame:
     return results.to_dataframe()
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def get_valid_sql_query(
-    messages: List[Message],
-    config: SQLQueryGenerationConfig
+    messages: List[Message], config: SQLQueryGenerationConfig
 ) -> Iterator[Union[Attempt, SQLExecutionResult]]:
     initial_description, initial_query = get_initial_sql_query(messages)
     log_initial_queries(initial_description, initial_query)
@@ -343,7 +349,9 @@ def extract_code_generation_response_data(response):
         return extract_respond_to_user_data(response)
     else:
         finish_reason = response["choices"][0]["finish_reason"]
-        function_args = json.loads(str(message["function_call"]["arguments"]), strict=False)
+        function_args = json.loads(
+            str(message["function_call"]["arguments"]), strict=False
+        )
 
         if finish_reason == "length":
             raise ContextLengthError
@@ -361,6 +369,7 @@ def execute_python_imports(imports: str) -> dict:
         return {}
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def execute_python_code(
     code: str,
     docstring: str,
@@ -414,13 +423,18 @@ def execute_python_code(
                 )
                 function_result.raise_error()
 
-        output = clean_jupyter_shell_output(captured_stdout.getvalue(), remove_final_result=True)
+        output = clean_jupyter_shell_output(
+            captured_stdout.getvalue(), remove_final_result=True
+        )
 
         if function_result and function_result.result is not None:
             result = function_result.result
         elif execution_result.result is not None:
             result = execution_result.result
-        elif config.output_variable in shell.user_ns and shell.user_ns[config.output_variable] is not None:
+        elif (
+            config.output_variable in shell.user_ns
+            and shell.user_ns[config.output_variable] is not None
+        ):
             result = shell.user_ns[config.output_variable]
         else:
             result = None
@@ -431,7 +445,9 @@ def execute_python_code(
                 # check_type(result, config.output_type)
                 assert_matches_accepted_type(result, config.output_types)
             except TypeCheckError as exc:
-                message = f"The code must return a variable of type `{config.output_types}`."
+                message = (
+                    f"The code must return a variable of type `{config.output_types}`."
+                )
                 logger.warning(message)
                 raise TypeError(message) from exc
         else:
@@ -449,7 +465,7 @@ def execute_python_code(
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         _, line_number, function_name, line_data = tb[-1]
-        error_msg = f"{type(e).__name__}: {str(e)}"
+        error_msg = f"{type(e).__name__}: {str(e)}, in code `{line_data}`"
         error_msg_trace = f"{type(e).__name__}: {str(e)}\nOn line {line_number}, function `{function_name}`, with code `{line_data}`"
         logger.warning(error_msg_trace)
         return PythonExecutionResult(
@@ -464,6 +480,7 @@ def execute_python_code(
         shell.clear_instance()
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def get_initial_python_code(messages) -> Tuple[str, str]:
     response = openai_chat_completion(
         PYTHON_GPT_MODEL,
@@ -479,6 +496,7 @@ def get_initial_python_code(messages) -> Tuple[str, str]:
     return docstring, code
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def generate_valid_python_code(
     messages: List[Message],
     local_variables=None,
@@ -504,7 +522,7 @@ def generate_valid_python_code(
             logger.warning(f"Attempt: {attempt_index + 1} of {config.max_attempts}")
             logger.warning(f"Error in code: {result.error}")
             logger.warning(f"Code:\n{code}")
-            
+
             yield Attempt(
                 index=attempt_index,
                 created_at=int(time.time()),
@@ -541,7 +559,12 @@ def generate_valid_python_code(
                 ],
                 function_call={"name": "execute_python_code"},
             )
-            _, docstring, code = extract_code_generation_response_data(response)
+            _, docstring, corrected_code = extract_code_generation_response_data(
+                response
+            )
+            code_diff = logging.get_unified_diff_changes(code, corrected_code)
+            logger.debug("Corrected code diff:\n%s", code_diff)
+            code = corrected_code
         else:
             result.messages = messages
             yield result
@@ -550,20 +573,23 @@ def generate_valid_python_code(
     yield result
 
 
+@logging.wrap(logging.entering, logging.exiting)
 def answer_user_query(
     request: Request,
     stream=False,
 ) -> Iterator[Union[Attempt, Output, QueryResult]]:
-    logger.debug(request)
+    logger.info(request)
 
     tables_summary = get_tables_summary(
         client=bigquery_client,
         data_source_url=request.data_source_url,
     )
     if not tables_summary:
-        logger.error("Could not find any tables for data source: %s", request.data_source_url)
+        logger.error(
+            "Could not find any tables for data source: %s", request.data_source_url
+        )
     else:
-        logger.debug(f"Tables summary: {tables_summary}")
+        logger.debug("Tables summary: %s", tables_summary.replace("\n", " "))
 
     sql_query_generation_prompt = SQL_QUERY_GENERATION_PROMPT_TEMPLATE.format(
         sql_query_instruction=(
@@ -580,21 +606,19 @@ def answer_user_query(
     input_messages_raw = [message.to_dict() for message in request.messages[:-1]]
     input_messages = [
         {
-            **message, "content": message["content"][:100] + "..."
+            **message,
+            "content": message["content"][:100] + "..."
             if len(message["content"]) > 100
-            else message["content"]
+            else message["content"],
         }
         for message in input_messages_raw[:-1]
     ]
     messages = input_messages + [
         {
             "role": Role.SYSTEM.value,
-            "content": inspect.cleandoc(sql_query_generation_prompt)
+            "content": inspect.cleandoc(sql_query_generation_prompt),
         },
-        {
-            "role": Role.USER.value,
-            "content": "Analytics question: " + user_query
-        },
+        {"role": Role.USER.value, "content": "Analytics question: " + user_query},
     ]
 
     sql_query_attempts = []
@@ -636,7 +660,9 @@ def answer_user_query(
         created_at=int(time.time()),
         description="Table sample rows",
         type=OutputType.PANDAS_DATAFRAME.value,
-        value=pd.concat([df.head(5), df.tail(5)]).to_json(orient='records', default_handler=str),
+        value=pd.concat([df.head(5), df.tail(5)]).to_json(
+            orient="records", default_handler=str
+        ),
     )
 
     if stream:
@@ -706,10 +732,7 @@ def answer_user_query(
             "role": Role.SYSTEM.value,
             "content": inspect.cleandoc(code_generation_prompt),
         },
-        {
-            "role": Role.USER.value,
-            "content": user_query
-        },
+        {"role": Role.USER.value, "content": user_query},
     ]
 
     python_execution_attempts = []
@@ -783,7 +806,7 @@ def answer_user_query(
             if len(item) > n:
                 item = item.iloc[:n]
             item = item.reset_index()
-            _output = item.to_json(orient='records', default_handler=str)
+            _output = item.to_json(orient="records", default_handler=str)
         else:
             _output = str(item)
 
@@ -810,7 +833,7 @@ def answer_user_query(
 
         for item in items_to_process:
             output = process_result(item, index + 4, created_at, output_description)
-            
+
             if stream:
                 yield output
             else:

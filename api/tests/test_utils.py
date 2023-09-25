@@ -2,7 +2,6 @@ import pandas as pd
 
 from api import utils
 
-
 # TODO Fix tests
 # def test_sort_by_datetime_index():
 #     data = {
@@ -37,14 +36,13 @@ from api import utils
 #     sorted_df = utils.sort_dataframe(df)
 #     assert list(sorted_df['name']) == ['B', 'A', 'C']
 
+
 def test_sort_by_non_date_with_other_columns():
-    data = {
-        'name': ['B', 'A', 'C'],
-        'other': ['x', 'y', 'z']
-    }
+    data = {"name": ["B", "A", "C"], "other": ["x", "y", "z"]}
     df = pd.DataFrame(data)
     sorted_df = utils.sort_dataframe(df)
-    assert list(sorted_df['name']) == ['B', 'A', 'C']
+    assert list(sorted_df["name"]) == ["B", "A", "C"]
+
 
 def test_dataframe_pre_processing():
     df = pd.DataFrame({"value": [0, 0]})
@@ -59,8 +57,13 @@ def test_dataframe_pre_processing():
     assert not pd.api.types.is_period_dtype(df["value"])
     assert df["value"].dtype == "int64"
 
+
 def test_create_type_string():
-    assert utils.create_type_string([int, float]) == "Union[List[Union[builtins.int, builtins.float]], Union[builtins.int, builtins.float]]"
+    assert (
+        utils.create_type_string([int, float])
+        == "Union[List[Union[builtins.int, builtins.float]], Union[builtins.int, builtins.float]]"
+    )
+
 
 def test_clean_jupyter_shell_output():
     output = """Out[1]:
