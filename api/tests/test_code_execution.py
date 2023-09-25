@@ -1,6 +1,8 @@
 from typing import List, Union, Tuple
 import pytest
 from typeguard import check_type
+from api import utils
+import json
 from api.utils import clean_jupyter_shell_output
 from api.chartgpt import execute_python_code
 from api.prompts import CODE_GENERATION_IMPORTS
@@ -123,3 +125,44 @@ answer_question(df_sample)
     assert result.error is None
     assert result.io == "Hello World!"
     assert config.output_variable not in result.local_variables
+
+
+def test_utils_period_encoder():
+    code = """
+import pandas as pd
+import plotly.express as px
+
+def answer_question(df: pd.DataFrame):
+    # Convert the 'date' column to datetime
+    df['date'] = pd.to_datetime(df['date'])
+    
+    # Set 'date' as the index
+    df.set_index('date', inplace=True)
+    
+    # Resample the data to get the average APR for each month
+    monthly_avg_apr = df['apr'].resample('M').mean()
+    
+    # Reset the index
+    monthly_avg_apr = monthly_avg_apr.reset_index()
+    
+    # Plot the average APR over time
+    fig = px.line(monthly_avg_apr, x='date', y='apr', title='Average APR for ***REMOVED*** Protocol Over the Past 6 Months')
+    
+    return fig
+
+answer_question(df)
+"""
+    df = pd.DataFrame({
+        'apr': [0, 0, 0],
+        'date': ['2021-01-01', '2021-02-01', '2021-03-01'],
+    })
+    result = execute_python_code(
+        code,
+        docstring="",
+        imports=CODE_GENERATION_IMPORTS,
+        local_variables={"df": df.copy()},
+        config=config,
+    )
+    fig = result.result
+    fig = json.dumps(fig, cls=utils.CustomPlotlyJSONEncoder)
+    assert not result.error

@@ -379,7 +379,8 @@ def execute_python_code(
             error=error_msg,
         )
 
-    local_variables = local_variables.copy() if local_variables else {}
+    df = local_variables.get("df", pd.DataFrame())
+    local_variables = local_variables or {}
     result = None
     output = ""
 
@@ -391,11 +392,11 @@ def execute_python_code(
         # Assert that the code is secure
         assert_secure_code(code)
 
-        shell.push(local_variables)
-
         # with io.capture_output() as captured:
         with contextlib.redirect_stdout(StringIO()) as captured_stdout:
             logger.debug("Executing code")
+            # Make a copy of the DataFrame to ensure the original is not modified
+            shell.push({**local_variables, "df": df.copy()})
             execution_result: ExecutionResult = shell.run_cell(code, store_history=True)
             execution_result.raise_error()
 
@@ -406,6 +407,8 @@ def execute_python_code(
             # with io.capture_output() as captured:
             with contextlib.redirect_stdout(StringIO()) as captured_stdout:
                 logger.debug("Calling function `answer_question`")
+                # Make a copy of the DataFrame to ensure the original is not modified
+                shell.push({**local_variables, "df": df.copy()})
                 function_result: ExecutionResult = shell.run_cell(
                     "answer_question(df.copy())", store_history=True
                 )
@@ -712,7 +715,7 @@ def answer_user_query(
     python_execution_attempts = []
     for result in generate_valid_python_code(
         messages=sql_generation_result.messages,
-        local_variables={"df": df.copy()},
+        local_variables={"df": df},
         config=CodeGenerationConfig(
             output_types=output_types,
             output_variable=output_variable,
