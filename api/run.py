@@ -7,7 +7,6 @@ from chartgpt_client import (Attempt, Error, Output, OutputType, Request,
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
 
 from api import auth, utils
 from api.chartgpt import answer_user_query
@@ -46,10 +45,10 @@ dictConfig(
 
 app = FastAPI()
 
+
 api_key_header = APIKeyHeader(name="X-API-KEY")
-
-
 def get_api_key(api_key: str = Security(api_key_header)) -> str:
+    """Authenticate using the API key from the request."""
     if auth.check_api_key(api_key):
         return api_key
     raise HTTPException(
@@ -59,7 +58,8 @@ def get_api_key(api_key: str = Security(api_key_header)) -> str:
 
 
 @app.exception_handler(Exception)
-async def value_error_exception_handler(request: Request, exc: Exception):
+async def uncaught_exception_handler(_: Request, exc: Exception):
+    """Handle uncaught exceptions raised by the API."""
     return JSONResponse(
         status_code=400,
         content={"error": str(exc)},
@@ -67,19 +67,22 @@ async def value_error_exception_handler(request: Request, exc: Exception):
 
 
 def stream_response(response: Response) -> Iterator[str]:
+    """Format and stream the response to the client."""
     yield "data: " + response.to_json() + "<end>\n"
 
 
 @app.get("/ping/")
 async def ping():
+    """Ping the API to check if it is running."""
     logger.info("Ping")
     return "pong"
 
 
 @app.post("/v1/ask_chartgpt/", response_model=Response)
 async def ask_chartgpt(
-    request: Request, api_key: str = Security(get_api_key), stream=False
+    request: Request, _: str = Security(get_api_key), stream=False
 ) -> Response:
+    """Answer a user query using the ChartGPT API."""
     logger.info("Request: %s", request)
     job_id = utils.generate_job_id()
     # flask.g.job_id = job_id
@@ -245,4 +248,5 @@ async def ask_chartgpt(
 async def ask_chartgpt_stream(
     request: Request, api_key: str = Security(get_api_key)
 ) -> Response:
+    """Stream the response from the ChartGPT API."""
     return await ask_chartgpt(request, api_key=api_key, stream=True)
