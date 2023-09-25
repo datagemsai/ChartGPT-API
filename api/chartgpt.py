@@ -553,7 +553,7 @@ def generate_valid_python_code(
 def answer_user_query(
     request: Request,
     stream=False,
-) -> Iterator[Union[Attempt, Output, QueryResult]]:  # When streaming, returns partial Output
+) -> Iterator[Union[Attempt, Output, QueryResult]]:
     logger.debug(request)
 
     tables_summary = get_tables_summary(
@@ -618,7 +618,8 @@ def answer_user_query(
     log_final_queries(sql_generation_result.description, sql_generation_result.query)
 
     # Convert Period dtype to timestamp to ensure DataFrame is JSON serializable
-    df = utils.convert_period_dtype_to_timestamp(df)
+    # NOTE: This is now handled by the `to_json` method's `default_handler` argument
+    # df = utils.convert_period_dtype_to_timestamp(df)
     # Sort DataFrame by date column if it exists
     df = utils.sort_dataframe(df)
 
@@ -635,8 +636,7 @@ def answer_user_query(
         created_at=int(time.time()),
         description="Table sample rows",
         type=OutputType.PANDAS_DATAFRAME.value,
-        # value=base64.b64encode(pickle.dumps(df)).decode("utf-8"),
-        value=pd.concat([df.head(5), df.tail(5)]).to_json(orient='records'),
+        value=pd.concat([df.head(5), df.tail(5)]).to_json(orient='records', default_handler=str),
     )
 
     if stream:
@@ -776,7 +776,7 @@ def answer_user_query(
         _type: OutputType = map_type_to_output_type(item)
 
         if _type == OutputType.PLOTLY_CHART:
-            _output = item.to_json()
+            _output = json.dumps(item, cls=utils.CustomPlotlyJSONEncoder)
         elif _type == OutputType.PANDAS_DATAFRAME:
             # If the dataframe is larger than X rows, only return the first X rows
             n = 20

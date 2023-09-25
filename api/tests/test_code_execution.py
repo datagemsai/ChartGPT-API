@@ -135,6 +135,49 @@ import plotly.express as px
 def answer_question(df: pd.DataFrame):
     # Convert the 'date' column to datetime
     df['date'] = pd.to_datetime(df['date'])
+
+    # Group by month and calculate the average APR
+    df_grouped = df.groupby(df['date'].dt.to_period('M')).mean()
+
+    # Plot the average APR over time
+    fig = px.line(df_grouped, x=df_grouped.index, y='apr', title='Average APR for ***REMOVED*** protocol in the past 6 months')
+    return fig
+
+answer_question(df)
+"""
+    df = pd.DataFrame({
+        'apr': [0, 0, 0],
+        'date': ['2021-01-01', '2021-02-01', '2021-03-01'],
+    })
+    result = execute_python_code(
+        code,
+        docstring="",
+        imports=CODE_GENERATION_IMPORTS,
+        local_variables={"df": df},
+        config=config,
+    )
+    fig = result.result
+    fig = json.dumps(fig, cls=utils.CustomPlotlyJSONEncoder)
+
+    # Check that Period types are successfully encoded
+    # Avoids error "OverflowError: Maximum recursion level reached"
+    df['date'] = pd.to_datetime(df['date'])
+    df['date_periods'] = df['date'].dt.to_period('M')
+    # df = utils.convert_period_dtype_to_timestamp(df)
+    df.to_json(orient='records', default_handler=str)
+
+
+def test_dataframe_index_mutation():
+    """
+    When the function is called twice, check that the index of the dataframe is not mutated.
+    """
+    code = """
+import pandas as pd
+import plotly.express as px
+
+def answer_question(df: pd.DataFrame):
+    # Convert the 'date' column to datetime
+    df['date'] = pd.to_datetime(df['date'])
     
     # Set 'date' as the index
     df.set_index('date', inplace=True)
@@ -163,6 +206,4 @@ answer_question(df)
         local_variables={"df": df.copy()},
         config=config,
     )
-    fig = result.result
-    fig = json.dumps(fig, cls=utils.CustomPlotlyJSONEncoder)
     assert not result.error

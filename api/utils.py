@@ -5,6 +5,7 @@ from typing import List, Optional
 from cachetools import cached
 from cachetools.keys import hashkey
 import pandas as pd
+from plotly.utils import PlotlyJSONEncoder
 
 from google.cloud import bigquery
 
@@ -30,6 +31,13 @@ def convert_period_dtype_to_timestamp(df: pd.DataFrame) -> pd.DataFrame:
             if pd.api.types.is_period_dtype(df[col])
         }
     )
+
+
+class CustomPlotlyJSONEncoder(PlotlyJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, pd.Period):
+            return obj.to_timestamp().isoformat()        
+        return super(CustomPlotlyJSONEncoder, self).default(obj)
 
 
 def sort_dataframe(df):
