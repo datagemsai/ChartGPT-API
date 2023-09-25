@@ -12,7 +12,8 @@ import time
 import traceback
 from contextlib import redirect_stdout
 from io import StringIO
-from typing import Any, Iterator, List, Optional, Tuple, Union
+from typing import Any, AsyncGenerator, List, Optional, Tuple, Union
+from fastapi.concurrency import run_in_threadpool
 
 import openai
 import pandas as pd
@@ -47,6 +48,7 @@ from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
     assert_matches_accepted_type, map_type_to_output_type)
 from api.utils import (apply_lower_to_where, clean_jupyter_shell_output,
                        get_tables_summary)
+
 
 pio.templates.default = "plotly"
 
@@ -121,11 +123,13 @@ function_execute_python_code = {
 
 
 @log.wrap(log.entering, log.exiting)
-def validate_sql_query(query: str) -> List[str]:
+async def validate_sql_query(query: str) -> List[str]:
     """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
     try:
-        query_job = bigquery_client.query(
-            query, job_config=bigquery.QueryJobConfig(dry_run=True)
+        query_job = await run_in_threadpool(
+            bigquery_client.query,
+            query,
+            job_config=bigquery.QueryJobConfig(dry_run=True)
         )
         errors = (
             [str(err["message"]) for err in query_job.errors]
@@ -141,9 +145,9 @@ def validate_sql_query(query: str) -> List[str]:
     return errors
 
 
-def openai_chat_completion(model, messages, functions, function_call):
+async def openai_chat_completion(model, messages, functions, function_call):
     try:
-        return openai.ChatCompletion.create(
+        return await openai.ChatCompletion.acreate(
             model=model,
             messages=messages,
             functions=functions,
@@ -151,7 +155,7 @@ def openai_chat_completion(model, messages, functions, function_call):
             temperature=GPT_TEMPERATURE,
         )
     except openai.InvalidRequestError as exc:
-        log.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
+        logger.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
         raise exc
 
 
@@ -174,8 +178,8 @@ def extract_sql_query_generation_response_data(response):
 
 
 @log.wrap(log.entering, log.exiting)
-def get_initial_sql_query(messages) -> Tuple[str, str]:
-    response = openai_chat_completion(
+async def get_initial_sql_query(messages) -> Tuple[str, str]:
+    response = await openai_chat_completion(
         SQL_GPT_MODEL,
         messages,
         functions=[
@@ -190,20 +194,20 @@ def get_initial_sql_query(messages) -> Tuple[str, str]:
 
 
 @log.wrap(log.entering, log.exiting)
-def generate_valid_sql_query(
+async def generate_valid_sql_query(
     query: str,
     description: str,
     messages: List[dict],
     attempts: List[Attempt] = [],
     config: SQLQueryGenerationConfig = SQLQueryGenerationConfig(),
-) -> Iterator[Union[Attempt, SQLExecutionResult]]:
+) -> AsyncGenerator[Union[Attempt, SQLExecutionResult], None]:
     query = apply_lower_to_where(query)
-    errors = validate_sql_query(query=query)
+    errors = await validate_sql_query(query=query)
     df = pd.DataFrame()
 
     if not errors:
         try:
-            df = execute_sql_query(query=query)
+            df = await execute_sql_query(query=query)
             if config.assert_results_not_empty and df.dropna(how="all").empty:
                 errors.append("Query returned no results, please try again.")
         except Exception as e:
@@ -222,7 +226,7 @@ def generate_valid_sql_query(
             }
         )
 
-        corrected_response = openai_chat_completion(
+        corrected_response = await openai_chat_completion(
             SQL_GPT_MODEL,
             messages,
             functions=[
@@ -264,13 +268,14 @@ def generate_valid_sql_query(
         )
         attempts.append(attempt)
         yield attempt
-        yield from generate_valid_sql_query(
+        async for result in generate_valid_sql_query(
             query=updated_query,
             description=updated_description,
             messages=messages,
             attempts=attempts,
             config=config,
-        )
+        ):
+            yield result
     else:
         yield SQLExecutionResult(
             description=description, query=query, dataframe=df, messages=messages
@@ -284,23 +289,23 @@ def log_errors_and_attempts(query, errors, attempts, max_attempts):
 
 
 @log.wrap(log.entering, log.exiting)
-def execute_sql_query(query: str) -> pd.DataFrame:
+async def execute_sql_query(query: str) -> pd.DataFrame:
     try:
-        query_job = bigquery_client.query(query)
-        results = query_job.result()
+        query_job = await run_in_threadpool(bigquery_client.query, query)
+        results = await run_in_threadpool(query_job.result)
         logger.debug(f"BigQuery job bytes billed: {query_job.total_bytes_billed}")
     except InternalServerError as exc:
         # Typically raised when maximum bytes processed limit is exceeded
-        log.error(f"BigQuery InternalServerError for query {query}")
+        logger.error(f"BigQuery InternalServerError for query {query}")
         raise exc
     return results.to_dataframe()
 
 
 @log.wrap(log.entering, log.exiting)
-def get_valid_sql_query(
+async def get_valid_sql_query(
     messages: List[Message], config: SQLQueryGenerationConfig
-) -> Iterator[Union[Attempt, SQLExecutionResult]]:
-    initial_description, initial_query = get_initial_sql_query(messages)
+) -> AsyncGenerator[Union[Attempt, SQLExecutionResult], None]:
+    initial_description, initial_query = await get_initial_sql_query(messages)
     log_initial_queries(initial_description, initial_query)
 
     if not config.assert_results_not_empty and not initial_query:
@@ -311,12 +316,13 @@ def get_valid_sql_query(
             messages=messages,
         )
     else:
-        yield from generate_valid_sql_query(
+        async for result in generate_valid_sql_query(
             query=initial_query,
             description=initial_description,
             messages=messages,
             config=config,
-        )
+        ):
+            yield result
 
 
 def log_initial_queries(description, query):
@@ -365,12 +371,12 @@ def execute_python_imports(imports: str) -> dict:
         exec(imports, global_variables)
         return global_variables
     except Exception as e:
-        log.error(e)
+        logger.error(e)
         return {}
 
 
 @log.wrap(log.entering, log.exiting)
-def execute_python_code(
+async def execute_python_code(
     code: str,
     docstring: str,
     imports=None,
@@ -406,7 +412,11 @@ def execute_python_code(
             logger.debug("Executing code")
             # Make a copy of the DataFrame to ensure the original is not modified
             shell.push({**local_variables, "df": df.copy()})
-            execution_result: ExecutionResult = shell.run_cell(code, store_history=True)
+            execution_result: ExecutionResult = await run_in_threadpool(
+                shell.run_cell,
+                code,
+                store_history=True
+            )
             execution_result.raise_error()
 
         answer_fn = shell.user_ns.get("answer_question")
@@ -418,8 +428,10 @@ def execute_python_code(
                 logger.debug("Calling function `answer_question`")
                 # Make a copy of the DataFrame to ensure the original is not modified
                 shell.push({**local_variables, "df": df.copy()})
-                function_result: ExecutionResult = shell.run_cell(
-                    "answer_question(df.copy())", store_history=True
+                function_result: ExecutionResult = await run_in_threadpool(
+                    shell.run_cell,
+                    "answer_question(df.copy())",
+                    store_history=True
                 )
                 function_result.raise_error()
 
@@ -440,7 +452,7 @@ def execute_python_code(
             result = None
 
         if result is not None:
-            logger.debug(f"Result: {str(result)[:100]}")
+            logger.debug("Result: %s", str(result)[:100])
             try:
                 # check_type(result, config.output_type)
                 assert_matches_accepted_type(result, config.output_types)
@@ -481,8 +493,8 @@ def execute_python_code(
 
 
 @log.wrap(log.entering, log.exiting)
-def get_initial_python_code(messages) -> Tuple[str, str]:
-    response = openai_chat_completion(
+async def get_initial_python_code(messages) -> Tuple[str, str]:
+    response = await openai_chat_completion(
         PYTHON_GPT_MODEL,
         messages,
         functions=[
@@ -497,12 +509,12 @@ def get_initial_python_code(messages) -> Tuple[str, str]:
 
 
 @log.wrap(log.entering, log.exiting)
-def generate_valid_python_code(
+async def generate_valid_python_code(
     messages: List[Message],
     local_variables=None,
     config: CodeGenerationConfig = CodeGenerationConfig(),
-) -> Iterator[Union[Attempt, PythonExecutionResult]]:
-    docstring, code = get_initial_python_code(messages)
+) -> AsyncGenerator[Union[Attempt, PythonExecutionResult], None]:
+    docstring, code = await get_initial_python_code(messages)
     logger.debug(f"Initial Python code docstring:\n{docstring}")
     logger.debug(f"Initial Python code:\n{code}")
 
@@ -510,7 +522,7 @@ def generate_valid_python_code(
     for attempt_index in range(config.max_attempts):
         local_variables["df"] = local_variables["df"].copy()
 
-        result: PythonExecutionResult = execute_python_code(
+        result: PythonExecutionResult = await execute_python_code(
             code=code,
             docstring=docstring,
             imports=CODE_GENERATION_IMPORTS,
@@ -549,7 +561,7 @@ def generate_valid_python_code(
                 attempt=attempt_index + 1, code=code, error_message=result.error
             )
             messages.append({"role": "user", "content": inspect.cleandoc(error_prompt)})
-            response = openai_chat_completion(
+            response = await openai_chat_completion(
                 PYTHON_GPT_MODEL,
                 messages,
                 functions=[
@@ -574,16 +586,17 @@ def generate_valid_python_code(
 
 
 @log.wrap(log.entering, log.exiting)
-def answer_user_query(
+async def answer_user_query(
     request: Request,
     stream=False,
-) -> Iterator[Union[Attempt, Output, QueryResult]]:
-    tables_summary = get_tables_summary(
+) -> AsyncGenerator[Union[Attempt, Output, QueryResult], None]:
+    tables_summary = await run_in_threadpool(
+        get_tables_summary,
         client=bigquery_client,
-        data_source_url=request.data_source_url,
+        data_source_url=request.data_source_url
     )
     if not tables_summary:
-        log.error(
+        logger.error(
             "Could not find any tables for data source: %s", request.data_source_url
         )
     else:
@@ -620,7 +633,7 @@ def answer_user_query(
     ]
 
     sql_query_attempts = []
-    for result in get_valid_sql_query(
+    async for result in get_valid_sql_query(
         messages=messages,
         config=SQLQueryGenerationConfig(
             data_source_url=request.data_source_url,
@@ -734,7 +747,7 @@ def answer_user_query(
     ]
 
     python_execution_attempts = []
-    for result in generate_valid_python_code(
+    async for result in generate_valid_python_code(
         messages=sql_generation_result.messages,
         local_variables={"df": df},
         config=CodeGenerationConfig(
@@ -751,11 +764,11 @@ def answer_user_query(
         else:
             raise ValueError("Invalid Python execution result type")
 
-    logger.debug(f"Valid Python code:\n{code_generation_result.code}")
+    logger.debug("Valid Python code:\n%s", code_generation_result.code)
 
     Figure.show = original_show_method
 
-    logger.debug(f"Final error: {code_generation_result.error}")
+    logger.debug("Final error: %s", code_generation_result.error)
 
     created_at = int(time.time())
 
