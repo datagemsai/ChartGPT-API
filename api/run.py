@@ -7,6 +7,7 @@ from chartgpt_client import (Attempt, Error, Output, OutputType, Request,
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.gzip import GZipMiddleware
 
 from api import auth, utils
 from api.chartgpt import answer_user_query
@@ -57,6 +58,19 @@ def get_api_key(api_key: str = Security(api_key_header)) -> str:
     )
 
 
+# Enable GZip compression for responses larger than 5 MB
+app.add_middleware(GZipMiddleware, minimum_size=5_000_000)
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+
 @app.exception_handler(Exception)
 async def uncaught_exception_handler(_: Request, exc: Exception):
     """Handle uncaught exceptions raised by the API."""
@@ -71,16 +85,16 @@ def stream_response(response: Response) -> Iterator[str]:
     yield "data: " + response.to_json() + "<end>\n"
 
 
-@app.get("/ping/")
+@app.get("/ping")
 async def ping():
     """Ping the API to check if it is running."""
     logger.info("Ping")
     return "pong"
 
 
-@app.post("/v1/ask_chartgpt/", response_model=Response)
+@app.post("/v1/ask_chartgpt", response_model=Response)
 async def ask_chartgpt(
-    request: Request, _: str = Security(get_api_key), stream=False
+    request: Request, api_key: str = Security(get_api_key), stream=False
 ) -> Response:
     """Answer a user query using the ChartGPT API."""
     logger.info("Request: %s", request)
@@ -244,7 +258,7 @@ async def ask_chartgpt(
         )
 
 
-@app.post("/v1/ask_chartgpt/stream/", response_model=Response)
+@app.post("/v1/ask_chartgpt/stream", response_model=Response)
 async def ask_chartgpt_stream(
     request: Request, api_key: str = Security(get_api_key)
 ) -> Response:
