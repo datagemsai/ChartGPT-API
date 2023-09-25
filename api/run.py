@@ -80,7 +80,6 @@ async def ping():
 async def ask_chartgpt(
     request: Request, api_key: str = Security(get_api_key), stream=False
 ) -> Response:
-    logger.debug(api_key)
     logger.info("Request: %s", request)
     job_id = utils.generate_job_id()
     # flask.g.job_id = job_id
@@ -246,4 +245,4 @@ async def ask_chartgpt(
 async def ask_chartgpt_stream(
     request: Request, api_key: str = Security(get_api_key)
 ) -> Response:
-    return ask_chartgpt(request, api_key=api_key, stream=True)
+    return await ask_chartgpt(request, api_key=api_key, stream=True)
