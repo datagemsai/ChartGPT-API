@@ -75,7 +75,8 @@ google_cloud_api_keys
 # API
 openapi-generator
 gunicorn==20.1.0
-connexion[swagger-ui]==2.14.2
+connexion[uvicorn, swagger-ui]==2.14.2
+pydantic==1.10.9
 api/clients/python_client/
 flask>=2.0.3
 flask-cors==4.0.0

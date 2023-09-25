@@ -70,7 +70,6 @@ components:
       type: apiKey
       in: header       # can be "header", "query" or "cookie"
       name: X-API-KEY  # name of the header, query parameter or cookie
-      x-apikeyInfoFunc: api.auth.apikey_auth
   responses:
     UnauthorizedError:
       description: API key is missing or invalid
@@ -159,9 +158,9 @@ components:
                 description: "The content of the message."
               role:
                 $ref: '#/components/schemas/Role'
-        dataset_id:
+        data_source_url:
           type: string
-          description: "The dataset ID of the request."
+          description: "The data source URL of the request."
         attempts:
           type: array
           description: "The attempts of the request."

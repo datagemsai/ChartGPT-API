@@ -3,8 +3,21 @@ import logging
 import time
 
 import flask
+from chartgpt_client import Response
 
 logger = logging.getLogger("chartgpt")
+
+
+def log_response(response: Response) -> None:
+    logger.info(
+        "Response: %s",
+        {
+            **response.to_dict(),
+            "attempts": [len(response.attempts)],
+            "outputs": [len(response.outputs)],
+            "errors": [len(response.errors)],
+        },
+    )
 
 
 def get_unified_diff(string1, string2):

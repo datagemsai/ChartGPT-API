@@ -46,8 +46,8 @@ class Response(BaseModel):
     messages: Optional[conlist(ResponseMessagesInner)] = Field(
         None, description="The messages of the request."
     )
-    dataset_id: Optional[StrictStr] = Field(
-        None, description="The dataset ID of the request."
+    data_source_url: Optional[StrictStr] = Field(
+        None, description="The data source URL of the request."
     )
     attempts: Optional[conlist(Attempt)] = Field(
         None, description="The attempts of the request."
@@ -66,7 +66,7 @@ class Response(BaseModel):
         "finished_at",
         "status",
         "messages",
-        "dataset_id",
+        "data_source_url",
         "attempts",
         "output_type",
         "outputs",
@@ -150,7 +150,7 @@ class Response(BaseModel):
                 ]
                 if obj.get("messages") is not None
                 else None,
-                "dataset_id": obj.get("dataset_id"),
+                "data_source_url": obj.get("data_source_url"),
                 "attempts": [Attempt.from_dict(_item) for _item in obj.get("attempts")]
                 if obj.get("attempts") is not None
                 else None,
