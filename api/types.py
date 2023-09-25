@@ -1,8 +1,8 @@
-from dataclasses import dataclass, field
 import enum
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
-import numpy
 
+import numpy
 import pandas as pd
 import plotly
 from chartgpt_client import OutputType

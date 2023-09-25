@@ -108,9 +108,7 @@ async def handle_ask_chartgpt(update: Update, context: ContextTypes.DEFAULT_TYPE
             try:
                 dataframe: pd.DataFrame = pd.read_json(output.value)
             except Exception as e:
-                logger.error(
-                    f"Exception when converting DataFrame to markdown: {e}"
-                )
+                logger.error(f"Exception when converting DataFrame to markdown: {e}")
                 dataframe = pd.DataFrame()
 
             if not dataframe.empty:

@@ -12,12 +12,14 @@
 """  # noqa: E501
 
 
-import unittest
 import datetime
+import unittest
 
 import chartgpt_client
-from chartgpt_client.models.api_request_ask_chartgpt200_response import ApiRequestAskChartgpt200Response  # noqa: E501
+from chartgpt_client.models.api_request_ask_chartgpt200_response import \
+    ApiRequestAskChartgpt200Response  # noqa: E501
 from chartgpt_client.rest import ApiException
+
 
 class TestApiRequestAskChartgpt200Response(unittest.TestCase):
     """ApiRequestAskChartgpt200Response unit test stubs"""
@@ -30,9 +32,9 @@ class TestApiRequestAskChartgpt200Response(unittest.TestCase):
 
     def make_instance(self, include_optional):
         """Test ApiRequestAskChartgpt200Response
-            include_option is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
+        include_option is a boolean, when False only required
+        params are included, when True both required and
+        optional params are included"""
         # uncomment below to create an instance of `ApiRequestAskChartgpt200Response`
         """
         model = chartgpt_client.models.api_request_ask_chartgpt200_response.ApiRequestAskChartgpt200Response()  # noqa: E501
@@ -99,5 +101,6 @@ class TestApiRequestAskChartgpt200Response(unittest.TestCase):
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

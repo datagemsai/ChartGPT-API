@@ -3,11 +3,11 @@ from io import StringIO
 from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-from google.cloud import bigquery
 from google.api_core.exceptions import InternalServerError
+from google.cloud import bigquery
 
-from app.config.datasets import Dataset
 from app import logger
+from app.config.datasets import Dataset
 
 
 class StreamlitDict(dict):
@@ -91,7 +91,9 @@ def get_sample_dataframes(
     sample_dfs = {}
     for table_id in dataset.tables:
         try:
-            query = f"SELECT * FROM `{dataset.project}.{dataset.id}.{table_id}` LIMIT 100"
+            query = (
+                f"SELECT * FROM `{dataset.project}.{dataset.id}.{table_id}` LIMIT 100"
+            )
             df = client.query(query).to_dataframe()
             sample_dfs[table_id] = df
         except InternalServerError:

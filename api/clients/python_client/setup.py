@@ -12,7 +12,7 @@
 """  # noqa: E501
 
 
-from setuptools import setup, find_packages  # noqa: H301
+from setuptools import find_packages, setup  # noqa: H301
 
 # To install the library, run the following
 #
@@ -27,7 +27,7 @@ REQUIRES = [
     "urllib3 >= 1.25.3, < 2.1.0",
     "python-dateutil",
     "pydantic >= 1.10.5, < 2",
-    "aenum"
+    "aenum",
 ]
 
 setup(
@@ -41,7 +41,7 @@ setup(
     install_requires=REQUIRES,
     packages=find_packages(exclude=["test", "tests"]),
     include_package_data=True,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     long_description="""\
     The ChartGPT API is a REST API that generates insights from data based on natural language questions.
     """,  # noqa: E501

@@ -13,27 +13,34 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
-
 from typing import Optional
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+
 from chartgpt_client.models.role import Role
+from pydantic import BaseModel, Field, StrictInt, StrictStr
+
 
 class ApiRequestAskChartgptRequestMessagesInner(BaseModel):
     """
     The message based on which the response will be generated.
     """
+
     id: Optional[StrictStr] = Field(None, description="The ID of the message.")
-    created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the message was created.")
-    content: Optional[StrictStr] = Field(None, description="The content of the message.")
+    created_at: Optional[StrictInt] = Field(
+        None, description="The timestamp of when the message was created."
+    )
+    content: Optional[StrictStr] = Field(
+        None, description="The content of the message."
+    )
     role: Optional[Role] = None
     __properties = ["id", "created_at", "content", "role"]
 
     class Config:
         """Pydantic configuration"""
+
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -52,10 +59,7 @@ class ApiRequestAskChartgptRequestMessagesInner(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
         return _dict
 
     @classmethod
@@ -67,12 +71,12 @@ class ApiRequestAskChartgptRequestMessagesInner(BaseModel):
         if not isinstance(obj, dict):
             return ApiRequestAskChartgptRequestMessagesInner.parse_obj(obj)
 
-        _obj = ApiRequestAskChartgptRequestMessagesInner.parse_obj({
-            "id": obj.get("id"),
-            "created_at": obj.get("created_at"),
-            "content": obj.get("content"),
-            "role": obj.get("role")
-        })
+        _obj = ApiRequestAskChartgptRequestMessagesInner.parse_obj(
+            {
+                "id": obj.get("id"),
+                "created_at": obj.get("created_at"),
+                "content": obj.get("content"),
+                "role": obj.get("role"),
+            }
+        )
         return _obj
-
-

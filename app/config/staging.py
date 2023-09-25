@@ -1,6 +1,5 @@
 from app.config.datasets import Dataset
 
-
 datasets = [
     Dataset(
         name="MetaQuants NFT Finance Aggregator",
@@ -37,7 +36,7 @@ datasets = [
         ],
         sample_questions=[
             "Which state has had the most stable increase in property prices over the past 10 years?",
-        ]
+        ],
     ),
     Dataset(
         name="Ethereum Blockchain Transactions",
@@ -51,9 +50,7 @@ datasets = [
 
         Data source: https://console.cloud.google.com/marketplace/product/ethereum/crypto-ethereum-blockchain
         """,
-        tables=[
-            "transactions"
-        ],
+        tables=["transactions"],
         sample_questions=[
             "Plot the number of transactions over time for the past year.",
             # "Plot a NetworkX graph of the largest 100 transactions in the past year."
@@ -76,9 +73,7 @@ datasets = [
 
         Data source: https://console.cloud.google.com/marketplace/product/bitcoin/crypto-bitcoin
         """,
-        tables=[
-            "transactions"
-        ],
+        tables=["transactions"],
         sample_questions=[
             "Plot the number of transactions over time for the past year.",
             # "Plot a NetworkX graph of the largest 100 transactions in the past year."
@@ -97,9 +92,7 @@ datasets = [
 
         Data source: https://console.cloud.google.com/marketplace/product/public-data-finance/crypto-polygon-dataset
         """,
-        tables=[
-            "transactions"
-        ],
+        tables=["transactions"],
         sample_questions=[
             "Plot the number of transactions over time for the past year.",
             # "Plot a NetworkX graph of the largest 100 transactions in the past year."

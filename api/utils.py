@@ -1,24 +1,26 @@
 import base64
+import hashlib
 import re
+import time
 import uuid
 from typing import List, Optional
+
+import pandas as pd
 from cachetools import cached
 from cachetools.keys import hashkey
-import pandas as pd
-from plotly.utils import PlotlyJSONEncoder
-
 from google.cloud import bigquery
+from plotly.utils import PlotlyJSONEncoder
 
 
 def create_type_string(types: List[type]) -> str:
     def get_qualified_name(t):
         return f"{t.__module__}.{t.__name__}"
-    
+
     type_names = [get_qualified_name(t) for t in types]
-    
+
     list_type_str = f"List[Union[{', '.join(type_names)}]]"
     single_type_str = f"Union[{', '.join(type_names)}]"
-    
+
     return f"Union[{list_type_str}, {single_type_str}]"
 
 
@@ -36,7 +38,7 @@ def convert_period_dtype_to_timestamp(df: pd.DataFrame) -> pd.DataFrame:
 class CustomPlotlyJSONEncoder(PlotlyJSONEncoder):
     def default(self, obj):
         if isinstance(obj, pd.Period):
-            return obj.to_timestamp().isoformat()        
+            return obj.to_timestamp().isoformat()
         return super(CustomPlotlyJSONEncoder, self).default(obj)
 
 
@@ -44,7 +46,7 @@ def sort_dataframe(df):
     # Check if the index is a DateTime index
     if isinstance(df.index, pd.DatetimeIndex):
         return df.sort_index()
-    
+
     # Check if any of the columns have date-like values
     for column_name in df.columns:
         column = df[column_name]
@@ -55,7 +57,7 @@ def sort_dataframe(df):
             or pd.api.types.is_timedelta64_ns_dtype(column)
         ):
             return df.sort_values(by=column_name)
-    
+
     # If no date column is found, sort by index
     return df.sort_index()
 
@@ -69,14 +71,19 @@ def get_dataframe_summary(df: pd.DataFrame, max_len=10) -> dict[str, str]:
 
 def clean_jupyter_shell_output(output: str, remove_final_result: bool = False) -> str:
     if remove_final_result:
-        return re.sub(r'Out\[\d+\]:.*', '', output, flags=re.DOTALL).rstrip()
+        return re.sub(r"Out\[\d+\]:.*", "", output, flags=re.DOTALL).rstrip()
     else:
-        return re.sub(r'Out\[\d+\]:\s*', '', output)
+        return re.sub(r"Out\[\d+\]:\s*", "", output)
 
 
 def generate_uuid() -> str:
     r_uuid = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf-8")
     return r_uuid.replace("=", "")
+
+
+def generate_job_id():
+    data = str(time.time()) + str(uuid.uuid4())
+    return hashlib.md5(data.encode("utf-8")).hexdigest()
 
 
 def parse_data_source_url(data_source_url) -> tuple[str, str, str, Optional[str]]:
@@ -131,6 +138,7 @@ def parse_data_source_url(data_source_url) -> tuple[str, str, str, Optional[str]
 #     else:
 #         return True
 
+
 @cached(cache={}, key=lambda client, data_source_url: hashkey(data_source_url))
 def get_tables_summary(
     client: bigquery.Client,
@@ -139,7 +147,9 @@ def get_tables_summary(
     markdown_summary = ""
 
     if data_source_url:
-        _data_source, project, dataset_id, table_id = parse_data_source_url(data_source_url)
+        _data_source, project, dataset_id, table_id = parse_data_source_url(
+            data_source_url
+        )
     else:
         project = None
         dataset_id = None

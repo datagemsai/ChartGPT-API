@@ -3,17 +3,15 @@ from typing import Optional
 
 import chartgpt_client
 from chartgpt_client.exceptions import ApiException
+from dotenv import load_dotenv
 
 from bots import logger
 
-from dotenv import load_dotenv
+load_dotenv("bots/.env")
 
-load_dotenv('bots/.env')
-
-configuration = chartgpt_client.Configuration(
-    host=os.environ["CHARTGPT_API_HOST"]
-)
+configuration = chartgpt_client.Configuration(host=os.environ["CHARTGPT_API_HOST"])
 configuration.api_key["ApiKeyAuth"] = os.environ["CHARTGPT_API_KEY"]
+
 
 def ask_chartgpt(question) -> Optional[chartgpt_client.Response]:
     with chartgpt_client.ApiClient(configuration) as api_client:
