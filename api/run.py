@@ -1,10 +1,11 @@
+import asyncio
 import time
 from logging.config import dictConfig
-from typing import Iterator
+from typing import AsyncGenerator
 
 from chartgpt_client import (Attempt, Error, Output, OutputType, Request,
                              Response, Usage)
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import FastAPI, HTTPException, Security, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.gzip import GZipMiddleware
@@ -15,6 +16,7 @@ from api.errors import ContextLengthError
 from api.guards import is_nda_broken
 from api.log import log_response, logger
 from api.types import QueryResult
+
 
 dictConfig(
     {
@@ -53,13 +55,13 @@ def get_api_key(api_key: str = Security(api_key_header)) -> str:
     if auth.check_api_key(api_key):
         return api_key
     raise HTTPException(
-        status_code=401,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or missing API Key",
     )
 
 
 # Enable GZip compression for responses larger than 5 MB
-app.add_middleware(GZipMiddleware, minimum_size=5_000_000)
+# app.add_middleware(GZipMiddleware, minimum_size=5_000_000)
 
 
 @app.middleware("http")
@@ -75,21 +77,21 @@ async def add_process_time_header(request: Request, call_next):
 async def uncaught_exception_handler(_: Request, exc: Exception):
     """Handle uncaught exceptions raised by the API."""
     return JSONResponse(
-        status_code=400,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={"error": str(exc)},
     )
 
 
-def stream_response(response: Response) -> Iterator[str]:
-    """Format and stream the response to the client."""
-    yield "data: " + response.to_json() + "<end>\n"
+def stream_response(response: Response) -> str:
+    """Format the stream response."""
+    return f"data: {response.to_json()}<end>\n\n"
 
 
-@app.get("/ping")
+@app.get("/health")
 async def ping():
     """Ping the API to check if it is running."""
-    logger.info("Ping")
-    return "pong"
+    logger.info("Health check")
+    return "ok"
 
 
 @app.post("/v1/ask_chartgpt", response_model=Response)
@@ -106,7 +108,7 @@ async def ask_chartgpt(
         message = "Could not complete analysis: messages is empty"
         logger.error(message)
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": message},
         )
     else:
@@ -116,7 +118,7 @@ async def ask_chartgpt(
         message = "Could not complete analysis: insecure request"
         logger.error(message)
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": message},
         )
 
@@ -126,14 +128,14 @@ async def ask_chartgpt(
         message = "Could not complete analysis: data source not supported"
         logger.error(message)
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": message},
         )
 
     try:
         if stream:
 
-            def generate_response(request: Request) -> Iterator[Response]:
+            async def generate_response(request: Request) -> AsyncGenerator[Response, None]:
                 # Respond with the job ID to indicate that the job has started
                 response = Response(
                     id=job_id,
@@ -147,8 +149,8 @@ async def ask_chartgpt(
                     errors=[],
                 )
                 log_response(response)
-                yield from stream_response(response=response)
-                for result in answer_user_query(request=request, stream=True):
+                yield stream_response(response=response)
+                async for result in answer_user_query(request=request, stream=True):
                     finished_at = int(time.time())
                     if isinstance(result, Attempt):
                         attempt = result
@@ -167,7 +169,7 @@ async def ask_chartgpt(
                             # usage=Usage(tokens=len(result.attempts)),
                         )
                         log_response(response)
-                        yield from stream_response(response=response)
+                        yield stream_response(response=response)
                     elif isinstance(result, Output):
                         output = result
                         response = Response(
@@ -185,7 +187,7 @@ async def ask_chartgpt(
                             # usage=Usage(tokens=len(result.attempts)),
                         )
                         log_response(response)
-                        yield from stream_response(response=response)
+                        yield stream_response(response=response)
                     elif isinstance(result, QueryResult):
                         query_result = result
                         response = Response(
@@ -203,27 +205,25 @@ async def ask_chartgpt(
                             usage=Usage(tokens=len(query_result.attempts)),
                         )
                         log_response(response)
-                        yield from stream_response(response=response)
+                        yield stream_response(response=response)
                     else:
                         logger.error("Unhandled result type: %s", type(result))
 
             return StreamingResponse(
                 generate_response(request=request),
+                status_code=status.HTTP_200_OK,
                 media_type="text/event-stream",
             )
         else:
-            result: QueryResult = next(
-                answer_user_query(
-                    request=request,
-                ),
-                None,
-            )
+            async for result in answer_user_query(request=request):
+                result: QueryResult = result
+                break
             finished_at = int(time.time())
             if not result:
                 message = "Could not complete analysis: no result"
                 logger.error(message)
                 return JSONResponse(
-                    status_code=400,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     content={"error": message},
                 )
             response = Response(
@@ -246,14 +246,14 @@ async def ask_chartgpt(
         message = "Could not complete analysis: ran out of context"
         logger.error(message)
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": message},
         )
     except Exception as ex:
         message = f"Could not complete analysis: {ex}"
         logger.exception(message)
         return JSONResponse(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": message},
         )
 
