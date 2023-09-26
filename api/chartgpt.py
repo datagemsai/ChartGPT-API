@@ -404,7 +404,7 @@ async def execute_python_code(
 
     shell = InteractiveShell.instance()
     try:
-        # Assert that the code is secure
+        # TODO Assert that the code is secure
         # assert_secure_code(code)
 
         # with io.capture_output() as captured:
