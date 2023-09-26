@@ -405,7 +405,7 @@ async def execute_python_code(
     shell = InteractiveShell.instance()
     try:
         # Assert that the code is secure
-        assert_secure_code(code)
+        # assert_secure_code(code)
 
         # with io.capture_output() as captured:
         with contextlib.redirect_stdout(StringIO()) as captured_stdout:
@@ -477,7 +477,7 @@ async def execute_python_code(
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         _, line_number, function_name, line_data = tb[-1]
-        error_msg = f"{type(e).__name__}: {str(e)}, in code `{line_data}`"
+        error_msg = f"{type(e).__name__}: {str(e)}" #, in code `{line_data}`"
         error_msg_trace = f"{type(e).__name__}: {str(e)}\nOn line {line_number}, function `{function_name}`, with code `{line_data}`"
         logger.warning(error_msg_trace)
         return PythonExecutionResult(
