@@ -26,4 +26,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Timeout is set to 0 to disable the timeouts of the workers to allow Cloud Run to handle instance scaling.
 EXPOSE $PORT
 # CMD exec gunicorn --bind :$PORT --workers 4 --threads 8 --timeout 0 --log-level 'debug' --preload api.run:app
-CMD exec uvicorn api.run:app --host 0.0.0.0 --port $PORT --log-level 'debug' --proxy-headers --forwarded-allow-ips '*'
+CMD exec uvicorn api.run:app \
+    --workers 4 \
+    --host 0.0.0.0 \
+    --port $PORT \
+    --log-level 'debug' \
+    --proxy-headers \
+    --forwarded-allow-ips '*' \
+    --timeout-keep-alive 15

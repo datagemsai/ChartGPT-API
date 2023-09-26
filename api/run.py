@@ -208,6 +208,10 @@ async def ask_chartgpt(
                         yield stream_response(response=response)
                     else:
                         logger.error("Unhandled result type: %s", type(result))
+                    # Sleep briefly so concurrent tasks can run
+                    # 1 ms (0.001 s) limits max throughput to 1,000 requests per second
+                    # See https://github.com/openai/openai-cookbook/blob/main/examples/api_request_parallel_processor.py
+                    asyncio.sleep(0.01)
 
             return StreamingResponse(
                 generate_response(request=request),
