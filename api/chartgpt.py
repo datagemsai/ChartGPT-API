@@ -1,9 +1,11 @@
 # pylint: disable=C0103
 # pylint: disable=C0116
 
+import asyncio
 import base64
 import contextlib
 import enum
+import functools
 import inspect
 import json
 import pickle
@@ -14,6 +16,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from typing import Any, AsyncGenerator, List, Optional, Tuple, Union
 from fastapi.concurrency import run_in_threadpool
+import concurrent.futures
 
 import openai
 import pandas as pd
@@ -28,7 +31,13 @@ from google.cloud import bigquery
 from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
 from IPython.utils import io
 from plotly.graph_objs import Figure
+import tenacity
 from typeguard import TypeCheckError, check_type, typechecked
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)  # for exponential backoff
 
 import api.utils
 from api import log, utils
@@ -48,7 +57,6 @@ from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
     assert_matches_accepted_type, map_type_to_output_type)
 from api.utils import (apply_lower_to_where, clean_jupyter_shell_output,
                        get_tables_summary)
-
 
 pio.templates.default = "plotly"
 
@@ -122,6 +130,14 @@ function_execute_python_code = {
 }
 
 
+async def execute_in_process(func, *args, **kwargs) -> Any:
+    partial_func = functools.partial(func, *args, **kwargs)
+
+    # asyncio.set_event_loop(asyncio.new_event_loop())
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        return await asyncio.get_running_loop().run_in_executor(executor, partial_func)
+
+
 @log.wrap(log.entering, log.exiting)
 async def validate_sql_query(query: str) -> List[str]:
     """Takes a BigQuery SQL query, executes it using a dry run, and returns a list of errors, if any"""
@@ -145,15 +161,18 @@ async def validate_sql_query(query: str) -> List[str]:
     return errors
 
 
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))
 async def openai_chat_completion(model, messages, functions, function_call):
     try:
-        return await openai.ChatCompletion.acreate(
+        response = await openai.ChatCompletion.acreate(
             model=model,
             messages=messages,
             functions=functions,
             function_call=function_call,
             temperature=GPT_TEMPERATURE,
         )
+        logger.debug("OpenAI ChatCompletion response usage: %s", response.get('usage'))
+        return response
     except openai.InvalidRequestError as exc:
         logger.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
         raise exc
@@ -412,11 +431,7 @@ async def execute_python_code(
             logger.debug("Executing code")
             # Make a copy of the DataFrame to ensure the original is not modified
             shell.push({**local_variables, "df": df.copy()})
-            execution_result: ExecutionResult = await run_in_threadpool(
-                shell.run_cell,
-                code,
-                store_history=True
-            )
+            execution_result: ExecutionResult = await shell.run_cell_async(code, store_history=True)
             execution_result.raise_error()
 
         answer_fn = shell.user_ns.get("answer_question")
@@ -428,11 +443,7 @@ async def execute_python_code(
                 logger.debug("Calling function `answer_question`")
                 # Make a copy of the DataFrame to ensure the original is not modified
                 shell.push({**local_variables, "df": df.copy()})
-                function_result: ExecutionResult = await run_in_threadpool(
-                    shell.run_cell,
-                    "answer_question(df.copy())",
-                    store_history=True
-                )
+                function_result: ExecutionResult = await shell.run_cell_async(code, store_history=True)
                 function_result.raise_error()
 
         output = clean_jupyter_shell_output(
