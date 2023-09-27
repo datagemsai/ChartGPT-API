@@ -211,7 +211,7 @@ async def ask_chartgpt(
                     # Sleep briefly so concurrent tasks can run
                     # 1 ms (0.001 s) limits max throughput to 1,000 requests per second
                     # See https://github.com/openai/openai-cookbook/blob/main/examples/api_request_parallel_processor.py
-                    asyncio.sleep(0.01)
+                    await asyncio.sleep(0.01)
 
             return StreamingResponse(
                 generate_response(request=request),
