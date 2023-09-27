@@ -444,7 +444,7 @@ async def execute_python_code(
                 logger.debug("Calling function `answer_question`")
                 # Make a copy of the DataFrame to ensure the original is not modified
                 shell.push({**local_variables, "df": df.copy()})
-                function_result: ExecutionResult = await shell.run_cell_async(code, store_history=True)
+                function_result: ExecutionResult = await shell.run_cell_async("answer_question(df)", store_history=True)
                 function_result.raise_error()
 
         output = clean_jupyter_shell_output(
