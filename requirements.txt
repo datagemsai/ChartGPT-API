@@ -46,6 +46,7 @@ ipykernel==6.25.1
 # jupyterlab
 pytest~=7.4.0
 pytest-xdist
+pytest-asyncio==0.21.1
 # notebook
 # ipywidgets
 pandas
