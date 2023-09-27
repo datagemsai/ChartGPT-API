@@ -1,7 +1,7 @@
 import asyncio
 import time
 from logging.config import dictConfig
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from chartgpt_client import (Attempt, Error, Output, OutputType, Request,
                              Response, Usage)
@@ -94,6 +94,108 @@ async def ping():
     return "ok"
 
 
+async def keep_alive_generator(queue: asyncio.Queue, stop_event: asyncio.Event) -> AsyncGenerator[str, None]:
+    try:
+        while not stop_event.is_set():
+            await asyncio.sleep(15)
+            await queue.put(":keep-alive\n\n")
+    except asyncio.CancelledError:
+        pass
+
+
+async def data_generator(
+        request: Request,
+        job_id: str,
+        created_at: int,
+        queue: asyncio.Queue,
+        stop_event: asyncio.Event,
+) -> AsyncGenerator[Response, None]:
+    try:
+        # Respond with the job ID to indicate that the job has started
+        response = Response(
+            id=job_id,
+            created_at=created_at,
+            status="stream",
+            messages=request.messages,
+            data_source_url=request.data_source_url,
+            attempts=[],
+            output_type=request.output_type,
+            outputs=[],
+            errors=[],
+        )
+        log_response(response)
+        await queue.put("event: stream_start\n")
+        await queue.put(stream_response(response=response))
+        async for result in answer_user_query(request=request, stream=True):
+            finished_at = int(time.time())
+            if isinstance(result, Attempt):
+                attempt = result
+                response = Response(
+                    id=job_id,
+                    created_at=created_at,
+                    finished_at=finished_at,
+                    status="stream",
+                    # TODO Update messages with each output
+                    messages=request.messages,
+                    data_source_url=request.data_source_url,
+                    attempts=[attempt],
+                    output_type=request.output_type,
+                    outputs=[],
+                    errors=[],
+                    # usage=Usage(tokens=len(result.attempts)),
+                )
+                log_response(response)
+                await queue.put("event: attempt\n")
+                await queue.put(stream_response(response=response))
+            elif isinstance(result, Output):
+                output = result
+                response = Response(
+                    id=job_id,
+                    created_at=created_at,
+                    finished_at=finished_at,
+                    status="stream",
+                    # TODO Update messages with each output
+                    messages=request.messages,
+                    data_source_url=request.data_source_url,
+                    attempts=[],
+                    output_type=request.output_type,
+                    outputs=[output],
+                    errors=[],
+                    # usage=Usage(tokens=len(result.attempts)),
+                )
+                log_response(response)
+                await queue.put("event: output\n")
+                await queue.put(stream_response(response=response))
+            elif isinstance(result, QueryResult):
+                query_result = result
+                response = Response(
+                    id=job_id,
+                    created_at=created_at,
+                    finished_at=finished_at,
+                    status="stream",
+                    # TODO Update messages
+                    messages=request.messages,
+                    data_source_url=request.data_source_url,
+                    attempts=query_result.attempts,
+                    output_type=request.output_type,
+                    outputs=query_result.outputs,
+                    errors=query_result.errors,
+                    usage=Usage(tokens=len(query_result.attempts)),
+                )
+                log_response(response)
+                await queue.put("event: output\n")
+                await queue.put(stream_response(response=response))
+            else:
+                logger.error("Unhandled result type: %s", type(result))
+            # Sleep briefly so concurrent tasks can run
+            # 1 ms (0.001 s) limits max throughput to 1,000 requests per second
+            # See https://github.com/openai/openai-cookbook/blob/main/examples/api_request_parallel_processor.py
+            await asyncio.sleep(0.01)
+        stop_event.set()
+    except asyncio.CancelledError:
+        pass
+
+
 @app.post("/v1/ask_chartgpt", response_model=Response)
 async def ask_chartgpt(
     request: Request, api_key: str = Security(get_api_key), stream=False
@@ -134,99 +236,47 @@ async def ask_chartgpt(
 
     try:
         if stream:
+            async def generate_response(request: Request) -> AsyncGenerator[str, None]:
+                queue = asyncio.Queue()
+                stop_event = asyncio.Event()
 
-            async def generate_response(request: Request) -> AsyncGenerator[Response, None]:
-                # Respond with the job ID to indicate that the job has started
-                response = Response(
-                    id=job_id,
+                keep_alive_task = asyncio.create_task(keep_alive_generator(
+                    queue=queue,
+                    stop_event=stop_event
+                ))
+                data_task = asyncio.create_task(data_generator(
+                    request=request,
+                    job_id=job_id,
                     created_at=created_at,
-                    status="stream",
-                    messages=request.messages,
-                    data_source_url=request.data_source_url,
-                    attempts=[],
-                    output_type=request.output_type,
-                    outputs=[],
-                    errors=[],
-                )
-                log_response(response)
-                yield "event: start\n"
-                yield stream_response(response=response)
-                async for result in answer_user_query(request=request, stream=True):
-                    finished_at = int(time.time())
-                    if isinstance(result, Attempt):
-                        attempt = result
-                        response = Response(
-                            id=job_id,
-                            created_at=created_at,
-                            finished_at=finished_at,
-                            status="stream",
-                            # TODO Update messages with each output
-                            messages=request.messages,
-                            data_source_url=request.data_source_url,
-                            attempts=[attempt],
-                            output_type=request.output_type,
-                            outputs=[],
-                            errors=[],
-                            # usage=Usage(tokens=len(result.attempts)),
-                        )
-                        log_response(response)
-                        yield "event: attempt\n"
-                        yield stream_response(response=response)
-                    elif isinstance(result, Output):
-                        output = result
-                        response = Response(
-                            id=job_id,
-                            created_at=created_at,
-                            finished_at=finished_at,
-                            status="stream",
-                            # TODO Update messages with each output
-                            messages=request.messages,
-                            data_source_url=request.data_source_url,
-                            attempts=[],
-                            output_type=request.output_type,
-                            outputs=[output],
-                            errors=[],
-                            # usage=Usage(tokens=len(result.attempts)),
-                        )
-                        log_response(response)
-                        yield "event: output\n"
-                        yield stream_response(response=response)
-                    elif isinstance(result, QueryResult):
-                        query_result = result
-                        response = Response(
-                            id=job_id,
-                            created_at=created_at,
-                            finished_at=finished_at,
-                            status="stream",
-                            # TODO Update messages
-                            messages=request.messages,
-                            data_source_url=request.data_source_url,
-                            attempts=query_result.attempts,
-                            output_type=request.output_type,
-                            outputs=query_result.outputs,
-                            errors=query_result.errors,
-                            usage=Usage(tokens=len(query_result.attempts)),
-                        )
-                        log_response(response)
-                        yield "event: output\n"
-                        yield stream_response(response=response)
-                    else:
-                        logger.error("Unhandled result type: %s", type(result))
-                    # Sleep briefly so concurrent tasks can run
-                    # 1 ms (0.001 s) limits max throughput to 1,000 requests per second
-                    # See https://github.com/openai/openai-cookbook/blob/main/examples/api_request_parallel_processor.py
-                    await asyncio.sleep(0.01)
-                yield "event: stream_complete\n"
-                yield "data: [DONE]\n\n"
+                    queue=queue,
+                    stop_event=stop_event,
+                ))
+
+                try:
+                    while not stop_event.is_set():
+                        event = await queue.get()
+                        yield event
+                    yield "event: stream_end\n"
+                    yield "data: [DONE]\n\n"
+                finally:
+                    keep_alive_task.cancel()
+                    data_task.cancel()
+                    await asyncio.gather(keep_alive_task, data_task, return_exceptions=True)
 
             return StreamingResponse(
                 generate_response(request=request),
                 status_code=status.HTTP_200_OK,
-                media_type="text/event-stream",
+                headers={
+                    "Content-type": "text/event-stream",
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    # "Content-Encoding": "deflate",
+                }
             )
         else:
-            async for result in answer_user_query(request=request):
-                result: QueryResult = result
+            result: Optional[QueryResult] = None
+            async for temp_result in answer_user_query(request=request):
+                result = temp_result
                 break
             finished_at = int(time.time())
             if not result:
