@@ -37,7 +37,8 @@ from tenacity import (
     retry,
     stop_after_attempt,
     wait_random_exponential,
-)  # for exponential backoff
+)
+from api import errors  # for exponential backoff
 
 import api.utils
 from api import log, utils
@@ -279,7 +280,7 @@ async def generate_valid_sql_query(
                 Error(
                     index=index,
                     created_at=created_at,
-                    type="SQLValidationError",
+                    type=errors.SQLValidationError.__name__,
                     value=error,
                 )
                 for index, error in enumerate(errors)
@@ -544,7 +545,7 @@ async def generate_valid_python_code(
         if result.error:
             logger.warning(f"Attempt: {attempt_index + 1} of {config.max_attempts}")
             logger.warning(f"Error in code: {result.error}")
-            logger.warning(f"Code:\n{code}")
+            logger.warning(f"Code:\n{result.code}")
 
             yield Attempt(
                 index=attempt_index,
@@ -555,21 +556,21 @@ async def generate_valid_python_code(
                         created_at=int(time.time()),
                         description=docstring,
                         type=OutputType.PYTHON_CODE.value,
-                        value=code,
+                        value=result.code,
                     )
                 ],
                 errors=[
                     Error(
                         index=0,
                         created_at=int(time.time()),
-                        type="PythonExecutionError",
+                        type=errors.PythonExecutionError.__name__,
                         value=result.error,
                     )
                 ],
             )
 
             error_prompt = CODE_GENERATION_ERROR_PROMPT_TEMPLATE.format(
-                attempt=attempt_index + 1, code=code, error_message=result.error
+                attempt=attempt_index + 1, code=result.code, error_message=result.error
             )
             messages.append({"role": "user", "content": inspect.cleandoc(error_prompt)})
             response = await openai_chat_completion(
@@ -585,8 +586,9 @@ async def generate_valid_python_code(
             _, docstring, corrected_code = extract_code_generation_response_data(
                 response
             )
-            code_diff = log.get_unified_diff_changes(code, corrected_code)
+            code_diff = log.get_unified_diff_changes(result.code, corrected_code)
             logger.debug("Corrected code diff:\n%s", code_diff)
+            # Update code with corrected code
             code = corrected_code
         else:
             result.messages = messages

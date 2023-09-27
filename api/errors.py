@@ -11,3 +11,9 @@ class MaxOutputsError(Exception):
 
 class MaxTokensError(Exception):
     """Raised when the maximum number of tokens used is exceeded."""
+
+class SQLValidationError(Exception):
+    """Raised when there is an error validating SQL query returned from LLM."""
+
+class PythonExecutionError(Exception):
+    """Raised when there is an error executing Python code returned from LLM."""
