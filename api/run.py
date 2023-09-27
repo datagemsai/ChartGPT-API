@@ -98,7 +98,8 @@ async def keep_alive_generator(queue: asyncio.Queue, stop_event: asyncio.Event) 
     try:
         while not stop_event.is_set():
             await asyncio.sleep(15)
-            await queue.put(":keep-alive\n\n")
+            await queue.put(r"event: keep-alive\n")
+            await queue.put(r"data: {}\n\n")
     except asyncio.CancelledError:
         pass
 
