@@ -1,9 +1,11 @@
 import json
 from typing import List, Tuple, Union
+import asyncio
 
 import pandas as pd
 import pytest
 from typeguard import check_type
+from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
 
 from api import utils
 from api.chartgpt import execute_python_code
@@ -17,6 +19,34 @@ config = CodeGenerationConfig(
     output_types=accepted_output_types,
     output_variable="result",
 )
+
+
+code_test_cases = [
+"""
+def answer_question(df):
+    return 1
+"""
+]
+
+
+class TestCases:
+    @pytest.mark.parametrize(
+        "code",
+        code_test_cases,
+    )
+    @pytest.mark.asyncio
+    async def test_execute_code_test_cases(self, code):
+        result = await execute_python_code(
+            code,
+            docstring="",
+            imports=CODE_GENERATION_IMPORTS,
+            local_variables={},
+            config=config,
+        )
+        assert result.result is not None
+        assert result.error is None
+        assert result.io == ""
+        assert config.output_variable not in result.local_variables
 
 
 def test_clean_jupyter_shell_output():
@@ -37,13 +67,14 @@ def test_clean_jupyter_shell_output():
     assert clean_jupyter_shell_output("Out[1]: 1", remove_final_result=True) == ""
 
 
-def test_execute_python_function():
+@pytest.mark.asyncio
+async def test_execute_python_function():
     code = """
 def answer_question(df: pd.DataFrame) -> int:
     print("Hello World!")
     return 1 + 1
 """
-    result = execute_python_code(
+    result = await execute_python_code(
         code,
         docstring="",
         imports=CODE_GENERATION_IMPORTS,
@@ -63,12 +94,13 @@ def test_unexpected_output_type():
         assert_matches_accepted_type(result, accepted_output_types)
 
 
-def test_execute_python_code():
+@pytest.mark.asyncio
+async def test_execute_python_code():
     code = """
 print("Hello World!")
 1 + 1
 """
-    result = execute_python_code(
+    result = await execute_python_code(
         code,
         docstring="",
         imports=CODE_GENERATION_IMPORTS,
@@ -81,27 +113,29 @@ print("Hello World!")
     assert config.output_variable not in result.local_variables
 
 
-def test_execute_python_function_returning_string():
+@pytest.mark.asyncio
+async def test_execute_python_function_returning_string():
     code = """
 def answer_question(df: pd.DataFrame) -> str:
-    print("Hello World!")
-    return "Hello World!"
+    print("Hello World, printed!")
+    return "Hello World, returned!"
 """
-    result = execute_python_code(
+    result = await execute_python_code(
         code,
         docstring="",
         imports=CODE_GENERATION_IMPORTS,
         local_variables={"df": pd.DataFrame()},
         config=config,
     )
-    assert result.result == "Hello World!"
+    assert result.result == "Hello World, returned!"
     assert result.error is None
-    assert result.io == "Hello World!"
+    assert result.io == "Hello World, printed!"
     assert "df" in result.local_variables
     assert config.output_variable not in result.local_variables
 
 
-def test_regression_sample_data():
+@pytest.mark.asyncio
+async def test_regression_sample_data():
     code = """
 import pandas as pd
 import plotly.express as px
@@ -124,7 +158,7 @@ answer_question(df_sample)
             "total_lending_volume": [1, 1, 1],
         }
     )
-    result = execute_python_code(
+    result = await execute_python_code(
         code,
         docstring="",
         imports=CODE_GENERATION_IMPORTS,
@@ -143,7 +177,8 @@ answer_question(df_sample)
     assert config.output_variable not in result.local_variables
 
 
-def test_utils_period_encoder():
+@pytest.mark.asyncio
+async def test_utils_period_encoder():
     code = """
 import pandas as pd
 import plotly.express as px
@@ -167,7 +202,7 @@ answer_question(df)
             "date": ["2021-01-01", "2021-02-01", "2021-03-01"],
         }
     )
-    result = execute_python_code(
+    result = await execute_python_code(
         code,
         docstring="",
         imports=CODE_GENERATION_IMPORTS,
@@ -185,7 +220,8 @@ answer_question(df)
     df.to_json(orient="records", default_handler=str)
 
 
-def test_dataframe_index_mutation():
+@pytest.mark.asyncio
+async def test_dataframe_index_mutation():
     """
     When the function is called twice, check that the index of the dataframe is not mutated.
     """
@@ -219,7 +255,7 @@ answer_question(df)
             "date": ["2021-01-01", "2021-02-01", "2021-03-01"],
         }
     )
-    result = execute_python_code(
+    result = await execute_python_code(
         code,
         docstring="",
         imports=CODE_GENERATION_IMPORTS,
