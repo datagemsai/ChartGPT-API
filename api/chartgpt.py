@@ -162,6 +162,7 @@ async def validate_sql_query(query: str) -> List[str]:
     return errors
 
 
+@log.wrap(log.entering, log.exiting)
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))
 async def openai_chat_completion(model, messages, functions, function_call):
     try:
