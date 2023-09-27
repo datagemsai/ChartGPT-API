@@ -84,7 +84,7 @@ async def uncaught_exception_handler(_: Request, exc: Exception):
 
 def stream_response(response: Response) -> str:
     """Format the stream response."""
-    return f"data: {response.to_json()}<end>\n\n"
+    return f"data: {response.to_json()}\n\n"
 
 
 @app.get("/health")
@@ -149,6 +149,7 @@ async def ask_chartgpt(
                     errors=[],
                 )
                 log_response(response)
+                yield "event: start\n"
                 yield stream_response(response=response)
                 async for result in answer_user_query(request=request, stream=True):
                     finished_at = int(time.time())
@@ -169,6 +170,7 @@ async def ask_chartgpt(
                             # usage=Usage(tokens=len(result.attempts)),
                         )
                         log_response(response)
+                        yield "event: attempt\n"
                         yield stream_response(response=response)
                     elif isinstance(result, Output):
                         output = result
@@ -187,6 +189,7 @@ async def ask_chartgpt(
                             # usage=Usage(tokens=len(result.attempts)),
                         )
                         log_response(response)
+                        yield "event: output\n"
                         yield stream_response(response=response)
                     elif isinstance(result, QueryResult):
                         query_result = result
@@ -205,6 +208,7 @@ async def ask_chartgpt(
                             usage=Usage(tokens=len(query_result.attempts)),
                         )
                         log_response(response)
+                        yield "event: output\n"
                         yield stream_response(response=response)
                     else:
                         logger.error("Unhandled result type: %s", type(result))
@@ -212,6 +216,8 @@ async def ask_chartgpt(
                     # 1 ms (0.001 s) limits max throughput to 1,000 requests per second
                     # See https://github.com/openai/openai-cookbook/blob/main/examples/api_request_parallel_processor.py
                     await asyncio.sleep(0.01)
+                yield "event: stream_complete\n"
+                yield "data: [DONE]\n\n"
 
             return StreamingResponse(
                 generate_response(request=request),
