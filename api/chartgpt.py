@@ -164,14 +164,14 @@ async def validate_sql_query(query: str) -> List[str]:
 
 @log.wrap(log.entering, log.exiting)
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))
-async def openai_chat_completion(model, messages, functions, function_call):
+async def openai_chat_completion(model, messages, functions, function_call, temperature=GPT_TEMPERATURE):
     try:
         response = await openai.ChatCompletion.acreate(
             model=model,
             messages=messages,
             functions=functions,
             function_call=function_call,
-            temperature=GPT_TEMPERATURE,
+            temperature=temperature,
         )
         logger.debug("OpenAI ChatCompletion response usage: %s", response.get('usage'))
         return response
@@ -255,6 +255,8 @@ async def generate_valid_sql_query(
                 function_validate_sql_query
             ],
             function_call={"name": "validate_sql_query"},
+            # Increase temperature from 0.1 to 0.5 with each attempt
+            temperature=0.1 + (len(attempts) / config.max_attempts) * 0.4,
         )
         (
             message,
@@ -583,6 +585,8 @@ async def generate_valid_python_code(
                     function_execute_python_code
                 ],
                 function_call={"name": "execute_python_code"},
+                # Increase temperature from 0.1 to 0.5 with each attempt
+                temperature=0.1 + (attempt_index / config.max_attempts) * 0.4,
             )
             _, docstring, corrected_code = extract_code_generation_response_data(
                 response
