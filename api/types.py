@@ -58,7 +58,7 @@ def assert_matches_accepted_type(value, types: List[Any] = [Any]) -> None:
         for index, item in enumerate(value):
             if not matches_types(item, types=types):
                 mismatches.append(
-                    f"Value of type {type(item)} at position {index} does not match any of the accepted output types: {types}"
+                    f"Value of type {type(item)} at index {index} does not match any of the accepted output types: {types}"
                 )
     elif isinstance(value, dict):
         for key, item in value.items():

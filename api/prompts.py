@@ -1,5 +1,10 @@
 # flake8: noqa
 
+import inspect
+from api.types import Role
+import toml
+
+
 SQL_QUERY_GENERATION_PROMPT_TEMPLATE = """
 You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
 
@@ -13,8 +18,8 @@ You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and P
 - Use `LOWER` for case-insensitive string comparisons: `LOWER(column_name) = LOWER('value')`
 - Use `LIKE` for case-insensitive substring matches: `LOWER(column_name) LIKE '%value%'`
 - If the result is empty, try `LIKE` with other variations of the value.
-- Always use a `LIMIT` clause if the result is large: `LIMIT 100000`
-- Always filter data for the last 6 months: `WHERE date >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH))`, using the appropriate date column and data type. 
+- Always use a `LIMIT` clause if the result is large, unless more data is requested: `LIMIT 100000`
+- Always filter data for the last 3 months, unless a longer period is requested: `WHERE date >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))`, using the appropriate date column and data type. 
 
 # BigQuery Database Schema
 The GoogleSQL query should be constructed based on the following database schema:
@@ -42,6 +47,25 @@ import networkx as nx
 import typing
 from typing import Optional, List, Any, Union
 """
+
+example_responses = toml.load("api/example_responses.toml")
+code_responses = [(item['query'], item['response']) for item in example_responses['code_responses']]
+
+CODE_GENERATION_EXAMPLE_MESSAGES = [
+    ({
+        "role": Role.SYSTEM.value,
+        "name": "example_user",
+        "content": inspect.cleandoc(example_user_query),
+    },
+    {
+        "role": Role.SYSTEM.value,
+        "name": "example_assistant",
+        "content": inspect.cleandoc(example_assistant_response),
+    }) for example_user_query, example_assistant_response in code_responses
+]
+CODE_GENERATION_EXAMPLE_MESSAGES = [
+    item for sublist in CODE_GENERATION_EXAMPLE_MESSAGES for item in sublist
+]
 
 CODE_GENERATION_PROMPT_TEMPLATE = """
 You're a Data Analyst proficient in the use of GoogleSQL, Pandas, and Plotly.
@@ -82,61 +106,10 @@ def answer_question({function_parameters}) -> {output_type}:
 ```
 
 The `answer_question` function must be defined and return a variable of the specified type.
+Double check to make sure your answer doesn't have any functional errors, test failures, syntax errors, or omissions.
+"""
 
-# Examples
-
-## Example 1
-Analytics Question: What is 1 + 1?
-
-```python
-def answer_question(df: pd.DataFrame) -> int:
-    return 1 + 1
-```
-
-## Example 2
-Analytics Question: What is the average `age` of participants?
-
-```python
-def answer_question(df: pd.DataFrame) -> float:
-    return df['age'].mean()
-```
-
-## Example 3
-Analytics Question: Plot a chart of transaction volume over time.
-
-```python
-def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
-    df['date'] = pd.to_datetime(df['date'])
-    fig = px.line(df, x='date', y='transaction_volume')
-    return fig
-```
-
-## Example 4
-Analytics Question: Perform exploratory data analysis (EDA) on the DataFrame.
-
-Use common sense when deciding which chart types to use for which columns:
-- For time series data, use a line chart or scatter plot.
-- For categorial data, use a bar chart or pie chart.
-- For numeric data, use a histogram or scatter plot.
-
-```python
-def answer_question(df: pd.DataFrame) -> List[plotly.graph_objs.Figure]:
-    histogram = px.histogram(df, x='usd_value')
-    scatter = px.scatter(df, x='apr', y='usd_value')
-    line = px.line(df, x='date', y='transaction_volume')
-    return [histogram, scatter, line]
-```
-
-## Example 5
-Analytics Question: What data is available?
-
-If a user asks what data is available, return the DataFrame schema.
-    
-```python
-def answer_question(df: pd.DataFrame) -> pd.DataFrame:
-    return df.describe()
-```
-
+CODE_GENERATION_USER_QUERY_PREFIX = """
 # Analytics Question
 """
 
