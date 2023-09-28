@@ -82,7 +82,7 @@ def create_embed(question: str) -> discord.Embed:
     embed = discord.Embed()
     embed.set_thumbnail(url="attachment://logo.png")
     embed.set_author(name="ChartGPT")
-    embed.title = f"Question: {question}"
+    embed.title = f"Question: {question[:100] + '...' if len(question) > 100 else question}"
     embed.description = "Thinking..."
     return embed
 
