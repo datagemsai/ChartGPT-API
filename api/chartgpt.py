@@ -46,7 +46,7 @@ from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
 from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError
 from api.log import logger
-from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
+from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE, CODE_GENERATION_EXAMPLE_MESSAGES,
                          CODE_GENERATION_IMPORTS,
                          CODE_GENERATION_PROMPT_TEMPLATE,
                          SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
@@ -631,24 +631,26 @@ async def answer_user_query(
         database_schema=str(tables_summary),
     )
 
-    user_query = request.messages[-1].content
-    input_messages_raw = [message.to_dict() for message in request.messages[:-1]]
-    input_messages = [
+    # user_query = request.messages[-1].content
+    # Get all user messages and convert to dict for OpenAI API
+    _user_messages = [message.to_dict() for message in request.messages if message.role == Role.USER.value]
+    user_messages = [
         {
             **message,
+            # Truncate message content to 100 characters
             "content": message["content"][:100] + "..."
             if len(message["content"]) > 100
             else message["content"],
         }
-        for message in input_messages_raw[:-1]
+        # Limit to last 3 user messages
+        for message in _user_messages[-3:]
     ]
-    messages = input_messages + [
+    messages = [
         {
             "role": Role.SYSTEM.value,
             "content": inspect.cleandoc(sql_query_generation_prompt),
         },
-        {"role": Role.USER.value, "content": "Analytics question: " + user_query},
-    ]
+    ] + user_messages
 
     sql_query_attempts = []
     async for result in get_valid_sql_query(
@@ -756,17 +758,21 @@ async def answer_user_query(
         output_variable=output_variable,
     )
 
-    sql_generation_result.messages += [
-        {
-            "role": Role.SYSTEM.value,
-            "content": inspect.cleandoc(code_generation_prompt),
-        },
-        {"role": Role.USER.value, "content": user_query},
-    ]
+    code_generation_messages = (
+        sql_generation_result.messages
+        + [
+            {
+                "role": Role.SYSTEM.value,
+                "content": inspect.cleandoc(code_generation_prompt),
+            },
+        ]
+        + CODE_GENERATION_EXAMPLE_MESSAGES
+        + user_messages
+    )
 
     python_execution_attempts = []
     async for result in generate_valid_python_code(
-        messages=sql_generation_result.messages,
+        messages=code_generation_messages,
         local_variables={"df": df},
         config=CodeGenerationConfig(
             output_types=output_types,

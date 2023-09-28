@@ -42,7 +42,7 @@ class CustomPlotlyJSONEncoder(PlotlyJSONEncoder):
         return super(CustomPlotlyJSONEncoder, self).default(obj)
 
 
-def sort_dataframe(df):
+def sort_dataframe(df) -> pd.DataFrame:
     # Check if the index is a DateTime index
     if isinstance(df.index, pd.DatetimeIndex):
         return df.sort_index()
