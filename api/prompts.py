@@ -81,6 +81,8 @@ The `answer_question` function must be defined and return a variable of the spec
 ```
 
 # DataFrame Schema
+Column names: {dataframe_columns}
+
 {dataframe_schema}
 
 # Instructions

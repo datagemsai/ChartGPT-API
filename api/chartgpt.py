@@ -173,6 +173,7 @@ async def openai_chat_completion(model, messages, functions, function_call, temp
             function_call=function_call,
             temperature=temperature,
         )
+        logger.debug("OpenAI ChatCompletion temperature: %s", temperature)
         logger.debug("OpenAI ChatCompletion response usage: %s", response.get('usage'))
         return response
     except openai.InvalidRequestError as exc:
@@ -201,7 +202,7 @@ def extract_sql_query_generation_response_data(response):
 @log.wrap(log.entering, log.exiting)
 async def get_initial_sql_query(messages) -> Tuple[str, str]:
     response = await openai_chat_completion(
-        SQL_GPT_MODEL,
+        "gpt-4",
         messages,
         functions=[
             # TODO Enable agent to respond to user directly
@@ -248,7 +249,7 @@ async def generate_valid_sql_query(
         )
 
         corrected_response = await openai_chat_completion(
-            SQL_GPT_MODEL,
+            "gpt-4",
             messages,
             functions=[
                 # function_respond_to_user,
@@ -510,7 +511,7 @@ async def execute_python_code(
 @log.wrap(log.entering, log.exiting)
 async def get_initial_python_code(messages) -> Tuple[str, str]:
     response = await openai_chat_completion(
-        PYTHON_GPT_MODEL,
+        "gpt-4",
         messages,
         functions=[
             # TODO Enable agent to respond to user directly
@@ -577,7 +578,7 @@ async def generate_valid_python_code(
             )
             messages.append({"role": "user", "content": inspect.cleandoc(error_prompt)})
             response = await openai_chat_completion(
-                PYTHON_GPT_MODEL,
+                "gpt-4",
                 messages,
                 functions=[
                     # TODO Enable agent to respond to user directly
@@ -749,6 +750,7 @@ async def answer_user_query(
     code_generation_prompt = CODE_GENERATION_PROMPT_TEMPLATE.format(
         sql_description=sql_generation_result.description,
         sql_query=sql_generation_result.query,
+        dataframe_columns=json.dumps(list(df.columns), indent=4, sort_keys=True),
         dataframe_schema=json.dumps(df_summary, indent=4, sort_keys=True),
         imports=CODE_GENERATION_IMPORTS,
         function_parameters=function_parameters,
