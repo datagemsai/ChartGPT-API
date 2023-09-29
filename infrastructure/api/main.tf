@@ -28,7 +28,7 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
         cpu_idle = true
         limits = {
           cpu    = "4"
-          memory = "4096Mi"
+          memory = "8192Mi"
         }
       }
 

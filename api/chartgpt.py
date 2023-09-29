@@ -14,7 +14,7 @@ import time
 import traceback
 from contextlib import redirect_stdout
 from io import StringIO
-from typing import Any, AsyncGenerator, List, Optional, Tuple, Union
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 from fastapi.concurrency import run_in_threadpool
 import concurrent.futures
 
@@ -164,15 +164,25 @@ async def validate_sql_query(query: str) -> List[str]:
 
 @log.wrap(log.entering, log.exiting)
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))
-async def openai_chat_completion(model, messages, functions, function_call, temperature=GPT_TEMPERATURE):
+async def openai_chat_completion(
+    model,
+    messages,
+    functions: Optional[List] = None,
+    function_call: Optional[Dict] = None,
+    temperature: float = GPT_TEMPERATURE,
+):
     try:
-        response = await openai.ChatCompletion.acreate(
-            model=model,
-            messages=messages,
-            functions=functions,
-            function_call=function_call,
-            temperature=temperature,
-        )
+        args = []
+        kwargs = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+        if functions:
+            kwargs["functions"] = functions
+        if function_call:
+            kwargs["function_call"] = function_call
+        response = await openai.ChatCompletion.acreate(*args, **kwargs)
         logger.debug("OpenAI ChatCompletion temperature: %s", temperature)
         logger.debug("OpenAI ChatCompletion response usage: %s", response.get('usage'))
         return response
@@ -235,6 +245,7 @@ async def generate_valid_sql_query(
         except Exception as e:
             errors.append(str(e))
 
+    # TODO If attempts > max_attempts, return an error to the user
     if errors and len(attempts) <= config.max_attempts:
         log_errors_and_attempts(query, errors, attempts, config.max_attempts)
 
@@ -350,13 +361,13 @@ async def get_valid_sql_query(
 
 
 def log_initial_queries(description, query):
-    logger.debug(f"Initial SQL query description: {description}")
-    logger.debug(f"Initial SQL query: {query}")
+    logger.debug("Initial SQL query description: %s", description)
+    logger.debug("Initial SQL query: %s", query)
 
 
 def log_final_queries(description, query):
-    logger.debug(f"Final SQL query description: {description}")
-    logger.debug(f"Valid SQL query: {query}")
+    logger.debug("Final SQL query description: %s", description)
+    logger.debug("Valid SQL query: %s", query)
 
 
 def extract_respond_to_user_data(response):
@@ -531,8 +542,8 @@ async def generate_valid_python_code(
     config: CodeGenerationConfig = CodeGenerationConfig(),
 ) -> AsyncGenerator[Union[Attempt, PythonExecutionResult], None]:
     docstring, code = await get_initial_python_code(messages)
-    logger.debug(f"Initial Python code docstring:\n{docstring}")
-    logger.debug(f"Initial Python code:\n{code}")
+    logger.debug("Initial Python code docstring:\n%s", docstring)
+    logger.debug("Initial Python code:\n%s", code)
 
     result: PythonExecutionResult = PythonExecutionResult()
     for attempt_index in range(config.max_attempts):
