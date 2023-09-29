@@ -217,11 +217,11 @@ async def ask_chartgpt(
     else:
         query = request.messages[-1].content
 
-    if is_nda_broken(query):
+    if await is_nda_broken(query):
         message = "Could not complete analysis: insecure request"
         logger.error(message)
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             content={"error": message},
         )
 
@@ -271,6 +271,7 @@ async def ask_chartgpt(
                     "Content-type": "text/event-stream",
                     "Cache-Control": "no-cache",
                     "Connection": "keep-alive",
+                    # TODO Investigate compression techniques
                     # "Content-Encoding": "deflate",
                 }
             )

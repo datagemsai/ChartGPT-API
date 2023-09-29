@@ -17,3 +17,6 @@ class SQLValidationError(Exception):
 
 class PythonExecutionError(Exception):
     """Raised when there is an error executing Python code returned from LLM."""
+
+class InsecureRequestError(Exception):
+    """Raised when a user's request is considered insecure."""
