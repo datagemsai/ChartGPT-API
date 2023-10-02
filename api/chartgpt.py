@@ -44,7 +44,7 @@ import api.utils
 from api import log, utils
 from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
 from api.connectors.bigquery import bigquery_client
-from api.errors import ContextLengthError
+from api.errors import ContextLengthError, PythonExecutionError, SQLValidationError
 from api.log import logger
 from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE, CODE_GENERATION_EXAMPLE_MESSAGES,
                          CODE_GENERATION_IMPORTS,
@@ -295,7 +295,7 @@ async def generate_valid_sql_query(
                 Error(
                     index=index,
                     created_at=created_at,
-                    type=errors.SQLValidationError.__name__,
+                    type=SQLValidationError.__name__,
                     value=error,
                 )
                 for index, error in enumerate(errors)
@@ -578,7 +578,7 @@ async def generate_valid_python_code(
                     Error(
                         index=0,
                         created_at=int(time.time()),
-                        type=errors.PythonExecutionError.__name__,
+                        type=PythonExecutionError.__name__,
                         value=result.error,
                     )
                 ],
