@@ -11,9 +11,13 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 ENV = os.environ.get("ENV", "LOCAL")
 PROJECT = os.environ.get("PROJECT", "LOCAL")
 
-SQL_GPT_MODEL = "gpt-4"
-PYTHON_GPT_MODEL = "gpt-4"
-GPT_TEMPERATURE = 0.0
+SQL_INITIAL_GPT_MODEL = "gpt-4"
+SQL_CORRECTION_GPT_MODEL = "gpt-4"
+CODE_INITIAL_GPT_MODEL = "gpt-4"
+CODE_CORRECTION_GPT_MODEL = "gpt-4"
+# "gpt-3.5-turbo-16k"
+# "gpt-3.5-turbo-0613"
+DEFAULT_GPT_TEMPERATURE = 0.0
 
 if ENV != "LOCAL":
     import sentry_sdk
