@@ -12,7 +12,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from api import auth, utils
 from api.chartgpt import answer_user_query
-from api.errors import ContextLengthError
+from api.errors import ContextLengthError, PythonExecutionError
 from api.guards import is_nda_broken
 from api.log import log_response, logger
 from api.types import QueryResult
@@ -193,6 +193,29 @@ async def data_generator(
             # See https://github.com/openai/openai-cookbook/blob/main/examples/api_request_parallel_processor.py
             await asyncio.sleep(0.01)
         stop_event.set()
+    except PythonExecutionError as ex:
+        # TODO Return user friendly errors
+        logger.error("Stream PythonExecutionError: %s", ex)
+        response = Response(
+            id=job_id,
+            created_at=created_at,
+            finished_at=int(time.time()),
+            status="failed",
+            messages=request.messages,
+            data_source_url=request.data_source_url,
+            attempts=[],
+            output_type=request.output_type,
+            outputs=[],
+            errors=[Error(
+                index=0,
+                created_at=int(time.time()),
+                type="PythonExecutionError",
+                value=str(ex),
+            )],
+        )
+        log_response(response)
+        await queue.put("event: error\n")
+        await queue.put(stream_response(response=response))
     except asyncio.CancelledError:
         pass
 
@@ -238,28 +261,29 @@ async def ask_chartgpt(
     try:
         if stream:
             async def generate_response(request: Request) -> AsyncGenerator[str, None]:
-                queue = asyncio.Queue()
-                stop_event = asyncio.Event()
-
-                keep_alive_task = asyncio.create_task(keep_alive_generator(
-                    queue=queue,
-                    stop_event=stop_event
-                ))
-                data_task = asyncio.create_task(data_generator(
-                    request=request,
-                    job_id=job_id,
-                    created_at=created_at,
-                    queue=queue,
-                    stop_event=stop_event,
-                ))
-
                 try:
+                    queue = asyncio.Queue()
+                    stop_event = asyncio.Event()
+
+                    keep_alive_task = asyncio.create_task(keep_alive_generator(
+                        queue=queue,
+                        stop_event=stop_event
+                    ))
+                    
+                    data_task = asyncio.create_task(data_generator(
+                        request=request,
+                        job_id=job_id,
+                        created_at=created_at,
+                        queue=queue,
+                        stop_event=stop_event,
+                    ))
+
                     while not stop_event.is_set():
                         event = await queue.get()
                         yield event
+                finally:
                     yield "event: stream_end\n"
                     yield "data: [DONE]\n\n"
-                finally:
                     keep_alive_task.cancel()
                     data_task.cancel()
                     await asyncio.gather(keep_alive_task, data_task, return_exceptions=True)
@@ -293,7 +317,6 @@ async def ask_chartgpt(
                 created_at=created_at,
                 finished_at=finished_at,
                 status="succeeded",
-                # TODO Update messages
                 messages=request.messages,
                 data_source_url=request.data_source_url,
                 attempts=result.attempts,
@@ -311,8 +334,8 @@ async def ask_chartgpt(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": message},
         )
-    except Exception as ex:
-        message = f"Could not complete analysis: {ex}"
+    except Exception:
+        message = "Could not complete analysis"
         logger.exception(message)
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,

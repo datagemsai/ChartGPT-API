@@ -5,6 +5,31 @@ from api.types import Role
 import toml
 
 
+example_query_responses = toml.load("api/example_query_responses.toml")
+query_responses = [(item['query'], item['sql'], item['code']) for item in example_query_responses['query_responses']]
+EXAMPLE_QUERY_RESPONSE_MESSAGES = [
+    (
+        {
+            "role": Role.SYSTEM.value,
+            "name": "example_user",
+            "content": inspect.cleandoc(example_user_query),
+        },
+        {
+            "role": Role.SYSTEM.value,
+            "name": "example_sql_assistant",
+            "content": inspect.cleandoc(example_sql_response),
+        },
+        {
+            "role": Role.SYSTEM.value,
+            "name": "example_code_assistant",
+            "content": inspect.cleandoc(example_code_response),
+        },
+    ) for example_user_query, example_sql_response, example_code_response in query_responses
+]
+EXAMPLE_QUERY_RESPONSE_MESSAGES = [
+    item for sublist in EXAMPLE_QUERY_RESPONSE_MESSAGES for item in sublist
+]
+
 SQL_QUERY_GENERATION_PROMPT_TEMPLATE = """
 You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
 
@@ -26,14 +51,20 @@ The GoogleSQL query should be constructed based on the following database schema
 
 {database_schema}
 
-# Begin
-Complete Steps (1) and (2).
+Here are some example questions and responses:
 """
 # - Always exclude NULL values: `WHERE column_name IS NOT NULL`
 
 SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE = """
-There was an error in the GoogleSQL query. Please correct the following errors and try again:
-{errors}
+# Error Detected in GoogleSQL Query
+Please correct the errors in the following SQL and try again.
+
+Error Messages: {error_messages}
+
+```sql
+--{description}
+{sql_query}
+```
 """
 
 CODE_GENERATION_IMPORTS = """
@@ -47,25 +78,6 @@ import networkx as nx
 import typing
 from typing import Optional, List, Any, Union
 """
-
-example_responses = toml.load("api/example_responses.toml")
-code_responses = [(item['query'], item['response']) for item in example_responses['code_responses']]
-
-CODE_GENERATION_EXAMPLE_MESSAGES = [
-    ({
-        "role": Role.SYSTEM.value,
-        "name": "example_user",
-        "content": inspect.cleandoc(example_user_query),
-    },
-    {
-        "role": Role.SYSTEM.value,
-        "name": "example_assistant",
-        "content": inspect.cleandoc(example_assistant_response),
-    }) for example_user_query, example_assistant_response in code_responses
-]
-CODE_GENERATION_EXAMPLE_MESSAGES = [
-    item for sublist in CODE_GENERATION_EXAMPLE_MESSAGES for item in sublist
-]
 
 CODE_GENERATION_PROMPT_TEMPLATE = """
 You're a Data Analyst proficient in the use of GoogleSQL, Pandas, and Plotly.
@@ -109,6 +121,8 @@ def answer_question({function_parameters}) -> {output_type}:
 
 The `answer_question` function must be defined and return a variable of the specified type.
 Double check to make sure your answer doesn't have any functional errors, test failures, syntax errors, or omissions.
+
+Here are some example questions and responses:
 """
 
 CODE_GENERATION_USER_QUERY_PREFIX = """
@@ -117,15 +131,17 @@ CODE_GENERATION_USER_QUERY_PREFIX = """
 
 CODE_GENERATION_ERROR_PROMPT_TEMPLATE = """
 # Error Detected in Python Code
-Please correct the errors and try again.
+Please correct the errors in the following Python code and try again.
 
-Attempt #{attempt}:
+Error Message: {error_message}
+
 ```python
+'''
+{description}
+'''
+
 {code}
 ```
-
-Error Message:
-{error_message}
 """
 
 # Your task is to use the data provided to answer a user's Analytics Question and visualise the results.

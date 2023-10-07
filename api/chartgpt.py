@@ -42,13 +42,19 @@ from api import errors  # for exponential backoff
 
 import api.utils
 from api import log, utils
-from api.config import GPT_TEMPERATURE, PYTHON_GPT_MODEL, SQL_GPT_MODEL
+from api.config import (
+    SQL_INITIAL_GPT_MODEL,
+    SQL_CORRECTION_GPT_MODEL,
+    CODE_INITIAL_GPT_MODEL,
+    CODE_CORRECTION_GPT_MODEL,
+    DEFAULT_GPT_TEMPERATURE,   
+)
 from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError, PythonExecutionError, SQLValidationError
 from api.log import logger
-from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE, CODE_GENERATION_EXAMPLE_MESSAGES,
+from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
                          CODE_GENERATION_IMPORTS,
-                         CODE_GENERATION_PROMPT_TEMPLATE,
+                         CODE_GENERATION_PROMPT_TEMPLATE, EXAMPLE_QUERY_RESPONSE_MESSAGES,
                          SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
                          SQL_QUERY_GENERATION_PROMPT_TEMPLATE)
 from api.security.secure_ast import assert_secure_code
@@ -83,10 +89,11 @@ function_respond_to_user = {
     },
 }
 
+
 function_validate_sql_query = {
     "name": "validate_sql_query",
     "description": """
-    Takes a BigQuery GoogleSQL query, executes it using a dry run, and returns a list of errors, if any.
+    Takes a BigQuery GoogleSQL query, validates and executes it using a dry run, and returns a list of errors, if any.
     """,
     "parameters": {
         "type": "object",
@@ -96,6 +103,8 @@ function_validate_sql_query = {
                 "description": """
                     The step-by-step description of the GoogleSQL query and Python code you will create
                     and how it will be used to answer the user's analytics question.
+
+                    Use simple language intended for a non-technical user, abstracting the details of the query and code.
                 """,
             },
             "query": {
@@ -107,10 +116,22 @@ function_validate_sql_query = {
     },
 }
 
+function_validate_sql_query_without_description = {
+    "name": function_validate_sql_query["name"],
+    "description": function_validate_sql_query["description"],
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": function_validate_sql_query["parameters"]["properties"]["query"],
+        },
+        "required": ["query"],
+    },
+}
+
 function_execute_python_code = {
     "name": "execute_python_code",
     "description": """
-    Takes a Python code string, executes it, and returns an instance of PythonExecutionResult.
+    Takes a Python code string, validates and executes it, and returns a list of errors, if any.
     """,
     "parameters": {
         "type": "object",
@@ -118,7 +139,9 @@ function_execute_python_code = {
             "docstring": {
                 "type": "string",
                 "description": """
-                    The docstring for the Python code describing step-by-step how it will be used to answer the user's analytics question.
+                    The description for the Python code describing step-by-step how it will be used to answer the user's analytics question.
+                
+                    Use simple language intended for a non-technical user, abstracting the details of the query and code.                
                 """,
             },
             "code": {
@@ -127,6 +150,18 @@ function_execute_python_code = {
             },
         },
         "required": ["docstring", "code"],
+    },
+}
+
+function_execute_python_code_without_docstring = {
+    "name": function_execute_python_code["name"],
+    "description": function_execute_python_code["description"],
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "code": function_execute_python_code["parameters"]["properties"]["code"],
+        },
+        "required": ["code"],
     },
 }
 
@@ -167,9 +202,10 @@ async def validate_sql_query(query: str) -> List[str]:
 async def openai_chat_completion(
     model,
     messages,
+    max_tokens: Optional[int] = None,
     functions: Optional[List] = None,
     function_call: Optional[Dict] = None,
-    temperature: float = GPT_TEMPERATURE,
+    temperature: float = DEFAULT_GPT_TEMPERATURE,
 ):
     try:
         args = []
@@ -178,6 +214,8 @@ async def openai_chat_completion(
             "messages": messages,
             "temperature": temperature,
         }
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
         if functions:
             kwargs["functions"] = functions
         if function_call:
@@ -195,24 +233,28 @@ def extract_sql_query_generation_response_data(response):
     message = response["choices"][0]["message"]
     function_name = message["function_call"]["name"]
 
-    if function_name == "respond_to_user":
-        return extract_respond_to_user_data(response)
-    else:
-        finish_reason = response["choices"][0]["finish_reason"]
-        function_args = json.loads(
-            str(message["function_call"]["arguments"]), strict=False
-        )
+    try:
+        if function_name == "respond_to_user":
+            return extract_respond_to_user_data(response)
+        else:
+            finish_reason = response["choices"][0]["finish_reason"]
+            function_args = json.loads(
+                str(message["function_call"]["arguments"]), strict=False
+            )
 
-        if finish_reason == "length":
-            raise ContextLengthError
+            if finish_reason == "length":
+                raise ContextLengthError("The LLM context is too long.")
 
-        return message, function_args.get("description"), function_args.get("query")
+            return message, function_args.get("description"), function_args.get("query")
+    except Exception as exc:
+        logger.exception("Failed to extract SQL query generation response data from response: %s", response)
+        raise SQLValidationError("Failed to extract SQL query generation response data") from exc
 
 
 @log.wrap(log.entering, log.exiting)
 async def get_initial_sql_query(messages) -> Tuple[str, str]:
     response = await openai_chat_completion(
-        "gpt-4",
+        SQL_INITIAL_GPT_MODEL,
         messages,
         functions=[
             # TODO Enable agent to respond to user directly
@@ -249,34 +291,35 @@ async def generate_valid_sql_query(
     if errors and len(attempts) <= config.max_attempts:
         log_errors_and_attempts(query, errors, attempts, config.max_attempts)
 
-        messages.append(
-            {
-                "role": Role.FUNCTION.value,
-                "name": "validate_sql_query",
-                "content": inspect.cleandoc(
-                    SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE.format(errors=errors)
-                ),
-            }
+        error_prompt = SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE.format(
+            description=description,
+            sql_query=query,
+            error_messages=errors
         )
+        error_correction_messages = [
+            # Include system message,
+            # exclude extensive examples to improve performance
+            messages[0],
+            {"role": Role.USER.value, "content": inspect.cleandoc(error_prompt)}
+        ]
 
         corrected_response = await openai_chat_completion(
-            "gpt-4",
-            messages,
+            SQL_CORRECTION_GPT_MODEL,
+            error_correction_messages,
             functions=[
                 # function_respond_to_user,
-                function_validate_sql_query
+                # function_validate_sql_query,
+                function_validate_sql_query_without_description,
             ],
             function_call={"name": "validate_sql_query"},
             # Increase temperature from 0.1 to 0.5 with each attempt
             temperature=0.1 + (len(attempts) / config.max_attempts) * 0.4,
         )
         (
-            message,
-            updated_description,
+            _,
+            _,
             updated_query,
         ) = extract_sql_query_generation_response_data(corrected_response)
-
-        messages.append(message)
 
         created_at = int(time.time())
         attempt = Attempt(
@@ -305,7 +348,7 @@ async def generate_valid_sql_query(
         yield attempt
         async for result in generate_valid_sql_query(
             query=updated_query,
-            description=updated_description,
+            description=description,
             messages=messages,
             attempts=attempts,
             config=config,
@@ -386,18 +429,22 @@ def extract_code_generation_response_data(response):
     message = response["choices"][0]["message"]
     function_name = message["function_call"]["name"]
 
-    if function_name == "respond_to_user":
-        return extract_respond_to_user_data(response)
-    else:
-        finish_reason = response["choices"][0]["finish_reason"]
-        function_args = json.loads(
-            str(message["function_call"]["arguments"]), strict=False
-        )
+    try:
+        if function_name == "respond_to_user":
+            return extract_respond_to_user_data(response)
+        else:
+            finish_reason = response["choices"][0]["finish_reason"]
+            function_args = json.loads(
+                str(message["function_call"]["arguments"]), strict=False
+            )
 
-        if finish_reason == "length":
-            raise ContextLengthError
+            if finish_reason == "length":
+                raise ContextLengthError("The LLM context is too long.")
 
-        return message, function_args.get("docstring"), function_args.get("code")
+            return message, function_args.get("docstring"), function_args.get("code")
+    except Exception as exc:
+        logger.exception("Failed to extract code generation response data from response: %s", response)
+        raise PythonExecutionError("Failed to extract code generation response data") from exc
 
 
 def execute_python_imports(imports: str) -> dict:
@@ -522,7 +569,7 @@ async def execute_python_code(
 @log.wrap(log.entering, log.exiting)
 async def get_initial_python_code(messages) -> Tuple[str, str]:
     response = await openai_chat_completion(
-        "gpt-4",
+        CODE_INITIAL_GPT_MODEL,
         messages,
         functions=[
             # TODO Enable agent to respond to user directly
@@ -585,28 +632,38 @@ async def generate_valid_python_code(
             )
 
             error_prompt = CODE_GENERATION_ERROR_PROMPT_TEMPLATE.format(
-                attempt=attempt_index + 1, code=result.code, error_message=result.error
+                description=docstring,
+                code=result.code,
+                error_message=result.error
             )
-            messages.append({"role": "user", "content": inspect.cleandoc(error_prompt)})
+
+            error_correction_messages = messages + [
+                {"role": Role.USER.value, "content": inspect.cleandoc(error_prompt)}
+            ]
+
             response = await openai_chat_completion(
-                "gpt-4",
-                messages,
+                CODE_CORRECTION_GPT_MODEL,
+                error_correction_messages,
+                # max_tokens=8000,
                 functions=[
                     # TODO Enable agent to respond to user directly
                     # function_respond_to_user,
-                    function_execute_python_code
+                    # function_execute_python_code,
+                    function_execute_python_code_without_docstring,
                 ],
                 function_call={"name": "execute_python_code"},
                 # Increase temperature from 0.1 to 0.5 with each attempt
                 temperature=0.1 + (attempt_index / config.max_attempts) * 0.4,
             )
-            _, docstring, corrected_code = extract_code_generation_response_data(
+            _, _, updated_code = extract_code_generation_response_data(
                 response
             )
-            code_diff = log.get_unified_diff_changes(result.code, corrected_code)
+
+            code_diff = log.get_unified_diff_changes(result.code, updated_code)
             logger.debug("Corrected code diff:\n%s", code_diff)
+
             # Update code with corrected code
-            code = corrected_code
+            code = updated_code
         else:
             result.messages = messages
             yield result
@@ -657,19 +714,19 @@ async def answer_user_query(
         # Limit to last 3 user messages
         for message in _user_messages[-3:]
     ]
-    messages = [
-        {
-            "role": Role.SYSTEM.value,
-            "content": inspect.cleandoc(sql_query_generation_prompt),
-        },
-    ] + user_messages
+    messages = (
+        [{"role": Role.SYSTEM.value, "content": inspect.cleandoc(sql_query_generation_prompt)}]
+        # + SQL_QUERY_GENERATION_EXAMPLE_MESSAGES
+        + EXAMPLE_QUERY_RESPONSE_MESSAGES
+        + user_messages
+    )
 
     sql_query_attempts = []
     async for result in get_valid_sql_query(
         messages=messages,
         config=SQLQueryGenerationConfig(
             data_source_url=request.data_source_url,
-            assert_results_not_empty=False,
+            assert_results_not_empty=True,
         ),
     ):
         if isinstance(result, Attempt):
@@ -729,13 +786,11 @@ async def answer_user_query(
         function_parameters = "df: pd.DataFrame"
         function_description = "Function to analyze the data and optionally return a list of results `result_list` or `None`."
         output_types = accepted_output_types
-        # output_type = Any
         output_description = "A list of any type of object or `None`."
         output_variable = "result_list"
     elif request.output_type == OutputType.PLOTLY_CHART.value:
         function_parameters = "df: pd.DataFrame"
         function_description = (
-            # "Function to analyze the data and return a list of Plotly charts."
             "Function to analyze the data and return a Plotly chart."
         )
         output_types = [plotly.graph_objs.Figure]
@@ -772,14 +827,8 @@ async def answer_user_query(
     )
 
     code_generation_messages = (
-        sql_generation_result.messages
-        + [
-            {
-                "role": Role.SYSTEM.value,
-                "content": inspect.cleandoc(code_generation_prompt),
-            },
-        ]
-        + CODE_GENERATION_EXAMPLE_MESSAGES
+        [{"role": Role.SYSTEM.value, "content": inspect.cleandoc(code_generation_prompt)}]
+        + EXAMPLE_QUERY_RESPONSE_MESSAGES
         + user_messages
     )
 
@@ -798,14 +847,15 @@ async def answer_user_query(
                 yield result
         elif isinstance(result, PythonExecutionResult):
             code_generation_result: PythonExecutionResult = result
+            if code_generation_result.error:
+                logger.error("Failed to generate valid Python code: %s", code_generation_result.error)
+                raise PythonExecutionError(code_generation_result.error)
         else:
             raise ValueError("Invalid Python execution result type")
 
     logger.debug("Valid Python code:\n%s", code_generation_result.code)
 
     Figure.show = original_show_method
-
-    logger.debug("Final error: %s", code_generation_result.error)
 
     created_at = int(time.time())
 
@@ -888,10 +938,22 @@ async def answer_user_query(
                 outputs.append(output)
 
     if not stream:
+        final_errors = (
+            [
+                Error(
+                    index=0,
+                    created_at=created_at,
+                    type=PythonExecutionError.__name__,
+                    value=code_generation_result.error,
+                )
+            ]
+            if code_generation_result.error
+            else []
+        )
         yield QueryResult(
             data_source="",
             output_type=request.output_type,
             attempts=sql_query_attempts + python_execution_attempts,
-            errors=[],
+            errors=final_errors,
             outputs=outputs,
         )

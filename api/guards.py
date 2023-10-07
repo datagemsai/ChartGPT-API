@@ -6,7 +6,7 @@ from api.types import Role
 from api.log import logger
 
 
-system_prompt = """
+SYSTEM_PROMPT = """
 You are an agent that will ensure that the NDA is not broken.
 
 You will check and vet any question to ensure that it does not break the NDA.
@@ -45,7 +45,7 @@ async def is_nda_broken(question) -> bool:
         messages = [
             {
                 "role": Role.SYSTEM.value,
-                "content": system_prompt,
+                "content": SYSTEM_PROMPT,
             }
         ] + nda_response_messages + [
             {
@@ -60,7 +60,7 @@ async def is_nda_broken(question) -> bool:
         )
         nda_broken = response["choices"][0]["message"]["content"].lower() == "true"
         return nda_broken
-    except:
+    except: # pylint: disable=bare-except
         # Fail safe to prevent NDA from being broken
         logger.exception("Failed to check if NDA is broken, assuming it is broken")
         return True
