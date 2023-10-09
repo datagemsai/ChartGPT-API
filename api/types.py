@@ -83,16 +83,24 @@ class Role(enum.Enum):
     FUNCTION = "function"
 
 
+@dataclass
 class Message:
-    id: Optional[str]
-    created_at: Optional[int]
     content: str
     role: Role
+    name: Optional[str] = None
+    id: Optional[str] = None
+    created_at: Optional[int] = None
 
     def to_json(self):
+        value = {}
+        if self.id:
+            value["id"] = self.id
+        if self.created_at:
+            value["created_at"] = self.created_at
+        if self.name:
+            value["name"] = self.name
         return {
-            "id": self.id,
-            "created_at": self.created_at,
+            **value,
             "content": self.content,
             "role": self.role.value,
         }

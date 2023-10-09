@@ -218,6 +218,8 @@ async def data_generator(
         await queue.put(stream_response(response=response))
     except asyncio.CancelledError:
         pass
+    finally:
+        stop_event.set()
 
 
 @app.post("/v1/ask_chartgpt", response_model=Response)
@@ -261,23 +263,22 @@ async def ask_chartgpt(
     try:
         if stream:
             async def generate_response(request: Request) -> AsyncGenerator[str, None]:
+                queue = asyncio.Queue()
+                stop_event = asyncio.Event()
+
+                keep_alive_task = asyncio.create_task(keep_alive_generator(
+                    queue=queue,
+                    stop_event=stop_event
+                ))
+                
+                data_task = asyncio.create_task(data_generator(
+                    request=request,
+                    job_id=job_id,
+                    created_at=created_at,
+                    queue=queue,
+                    stop_event=stop_event,
+                ))
                 try:
-                    queue = asyncio.Queue()
-                    stop_event = asyncio.Event()
-
-                    keep_alive_task = asyncio.create_task(keep_alive_generator(
-                        queue=queue,
-                        stop_event=stop_event
-                    ))
-                    
-                    data_task = asyncio.create_task(data_generator(
-                        request=request,
-                        job_id=job_id,
-                        created_at=created_at,
-                        queue=queue,
-                        stop_event=stop_event,
-                    ))
-
                     while not stop_event.is_set():
                         event = await queue.get()
                         yield event
