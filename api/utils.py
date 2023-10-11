@@ -39,6 +39,8 @@ class CustomPlotlyJSONEncoder(PlotlyJSONEncoder):
     def default(self, obj):
         if isinstance(obj, pd.Period):
             return obj.to_timestamp().isoformat()
+        elif isinstance(obj, pd.Interval):
+            return str(obj)
         return super(CustomPlotlyJSONEncoder, self).default(obj)
 
 

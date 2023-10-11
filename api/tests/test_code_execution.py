@@ -1,11 +1,8 @@
 import json
-from typing import List, Tuple, Union
-import asyncio
 
 import pandas as pd
+import plotly.graph_objects as go
 import pytest
-from typeguard import check_type
-from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
 
 from api import utils
 from api.chartgpt import execute_python_code
@@ -178,7 +175,7 @@ answer_question(df_sample)
 
 
 @pytest.mark.asyncio
-async def test_utils_period_encoder():
+async def test_utils_json_encoder_period():
     code = """
 import pandas as pd
 import plotly.express as px
@@ -218,6 +215,35 @@ answer_question(df)
     df["date_periods"] = df["date"].dt.to_period("M")
     # df = utils.convert_period_dtype_to_timestamp(df)
     df.to_json(orient="records", default_handler=str)
+
+
+@pytest.mark.asyncio
+async def test_utils_json_encoder_interval():
+    code = """
+import pandas as pd
+import plotly.express as px
+
+def answer_question(df: pd.DataFrame):
+    fig = px.bar(df, x='x', y='y')
+    return fig
+"""
+    data = {
+        'x':[pd.Interval(0, 1, closed='right')],
+        'y':[1]
+    }
+    df = pd.DataFrame(data)
+    result = await execute_python_code(
+        code,
+        docstring="",
+        imports=CODE_GENERATION_IMPORTS,
+        local_variables={"df": df},
+        config=config,
+    )
+    assert result.error is None
+    assert result.result is not None
+    fig_json_string = json.dumps(result.result, cls=utils.CustomPlotlyJSONEncoder)
+    fig_json = json.loads(fig_json_string)
+    _ = go.Figure(fig_json)
 
 
 @pytest.mark.asyncio
