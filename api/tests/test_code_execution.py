@@ -228,8 +228,8 @@ def answer_question(df: pd.DataFrame):
     return fig
 """
     data = {
-        'x':[pd.Interval(0, 1, closed='right')],
-        'y':[1]
+        'x': [pd.Interval(0, 1, closed='right')],
+        'y': [1]
     }
     df = pd.DataFrame(data)
     result = await execute_python_code(
