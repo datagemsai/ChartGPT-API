@@ -230,21 +230,24 @@ async def openai_chat_completion(
 
 
 def extract_sql_query_generation_response_data(response):
-    message = response["choices"][0]["message"]
-    function_name = message["function_call"]["name"]
+    choice = response["choices"][0]
+    finish_reason = choice["finish_reason"]
+
+    if finish_reason == "length":
+        raise ContextLengthError("The LLM context is too long.")
+
+    message = choice["message"]
+    function_call = message["function_call"]
+    function_name = function_call["name"]
 
     try:
         if function_name == "respond_to_user":
             return extract_respond_to_user_data(response)
         else:
-            finish_reason = response["choices"][0]["finish_reason"]
+            raw_function_args = function_call["arguments"]
             function_args = json.loads(
-                str(message["function_call"]["arguments"]), strict=False
+                str(raw_function_args), strict=False
             )
-
-            if finish_reason == "length":
-                raise ContextLengthError("The LLM context is too long.")
-
             return message, function_args.get("description"), function_args.get("query")
     except Exception as exc:
         logger.exception("Failed to extract SQL query generation response data from response: %s", response)
@@ -426,21 +429,26 @@ def extract_respond_to_user_data(response):
 
 
 def extract_code_generation_response_data(response):
-    message = response["choices"][0]["message"]
-    function_name = message["function_call"]["name"]
+    choice = response["choices"][0]
+    finish_reason = choice["finish_reason"]
+
+    if finish_reason == "length":
+        raise ContextLengthError("The LLM context is too long.")
+
+    message = choice["message"]
+    function_call = message["function_call"]
+    function_name = function_call["name"]
 
     try:
         if function_name == "respond_to_user":
             return extract_respond_to_user_data(response)
         else:
-            finish_reason = response["choices"][0]["finish_reason"]
+            raw_function_args = function_call["arguments"]
+            # Replace """ with "
+            raw_function_args = raw_function_args.replace('"""', '"')
             function_args = json.loads(
-                str(message["function_call"]["arguments"]), strict=False
+                str(raw_function_args), strict=False
             )
-
-            if finish_reason == "length":
-                raise ContextLengthError("The LLM context is too long.")
-
             return message, function_args.get("docstring"), function_args.get("code")
     except Exception as exc:
         logger.exception("Failed to extract code generation response data from response: %s", response)
