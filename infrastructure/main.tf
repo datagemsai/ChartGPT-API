@@ -71,15 +71,6 @@ module "secret-manager" {
 
 data "google_client_config" "default" {}
 
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "3.0.2"
-    }
-  }
-}
-
 provider "docker" {
   registry_auth {
     address  = "europe-west3-docker.pkg.dev"

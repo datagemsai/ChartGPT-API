@@ -1,0 +1,52 @@
+steps:
+- id: 'install'
+  name: python
+  entrypoint: pip
+  args: ['install', '-r', 'requirements.txt', '--user']
+  waitFor: ['-']
+
+- id: 'test'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args: ['-c', 'python -m pytest api']
+  waitFor: ['install']
+
+- id: 'pull'
+  name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull ${_IMAGE_URL}:latest || exit 0']
+  waitFor: ['test']
+
+- id: 'build'
+  name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '-t',
+    '${_IMAGE_URL}:${SHORT_SHA}',
+    '--cache-from',
+    '${_IMAGE_URL}:latest',
+    '-f',
+    'api/Dockerfile',
+    '.'
+  ]
+  waitFor: ['test', 'pull']
+
+- id: 'tag'
+  name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'tag',
+    '${_IMAGE_URL}:${SHORT_SHA}',
+    '${_IMAGE_URL}:latest'
+  ]
+  waitFor: ['build']
+
+images:
+- '${_IMAGE_URL}:${SHORT_SHA}'
+- '${_IMAGE_URL}:latest'
+substitutions:
+  _DOCKER_REGISTRY: 'europe-west3-docker.pkg.dev'
+  _IMAGE_NAME: 'chartgpt-api'
+  _IMAGE_URL: '${_DOCKER_REGISTRY}/${PROJECT_ID}/${PROJECT_ID}/${_IMAGE_NAME}'
+  _IMAGE_TAG: 'latest'
+options:
+  dynamicSubstitutions: true
