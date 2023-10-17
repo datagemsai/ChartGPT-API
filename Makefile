@@ -137,4 +137,3 @@ terraform_deploy_production: project_production
 
 # deploy_app_staging:
 # 	gcloud app deploy --project=chartgpt-staging app_staging.yaml
-
