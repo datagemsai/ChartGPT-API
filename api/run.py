@@ -328,6 +328,13 @@ async def ask_chartgpt(
             )
             log_response(response)
             return response
+    except asyncio.exceptions.CancelledError:
+        message = "Could not complete analysis: request cancelled"
+        logger.error(message)
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": message},
+        )
     except ContextLengthError:
         message = "Could not complete analysis: ran out of context"
         logger.error(message)
