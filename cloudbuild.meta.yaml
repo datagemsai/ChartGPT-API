@@ -1,0 +1,82 @@
+steps:
+- id: 'branch name'
+  name: 'alpine'
+  entrypoint: 'sh'  
+  args: 
+  - '-c'
+  - | 
+      echo "***********************"
+      echo "$BRANCH_NAME"
+      echo "***********************"
+
+# - id: 'build app'
+#   name: 'gcr.io/cloud-builders/gcloud'
+#   args: ['builds', 'submit', '.', '--config cloudbuild.app.yaml']
+#   waitFor: ['-'] # start in parallel
+
+- id: 'build api'
+  name: 'gcr.io/cloud-builders/gcloud'
+  args: ['builds', 'submit', '.', '--config cloudbuild.api.yaml']
+  waitFor: ['-'] # start in parallel
+
+- id: 'tf init'
+  name: 'hashicorp/terraform:1.0.0'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+      cd infrastructure
+      for workspace in $(terraform workspace list | sed -e 's/*//g' -e 's/ //g')
+      do
+        echo "*************** TERRAFORM INIT ******************"
+        echo "******* Switching to workspace: ${workspace} ********"
+        echo "*************************************************"
+        terraform workspace select ${workspace} || exit 1
+        terraform init || exit 1
+      done
+
+# [START tf-plan]
+# - id: 'tf plan'
+#   name: 'hashicorp/terraform:1.0.0'
+#   entrypoint: 'sh'
+#   args: 
+#   - '-c'
+#   - | 
+#       if [ -d "environments/$BRANCH_NAME/" ]; then
+#         cd environments/$BRANCH_NAME
+#         echo pwd
+#         # terraform plan
+#       else
+#         for dir in environments/*/
+#         do 
+#           cd ${dir}
+#           echo pwd
+#           # env=${dir%*/}
+#           # env=${env#*/}  
+#           # echo ""
+#           # echo "*************** TERRAFOM PLAN ******************"
+#           # echo "******* At environment: ${env} ********"
+#           # echo "*************************************************"
+#           # terraform plan || exit 1
+#           # cd ../../
+#         done
+#       fi 
+# [END tf-plan]
+
+# [START tf-apply]
+# - id: 'tf apply'
+#   name: 'hashicorp/terraform:1.0.0'
+#   entrypoint: 'sh'
+#   args: 
+#   - '-c'
+#   - | 
+#       if [ -d "environments/$BRANCH_NAME/" ]; then
+#         cd environments/$BRANCH_NAME
+#         echo pwd 
+#         # terraform apply -auto-approve
+#       else
+#         echo "***************************** SKIPPING APPLYING *******************************"
+#         echo "Branch '$BRANCH_NAME' does not represent an official environment."
+#         echo "*******************************************************************************"
+#       fi
+# [END tf-apply]      
