@@ -11,6 +11,7 @@ variable "discord_docker_image" {}
 variable "secrets" {
   type = map(string)
 }
+variable "service_account_email" {}
 
 locals {
   export_secrets = join("\n", [
@@ -46,6 +47,7 @@ resource "google_compute_instance" "chartgpt-bots" {
   can_ip_forward      = false
   deletion_protection = false
   enable_display      = false
+  allow_stopping_for_update = true
 
   labels = {
     goog-ec-src = "vm_add-tf"
@@ -67,7 +69,7 @@ resource "google_compute_instance" "chartgpt-bots" {
   }
 
   service_account {
-    email  = "chartgpt-app-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
+    email  = var.service_account_email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
