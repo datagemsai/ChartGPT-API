@@ -50,6 +50,11 @@ data "external" "git" {
   ]
 }
 
+module "google_cloud_service_accounts" {
+  source = "./google_cloud/service_accounts"
+  project_id = var.project_id
+}
+
 # Create secrets in Google Secret Manager
 module "secret-manager" {
   source     = "GoogleCloudPlatform/secret-manager/google"
@@ -118,7 +123,12 @@ module "chartgpt_api" {
   deployment      = var.deployment
   secrets         = local.secrets
   docker_image    = local.chartgpt_api_image_latest
-  depends_on      = [google_project_service.run_api, module.secret-manager]
+  service_account_email = module.google_cloud_service_accounts.chartgpt_api_service_account_email
+  depends_on      = [
+    google_project_service.run_api,
+    module.secret-manager,
+    module.google_cloud_service_accounts
+  ]
 }
 
 module "chartgpt_app" {
@@ -129,7 +139,12 @@ module "chartgpt_app" {
   deployment      = var.deployment
   secrets         = local.secrets
   docker_image    = local.chartgpt_app_image_latest
-  depends_on      = [google_project_service.run_api, module.secret-manager]
+  service_account_email = module.google_cloud_service_accounts.chartgpt_api_service_account_email
+  depends_on      = [
+    google_project_service.run_api,
+    module.secret-manager,
+    module.google_cloud_service_accounts
+  ]
 }
 
 module "caddy" {
@@ -141,7 +156,10 @@ module "caddy" {
   deployment      = var.deployment
   secrets         = local.secrets
   docker_image    = local.caddy_image_latest
-  depends_on      = [google_project_service.run_api, module.secret-manager]
+  depends_on      = [
+    google_project_service.run_api,
+    module.secret-manager
+  ]
 }
 
 module "bots" {
@@ -154,5 +172,10 @@ module "bots" {
   slack_docker_image    = local.chartgpt_slack_bot_image_latest
   telegram_docker_image = local.chartgpt_telegram_bot_image_latest
   discord_docker_image  = local.chartgpt_discord_bot_image_latest
-  depends_on            = [google_project_service.run_api, module.secret-manager]
+  service_account_email = module.google_cloud_service_accounts.chartgpt_api_service_account_email
+  depends_on            = [
+    google_project_service.run_api,
+    module.secret-manager,
+    module.google_cloud_service_accounts
+  ]
 }

@@ -6,6 +6,7 @@ variable "docker_image" {}
 variable "secrets" {
   type = map(string)
 }
+variable "service_account_email" {}
 
 resource "google_cloud_run_v2_service" "chartgpt_api_service" {
   project  = var.project_id
@@ -45,7 +46,7 @@ resource "google_cloud_run_v2_service" "chartgpt_api_service" {
         }
       }
     }
-    service_account = "chartgpt-app-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
+    service_account = var.service_account_email
   }
 
   traffic {
