@@ -191,12 +191,22 @@ def get_tables_summary(
             table_ref = client.dataset(dataset_id, project=project).table(table_id)
             table = client.get_table(table_ref)
 
+            # Fetch 3 random records for sample data
+            query = f"""
+            SELECT * FROM `{project}.{dataset_id}.{table_id}` TABLESAMPLE SYSTEM (20 PERCENT)
+            WHERE rand() < 0.1
+            LIMIT 3
+            """
+            query_job = client.query(query)
+            sample_records = [row for row in query_job]
+
             # SQL-like CREATE TABLE statement
-            create_table_statement = (
-                f"CREATE TABLE `{project}.{dataset_id}.{table_id}` (\n"
-            )
+            create_table_statement = f"CREATE TABLE `{project}.{dataset_id}.{table_id}` (\n"
 
             for field in table.schema:
+                samples = [str(record[field.name]) for record in sample_records]
+                samples_text = ', '.join(samples) if samples else "N/A"
+                
                 create_table_statement += f'"{field.name}" {field.field_type}'
 
                 if field.mode == "REQUIRED":
@@ -204,7 +214,9 @@ def get_tables_summary(
 
                 create_table_statement += ","
                 if field.description:
-                    create_table_statement += f" - {field.description}"
+                    create_table_statement += f" - {field.description} (Samples: {samples_text})"
+                else:
+                    create_table_statement += f" (Samples: {samples_text})"
                 create_table_statement += "\n"
 
             # Here we are not adding primary and foreign keys, but they can be added based on the dataset schema.

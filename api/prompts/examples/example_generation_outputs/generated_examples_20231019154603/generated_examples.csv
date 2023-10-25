@@ -1,0 +1,175 @@
+passed,data_source_url,question,response_time,number_of_attempts,number_of_outputs,number_of_errors,sql_query,sample_rows,python_code
+True,bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow,Plot the average APR for the NFTfi protocol in the past 6 months.,46,0,5,0,"SELECT DATE(block_timestamp) as date, AVG(apr) as average_apr FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)) AND LOWER(protocol) = LOWER('NFTfi') GROUP BY date ORDER BY date","[{""date"":1681862400000,""average_apr"":0.4523300077},{""date"":1681948800000,""average_apr"":0.4704692857},{""date"":1682035200000,""average_apr"":0.5674839765},{""date"":1682121600000,""average_apr"":0.3890310498},{""date"":1682208000000,""average_apr"":0.4669262911},{""date"":1697241600000,""average_apr"":0.4149312358},{""date"":1697328000000,""average_apr"":0.5541394478},{""date"":1697414400000,""average_apr"":0.5688800543},{""date"":1697500800000,""average_apr"":0.793632438},{""date"":1697587200000,""average_apr"":0.9328511545}]","import plotly.express as px
+
+
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    fig = px.line(df, x='date', y='average_apr', title='Average APR for NFTfi protocol over the past 6 months')
+    return fig"
+True,bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow,Plot a bar chart of the USD lending volume for all protocols.,42,0,5,0,"SELECT protocol, SUM(amt_in_usd) as total_volume FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) GROUP BY protocol","[{""protocol"":""jpegd"",""total_volume"":582913.627648157},{""protocol"":""bend"",""total_volume"":3513167.9898027824},{""protocol"":""x2y2"",""total_volume"":9479314.6707341671},{""protocol"":""nftfi"",""total_volume"":24009613.5187098719},{""protocol"":""blend"",""total_volume"":1014601726.1251137257},{""protocol"":""bend"",""total_volume"":3513167.9898027824},{""protocol"":""x2y2"",""total_volume"":9479314.6707341671},{""protocol"":""nftfi"",""total_volume"":24009613.5187098719},{""protocol"":""blend"",""total_volume"":1014601726.1251137257},{""protocol"":""arcade"",""total_volume"":16069332.4317449033}]","
+import plotly
+import plotly.express as px
+import pandas as pd
+
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    fig = px.bar(df, x='protocol', y='total_volume', title='Total lending volume in USD for each protocol over the past 3 months')
+    return fig
+"
+True,bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow,Plot a stacked area chart of the USD lending volume for all protocols.,30,0,5,0,"SELECT DATE(block_timestamp) as date, protocol, SUM(amt_in_usd) as total_volume FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) GROUP BY date, protocol ORDER BY date","[{""date"":1689724800000,""protocol"":""bend"",""total_volume"":46923.6142455},{""date"":1689724800000,""protocol"":""nftfi"",""total_volume"":263038.035330147},{""date"":1689724800000,""protocol"":""blend"",""total_volume"":14818810.4884072468},{""date"":1689724800000,""protocol"":""x2y2"",""total_volume"":194791.519172634},{""date"":1689724800000,""protocol"":""arcade"",""total_volume"":115344.937545},{""date"":1697500800000,""protocol"":""x2y2"",""total_volume"":71042.9516759063},{""date"":1697500800000,""protocol"":""blend"",""total_volume"":9550218.413445238},{""date"":1697587200000,""protocol"":""nftfi"",""total_volume"":9954.1976769997},{""date"":1697587200000,""protocol"":""x2y2"",""total_volume"":33390.8836390437},{""date"":1697587200000,""protocol"":""blend"",""total_volume"":7595427.8740172163}]","def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    df_pivot = df.pivot(index='date', columns='protocol', values='total_volume').fillna(0)
+    fig = px.area(df_pivot, facet_col='protocol', facet_col_wrap=2)
+    return fig"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,What is the average sale duration of furnished vs. unfurnished properties over time?,39,0,5,0,"SELECT `list_date`, `furnished`, AVG(`sale_duration`) as avg_sale_duration FROM `chartgpt-staging.real_estate.usa_real_estate_listings_synthetic` WHERE `list_date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) GROUP BY `list_date`, `furnished` ORDER BY `list_date`","[{""list_date"":1689724800000,""furnished"":false,""avg_sale_duration"":203.8888888889},{""list_date"":1689724800000,""furnished"":true,""avg_sale_duration"":128.1},{""list_date"":1689811200000,""furnished"":true,""avg_sale_duration"":127.0},{""list_date"":1689811200000,""furnished"":false,""avg_sale_duration"":203.1666666667},{""list_date"":1689897600000,""furnished"":false,""avg_sale_duration"":234.8},{""list_date"":1696204800000,""furnished"":true,""avg_sale_duration"":72.0},{""list_date"":1696291200000,""furnished"":false,""avg_sale_duration"":175.1666666667},{""list_date"":1696291200000,""furnished"":true,""avg_sale_duration"":129.0},{""list_date"":1696377600000,""furnished"":false,""avg_sale_duration"":156.5},{""list_date"":1696377600000,""furnished"":true,""avg_sale_duration"":151.4}]","import plotly.express as px
+
+
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    fig = px.line(df, x='list_date', y='avg_sale_duration', color='furnished', title='Average Sale Duration of Furnished vs. Unfurnished Properties Over Time')
+    return fig"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,Which states offer the best value for money in terms of house size? Show this on a map.,54,0,5,0,"SELECT `state`, AVG(`price`/`house_size`) as avg_price_per_sqft FROM `chartgpt-staging.real_estate.usa_real_estate_listings_synthetic` WHERE `list_date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) AND `house_size` > 0 GROUP BY `state`","[{""state"":""PA"",""avg_price_per_sqft"":212.5271878271},{""state"":""TX"",""avg_price_per_sqft"":220.8601266895},{""state"":""NY"",""avg_price_per_sqft"":220.3357663936},{""state"":""CA"",""avg_price_per_sqft"":217.9921964812},{""state"":""IL"",""avg_price_per_sqft"":222.2762296158},{""state"":""TX"",""avg_price_per_sqft"":220.8601266895},{""state"":""NY"",""avg_price_per_sqft"":220.3357663936},{""state"":""CA"",""avg_price_per_sqft"":217.9921964812},{""state"":""IL"",""avg_price_per_sqft"":222.2762296158},{""state"":""AZ"",""avg_price_per_sqft"":219.2093973115}]","import plotly.graph_objs as go
+
+
+def answer_question(df: pd.DataFrame) -> go.Figure:
+    fig = go.Figure(data=go.Choropleth(
+        locations=df['state'], # Spatial coordinates
+        z = df['avg_price_per_sqft'].astype(float), # Data to be color-coded
+        locationmode = 'USA-states', # set of locations match entries in `locations`
+        colorscale = 'Reds',
+        colorbar_title = ""USD per sq ft"",
+    ))
+
+    fig.update_layout(
+        title_text = 'Average Price per Square Foot by State',
+        geo_scope='usa', # limite map scope to USA
+    )
+
+    return fig"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,What is the most common feedback term for houses in New York?,47,1,5,1,SELECT `feedback` FROM `chartgpt-staging.real_estate.usa_real_estate_listings_synthetic` WHERE LOWER(`city`) = LOWER('New York'),"[{""feedback"":null},{""feedback"":null},{""feedback"":null},{""feedback"":null},{""feedback"":null},{""feedback"":""Loved the furnishings""},{""feedback"":""Loved the furnishings""},{""feedback"":""Loved the furnishings""},{""feedback"":""Loved the furnishings""},{""feedback"":""Loved the furnishings""}]","
+import pandas as pd
+from collections import Counter
+import re
+
+def answer_question(df: pd.DataFrame) -> str:
+    # Remove None values
+    df = df.dropna()
+    
+    # Concatenate all feedback into one string
+    all_feedback = ' '.join(df['feedback'].tolist())
+    
+    # Split the string into individual words
+    words = re.findall(r'\w+', all_feedback.lower())
+    
+    # Count the frequency of each word
+    word_counts = Counter(words)
+    
+    # Find the most common word
+    most_common_word = word_counts.most_common(1)[0][0]
+    
+    return most_common_word
+"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,Which cities had the highest USD sale volume in 2022?,43,0,5,0,"SELECT `city`, SUM(`price`) as sale_volume FROM `real_estate.usa_real_estate_listings_synthetic` WHERE EXTRACT(YEAR FROM `list_date`) = 2022 AND `status` = 'Sold' GROUP BY `city` ORDER BY sale_volume DESC LIMIT 10","[{""city"":""San Antonio"",""sale_volume"":78019501},{""city"":""San Jose"",""sale_volume"":77418646},{""city"":""Philadelphia"",""sale_volume"":63022935},{""city"":""Houston"",""sale_volume"":62363365},{""city"":""San Diego"",""sale_volume"":62159145},{""city"":""Phoenix"",""sale_volume"":61924199},{""city"":""Los Angeles"",""sale_volume"":61357459},{""city"":""Dallas"",""sale_volume"":58634132},{""city"":""Chicago"",""sale_volume"":58356185},{""city"":""New York"",""sale_volume"":45359521}]","def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    top_cities = df.sort_values('sale_volume', ascending=False).head(10)
+    return top_cities"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,"For properties that have had more than 10 viewings, how long, on average, does it take to sell them?",24,0,5,0,SELECT AVG(`sale_duration`) as average_sale_duration FROM `real_estate.usa_real_estate_listings_synthetic` WHERE `physical_viewings` > 10,"[{""average_sale_duration"":182.1201599327},{""average_sale_duration"":182.1201599327}]","def answer_question(df: pd.DataFrame) -> float:
+    average_sale_duration = df['average_sale_duration'].values[0]
+    return average_sale_duration"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,What percentage of website visits for properties with 3 bedrooms and above convert into actual property viewings?,29,0,5,0,"SELECT SUM(`web_visits`) as total_web_visits, SUM(`physical_viewings`) as total_physical_viewings FROM `real_estate.usa_real_estate_listings_synthetic` WHERE `bed` >= 3","[{""total_web_visits"":3004924,""total_physical_viewings"":591438},{""total_web_visits"":3004924,""total_physical_viewings"":591438}]","def answer_question(df: pd.DataFrame) -> float:
+    conversion_rate = df['total_physical_viewings'][0] / df['total_web_visits'][0] * 100
+    return conversion_rate"
+True,bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic,What combination of bedrooms and bathrooms had the highest average web visits in October 2022 in Los Angeles?,47,0,5,0,"SELECT `bed`, `bath`, AVG(`web_visits`) as average_web_visits FROM `real_estate.usa_real_estate_listings_synthetic` WHERE `city` = 'Los Angeles' AND `list_date` >= '2022-10-01' AND `list_date` < '2022-11-01' GROUP BY `bed`, `bath` ORDER BY average_web_visits DESC LIMIT 1","[{""bed"":5,""bath"":3,""average_web_visits"":707.75},{""bed"":5,""bath"":3,""average_web_visits"":707.75}]","
+import pandas as pd
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    return df.head(1)
+"
+True,bigquery/chartgpt-staging/aviation/airport_operations,Plot average Taxi times (before and after) for each gate,88,1,5,1,"SELECT `Gate_Number`, AVG(`Taxi_Times_Before`) as avg_taxi_before, AVG(`Taxi_Times_After`) as avg_taxi_after FROM `chartgpt-staging.aviation.airport_operations` WHERE `Date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) GROUP BY `Gate_Number`","[{""Gate_Number"":1,""avg_taxi_before"":9.7300815962,""avg_taxi_after"":8.788900239},{""Gate_Number"":3,""avg_taxi_before"":10.0762431591,""avg_taxi_after"":9.0704497923},{""Gate_Number"":4,""avg_taxi_before"":10.1944289743,""avg_taxi_after"":8.775520686},{""Gate_Number"":5,""avg_taxi_before"":9.6915191114,""avg_taxi_after"":8.8350111689},{""Gate_Number"":6,""avg_taxi_before"":10.289786791,""avg_taxi_after"":9.3843793744},{""Gate_Number"":8,""avg_taxi_before"":9.8885902689,""avg_taxi_after"":9.0817638415},{""Gate_Number"":9,""avg_taxi_before"":9.7917154678,""avg_taxi_after"":9.0786724935},{""Gate_Number"":10,""avg_taxi_before"":10.1458435131,""avg_taxi_after"":9.2059644265},{""Gate_Number"":2,""avg_taxi_before"":9.8326715914,""avg_taxi_after"":9.0628058378},{""Gate_Number"":7,""avg_taxi_before"":9.6669407894,""avg_taxi_after"":9.4431874871}]","
+import plotly.graph_objs as go
+
+def answer_question(df: pd.DataFrame) -> go.Figure:
+    # Sort dataframe by Gate_Number
+    df = df.sort_values('Gate_Number')
+
+    # Create a line for average taxi times before
+    trace_before = go.Scatter(
+        x = df['Gate_Number'],
+        y = df['avg_taxi_before'],
+        mode = 'lines',
+        name = 'Average Taxi Times Before'
+    )
+
+    # Create a line for average taxi times after
+    trace_after = go.Scatter(
+        x = df['Gate_Number'],
+        y = df['avg_taxi_after'],
+        mode = 'lines',
+        name = 'Average Taxi Times After'
+    )
+
+    # Define the layout
+    layout = go.Layout(
+        title = 'Average Taxi Times (Before and After) for Each Gate',
+        xaxis = dict(title = 'Gate Number'),
+        yaxis = dict(title = 'Average Taxi Time')
+    )
+
+    # Define the figure
+    fig = go.Figure(data = [trace_before, trace_after], layout = layout)
+    return fig
+"
+True,bigquery/chartgpt-staging/aviation/airport_operations,Plot the passenger arrivals by terminal over time,41,0,5,0,"SELECT `Date`, `Terminal`, `Passenger_Arrivals` FROM `chartgpt-staging.aviation.airport_operations` WHERE `Date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) ORDER BY `Date`","[{""Date"":1689724800000,""Terminal"":""B"",""Passenger_Arrivals"":122},{""Date"":1689724800000,""Terminal"":""A"",""Passenger_Arrivals"":136},{""Date"":1689724800000,""Terminal"":""A"",""Passenger_Arrivals"":144},{""Date"":1689724800000,""Terminal"":""A"",""Passenger_Arrivals"":95},{""Date"":1689724800000,""Terminal"":""B"",""Passenger_Arrivals"":118},{""Date"":1696464000000,""Terminal"":""B"",""Passenger_Arrivals"":120},{""Date"":1696464000000,""Terminal"":""B"",""Passenger_Arrivals"":176},{""Date"":1696464000000,""Terminal"":""A"",""Passenger_Arrivals"":199},{""Date"":1696464000000,""Terminal"":""A"",""Passenger_Arrivals"":97},{""Date"":1696464000000,""Terminal"":""A"",""Passenger_Arrivals"":63}]","def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    df_grouped = df.groupby(['Date', 'Terminal']).sum().reset_index()
+    fig = px.line(df_grouped, x='Date', y='Passenger_Arrivals', color='Terminal', title='Passenger Arrivals by Terminal Over Time')
+    return fig"
+True,bigquery/chartgpt-staging/aviation/airport_operations,"Given 2022 seasonal fluctuations, what volume of baggage can we anticipate between December 15th and December 31st?",71,0,5,0,"SELECT `Date`, `Total_Baggage_Volume` FROM `chartgpt-staging.aviation.airport_operations` WHERE EXTRACT(MONTH FROM `Date`) = 12 AND `Date` < DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR) ORDER BY `Date`","[{""Date"":1638316800000,""Total_Baggage_Volume"":565},{""Date"":1638316800000,""Total_Baggage_Volume"":582},{""Date"":1638316800000,""Total_Baggage_Volume"":640},{""Date"":1638316800000,""Total_Baggage_Volume"":644},{""Date"":1638316800000,""Total_Baggage_Volume"":789},{""Date"":1640908800000,""Total_Baggage_Volume"":988},{""Date"":1640908800000,""Total_Baggage_Volume"":751},{""Date"":1640908800000,""Total_Baggage_Volume"":625},{""Date"":1640908800000,""Total_Baggage_Volume"":637},{""Date"":1640908800000,""Total_Baggage_Volume"":521}]","def answer_question(df: pd.DataFrame) -> float:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Year'] = df['Date'].dt.year
+    df['Day'] = df['Date'].dt.day
+    df_grouped = df.groupby(['Year', 'Day'])['Total_Baggage_Volume'].mean().reset_index()
+    df_dec_15 = df_grouped[df_grouped['Day'] == 15]
+    mean_baggage_volume_dec_15 = df_dec_15['Total_Baggage_Volume'].mean()
+    return mean_baggage_volume_dec_15"
+True,bigquery/chartgpt-staging/aviation/airport_operations,Which gates had on average the largest volume of baggage in September?,34,0,5,0,"SELECT `Gate_Number`, AVG(`Total_Baggage_Volume`) as average_baggage_volume FROM `chartgpt-staging.aviation.airport_operations` WHERE EXTRACT(MONTH FROM `Date`) = 9 GROUP BY `Gate_Number` ORDER BY average_baggage_volume DESC","[{""Gate_Number"":6,""average_baggage_volume"":776.2222222222},{""Gate_Number"":4,""average_baggage_volume"":766.1333333333},{""Gate_Number"":7,""average_baggage_volume"":763.2111111111},{""Gate_Number"":9,""average_baggage_volume"":763.1777777778},{""Gate_Number"":5,""average_baggage_volume"":762.4333333333},{""Gate_Number"":2,""average_baggage_volume"":756.5333333333},{""Gate_Number"":3,""average_baggage_volume"":748.6111111111},{""Gate_Number"":1,""average_baggage_volume"":734.6},{""Gate_Number"":10,""average_baggage_volume"":734.0333333333},{""Gate_Number"":8,""average_baggage_volume"":710.3888888889}]","def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    sorted_df = df.sort_values(by='average_baggage_volume', ascending=False)
+    top_5_gates = sorted_df.head(5)
+    return top_5_gates"
+True,bigquery/chartgpt-staging/aviation/airport_operations,"From our historical gate usage data, which gates are most frequently delayed in turning over for incoming flights during morning rush hours (6:30 am - 9:30 am)?",34,0,5,0,"SELECT `Gate_Number`, COUNT(`Gate_Turnover_Delay`) as delay_count FROM `chartgpt-staging.aviation.airport_operations` WHERE `Date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) AND `Gate_Turnover_Delay` > 0 GROUP BY `Gate_Number` ORDER BY delay_count DESC LIMIT 100000;","[{""Gate_Number"":7,""delay_count"":79},{""Gate_Number"":2,""delay_count"":79},{""Gate_Number"":9,""delay_count"":78},{""Gate_Number"":4,""delay_count"":78},{""Gate_Number"":5,""delay_count"":78},{""Gate_Number"":8,""delay_count"":78},{""Gate_Number"":3,""delay_count"":78},{""Gate_Number"":10,""delay_count"":77},{""Gate_Number"":6,""delay_count"":77},{""Gate_Number"":1,""delay_count"":76}]","def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    top_5_delayed_gates = df.sort_values('delay_count', ascending=False).head(5)
+    return top_5_delayed_gates"
+True,bigquery/chartgpt-staging/aviation/airport_operations,"Given 2022 seasonal fluctuations, what volume of baggage can we anticipate between December 15th and December 31st?",57,0,5,0,"SELECT `Date`, `Total_Baggage_Volume` FROM `chartgpt-staging.aviation.airport_operations` WHERE EXTRACT(MONTH FROM `Date`) = 12 AND `Date` < DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR) ORDER BY `Date`","[{""Date"":1638316800000,""Total_Baggage_Volume"":565},{""Date"":1638316800000,""Total_Baggage_Volume"":582},{""Date"":1638316800000,""Total_Baggage_Volume"":640},{""Date"":1638316800000,""Total_Baggage_Volume"":644},{""Date"":1638316800000,""Total_Baggage_Volume"":789},{""Date"":1640908800000,""Total_Baggage_Volume"":988},{""Date"":1640908800000,""Total_Baggage_Volume"":751},{""Date"":1640908800000,""Total_Baggage_Volume"":625},{""Date"":1640908800000,""Total_Baggage_Volume"":637},{""Date"":1640908800000,""Total_Baggage_Volume"":521}]","import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> float:
+    # Convert 'Date' column to datetime format
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    # Filter data to only include records from December 15th to the end of the year
+    df = df[(df['Date'].dt.month == 12) & (df['Date'].dt.day >= 15)]
+
+    # Calculate average baggage volume for this period in previous years
+    avg_baggage_volume = df['Total_Baggage_Volume'].mean()
+
+    return avg_baggage_volume"
+False,bigquery/chartgpt-staging/finance/private_equity,Can you show me the month-over-month performance of Tech sector ETFs in my clients’ portfolios compared to the NASDAQ index over the past year?,262,11,5,11,"SELECT FORMAT_TIMESTAMP('%Y-%m', `date`) as month, AVG(`performance`) as average_performance, AVG(`benchmark_performance`) as average_benchmark_performance FROM `finance.private_equity` WHERE `date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) AND LOWER(`asset_class`) = LOWER('ETF') AND LOWER(`sector`) = LOWER('Tech') GROUP BY month ORDER BY month",[],"def answer_question(df: pd.DataFrame) -> Union[plotly.graph_objs._figure.Figure, str]:
+    if df.empty:
+        return 'DataFrame is empty'
+    else:
+        fig = px.line(df, x='month', y=['average_performance', 'average_benchmark_performance'], title='Month-over-Month Performance of Tech Sector ETFs')
+        return fig"
+False,bigquery/chartgpt-staging/finance/private_equity,"Given the recent hikes in interest rates, how have the bond holdings in my portfolios been impacted compared to benchmark Treasury yields?",170,10,5,10,"SELECT `client_id`, `date`, `performance`, `sensitivity_to_news` FROM `finance.private_equity` WHERE LOWER(`asset_class`) = LOWER('Bonds') AND `date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)",[],"def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    # Group by client_id and calculate the mean of performance and sensitivity_to_news
+    result_df = df.groupby('client_id')[['performance', 'sensitivity_to_news']].mean()
+    return result_df"
+True,bigquery/chartgpt-staging/finance/private_equity,"From our internal data, which asset class has consistently outperformed the S&P 500 for clients in the 45-55 age bracket over the last five years?",39,0,5,0,"SELECT `asset_class`, AVG(`performance`) as avg_performance FROM `finance.private_equity` WHERE `date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) AND `performance` > `benchmark_performance` GROUP BY `asset_class` ORDER BY avg_performance DESC LIMIT 100000;",[],"def answer_question(df: pd.DataFrame) -> Union[str, pd.DataFrame]:
+    if df.empty:
+        return 'No data to analyze.'
+    else:
+        return df.loc[df['avg_performance'].idxmax(), 'asset_class']"
+True,bigquery/chartgpt-staging/finance/private_equity,"Considering recent global macroeconomic shifts, how did emerging market equities in our portfolios perform relative to the MSCI Emerging Markets Index last quarter?",105,5,5,5,"SELECT `date`, AVG(`performance`) as average_performance FROM `finance.private_equity` WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) AND LOWER(`asset_class`) = LOWER('equity') AND LOWER(`geography`) LIKE '%emerging%' GROUP BY `date` ORDER BY `date`",[],"import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return 'DataFrame is empty'
+    else:
+        return df.describe()"
+True,bigquery/chartgpt-staging/finance/private_equity,"Which clients had the highest exposure to the Energy sector during the last oil price crash, and how did their portfolios fare against the broader market?",36,0,5,0,"SELECT `client_id`, `sector`, `performance` FROM `finance.private_equity` WHERE LOWER(`sector`) = LOWER('Energy') AND `date` BETWEEN DATE('2020-01-01') AND DATE('2020-12-31') ORDER BY `performance` DESC LIMIT 100000;","[{""client_id"":34,""sector"":""Energy"",""performance"":9.999892185},{""client_id"":58,""sector"":""Energy"",""performance"":9.998543556},{""client_id"":14,""sector"":""Energy"",""performance"":9.997522078},{""client_id"":7,""sector"":""Energy"",""performance"":9.970711731},{""client_id"":97,""sector"":""Energy"",""performance"":9.953185367},{""client_id"":27,""sector"":""Energy"",""performance"":-9.912104417},{""client_id"":45,""sector"":""Energy"",""performance"":-9.925634668},{""client_id"":47,""sector"":""Energy"",""performance"":-9.976464156},{""client_id"":72,""sector"":""Energy"",""performance"":-9.984724945},{""client_id"":53,""sector"":""Energy"",""performance"":-9.999830141}]","def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    top_clients = df.sort_values('performance', ascending=False).head(10)
+    return top_clients"

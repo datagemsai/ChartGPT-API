@@ -1,34 +1,98 @@
 # flake8: noqa
 
+from dataclasses import dataclass
+from typing import Dict, List
+import toml
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 import inspect
 from api.types import Role
 import toml
 
 
-example_query_responses = toml.load("api/example_query_responses.toml")
-query_responses = [(item['query'], item['sql'], item['code']) for item in example_query_responses['query_responses']]
-EXAMPLE_QUERY_RESPONSE_MESSAGES = [
-    (
-        {
-            "role": Role.SYSTEM.value,
-            "name": "example_user",
-            "content": inspect.cleandoc(example_user_query),
-        },
-        {
-            "role": Role.SYSTEM.value,
-            "name": "example_sql_assistant",
-            "content": inspect.cleandoc(example_sql_response),
-        },
-        {
-            "role": Role.SYSTEM.value,
-            "name": "example_code_assistant",
-            "content": inspect.cleandoc(example_code_response),
-        },
-    ) for example_user_query, example_sql_response, example_code_response in query_responses
+@dataclass
+class Example:
+    data_source_url: str
+    query: str
+    sql: str
+    code: str
+
+
+examples_generated = [
+    Example(**item)
+    for item in toml.load("api/prompts/examples/examples_generated.toml")['examples']
 ]
-EXAMPLE_QUERY_RESPONSE_MESSAGES = [
-    item for sublist in EXAMPLE_QUERY_RESPONSE_MESSAGES for item in sublist
-]
+
+
+def get_relevant_examples(query, data_source_url=None, examples=examples_generated) -> List[Example]:
+    """
+    Get top 5 relevant examples for a specific data source,
+    or from all examples if no data source is specified,
+    using cosine similarity of question.
+    """
+    # If data source is specified, filter examples by it
+    if data_source_url:
+        filtered_examples = [example for example in examples if not example.data_source_url or example.data_source_url == data_source_url]
+    
+    # If examples are empty after filtering, use all examples
+    if not filtered_examples:
+        filtered_examples = examples
+
+    # Extract queries from examples
+    example_queries = [example.query for example in filtered_examples]
+    
+    # Combine the new query with example queries
+    texts = example_queries + [query]
+    
+    # Convert the queries to TF-IDF vectors
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(texts)
+    
+    # Compute cosine similarity between the new query and each example
+    cosine_similarities = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1])
+    
+    # Get indices of the top 5 most similar examples
+    relevant_indices = cosine_similarities.argsort()[0][-5:][::-1]
+    
+    return [filtered_examples[i] for i in relevant_indices]
+
+
+def convert_examples_to_llm_messages(
+        examples: List[Example],
+        include_sql_query=True,
+        include_code=True
+    ) -> List[Dict]:
+    """
+    Convert a list of examples to a list of LLM messages.
+    """
+    messages = []
+    for example in examples:
+        messages.append(
+            {
+                "role": Role.SYSTEM.value,
+                "name": "example_user",
+                "content": inspect.cleandoc(example.query),
+            }
+        )
+        if include_sql_query:
+            messages.append(
+                {
+                    "role": Role.SYSTEM.value,
+                    "name": "example_sql_assistant",
+                    "content": inspect.cleandoc(example.sql),
+                }
+            )
+        if include_code:
+            messages.append(
+                {
+                    "role": Role.SYSTEM.value,
+                    "name": "example_code_assistant",
+                    "content": inspect.cleandoc(example.code),
+                }
+            )
+    return messages
+
 
 SQL_QUERY_GENERATION_PROMPT_TEMPLATE = """
 You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and Plotly. Your mission is to address a specific analytics question and visualize the findings. Follow these steps:
@@ -44,7 +108,8 @@ You are a Data Analyst specialized in GoogleSQL (BigQuery syntax), Pandas, and P
 - Use `LIKE` for case-insensitive substring matches: `LOWER(column_name) LIKE '%value%'`
 - If the result is empty, try `LIKE` with other variations of the value.
 - Always use a `LIMIT` clause if the result is large, unless more data is requested: `LIMIT 100000`
-- Always filter data for the last 3 months, unless a longer period is requested: `WHERE date >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))`, using the appropriate date column and data type. 
+- Always filter data for the last 3 months, unless a longer period is requested: `WHERE `date_column` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))`, using the appropriate date column and data type. 
+- If the filtered results are empty, try replacing `CURRENT_DATE()` with `(SELECT MAX(`date_column`) FROM `table_name`)`.
 
 # BigQuery Database Schema
 The GoogleSQL query should be constructed based on the following database schema:
