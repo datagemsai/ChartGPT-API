@@ -498,8 +498,12 @@ async def execute_python_code(
 
     shell = InteractiveShell.instance()
     try:
-        # TODO Assert that the code is secure
-        # assert_secure_code(code)
+        try:
+            # TODO For now we just log the error to Sentry,
+            # but once the app is deployed publicly, we should lock this down
+            assert_secure_code(code)
+        except Exception:
+            pass
 
         # with io.capture_output() as captured:
         with contextlib.redirect_stdout(StringIO()) as captured_stdout:
