@@ -52,11 +52,15 @@ from api.config import (
 from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError, PythonExecutionError, SQLValidationError
 from api.log import logger
-from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
-                         CODE_GENERATION_IMPORTS,
-                         CODE_GENERATION_PROMPT_TEMPLATE, EXAMPLE_QUERY_RESPONSE_MESSAGES,
-                         SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
-                         SQL_QUERY_GENERATION_PROMPT_TEMPLATE)
+from api.prompts.templates import (
+    CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
+    CODE_GENERATION_IMPORTS,
+    CODE_GENERATION_PROMPT_TEMPLATE,
+    SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
+    SQL_QUERY_GENERATION_PROMPT_TEMPLATE,
+    get_relevant_examples,
+    convert_examples_to_llm_messages,
+)
 from api.security.secure_ast import assert_secure_code
 from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
     CodeGenerationConfig, Message, PythonExecutionResult, QueryResult, Role,
@@ -722,10 +726,23 @@ async def answer_user_query(
         # Limit to last 3 user messages
         for message in _user_messages[-3:]
     ]
+    
+    examples = get_relevant_examples(
+        query=user_messages[-1]["content"],
+        data_source_url=request.data_source_url,
+    )
+    example_messages_without_sql = convert_examples_to_llm_messages(
+        examples,
+        include_sql_query=False
+    )
+    example_messages_without_code = convert_examples_to_llm_messages(
+        examples,
+        include_code=False
+    )
+
     messages = (
         [{"role": Role.SYSTEM.value, "content": inspect.cleandoc(sql_query_generation_prompt)}]
-        # + SQL_QUERY_GENERATION_EXAMPLE_MESSAGES
-        + EXAMPLE_QUERY_RESPONSE_MESSAGES
+        + example_messages_without_code
         + user_messages
     )
 
@@ -836,7 +853,7 @@ async def answer_user_query(
 
     code_generation_messages = (
         [{"role": Role.SYSTEM.value, "content": inspect.cleandoc(code_generation_prompt)}]
-        + EXAMPLE_QUERY_RESPONSE_MESSAGES
+        + example_messages_without_sql
         + user_messages
     )
 

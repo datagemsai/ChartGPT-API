@@ -20,7 +20,7 @@ You will receive a question, and must respond "false" if it does not break the N
 Here are some example questions and responses:
 """
 
-example_responses = toml.load("api/example_nda_responses.toml")
+example_responses = toml.load("api/prompts/example_nda_responses.toml")
 nda_responses = [(item['query'], item['response']) for item in example_responses['nda_responses']]
 
 nda_response_messages = [
