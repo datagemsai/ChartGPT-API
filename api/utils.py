@@ -192,12 +192,20 @@ def get_tables_summary(
             table = client.get_table(table_ref)
 
             # Fetch 3 random records for sample data
-            query = f"""
-            SELECT * FROM `{project}.{dataset_id}.{table_id}` TABLESAMPLE SYSTEM (20 PERCENT)
-            WHERE rand() < 0.1
-            LIMIT 3
-            """
-            query_job = client.query(query)
+            if "VIEW" in table.table_type:
+                sample_query = f"""
+                SELECT * FROM `{project}.{dataset_id}.{table_id}`
+                WHERE rand() < 0.1
+                LIMIT 3
+                """
+            else:
+                sample_query = f"""
+                SELECT * FROM `{project}.{dataset_id}.{table_id}` TABLESAMPLE SYSTEM (20 PERCENT)
+                WHERE RAND() < 0.02
+                LIMIT 3
+                """
+
+            query_job = client.query(sample_query)
             sample_records = [row for row in query_job]
 
             # SQL-like CREATE TABLE statement
