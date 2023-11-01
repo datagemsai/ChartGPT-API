@@ -1,13 +1,14 @@
 # Error
 
+Error
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**index** | **int** | The index of the error. | [optional] 
-**created_at** | **int** | The timestamp of when the error was created. | [optional] 
-**type** | **str** | The type of the error. | [optional] 
-**value** | **str** | The value of the error. | [optional] 
+**created_at** | **object** | The timestamp of when the error was created. | [optional] 
+**index** | **object** | The index of the error. | [optional] 
+**type** | **object** | The type of the error. | [optional] 
+**value** | **object** | The value of the error. | [optional] 
 
 ## Example
 

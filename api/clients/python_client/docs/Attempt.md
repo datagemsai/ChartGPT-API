@@ -1,13 +1,14 @@
 # Attempt
 
+Attempt
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**index** | **int** | The index of the attempt. | [optional] 
-**created_at** | **int** | The timestamp of when the attempt was created. | [optional] 
-**outputs** | [**List[Output]**](Output.md) | The outputs of the attempt. | [optional] 
-**errors** | [**List[Error]**](Error.md) | The errors of the attempt. | [optional] 
+**created_at** | **object** | The timestamp of when the attempt was created. | [optional] 
+**errors** | **object** | The errors of the attempt. | [optional] 
+**index** | **object** | The index of the attempt. | [optional] 
+**outputs** | **object** | The outputs of the attempt. | [optional] 
 
 ## Example
 

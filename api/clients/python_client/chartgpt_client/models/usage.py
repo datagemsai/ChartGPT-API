@@ -13,28 +13,23 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
+import json
+
+
 from typing import Optional
-
 from pydantic import BaseModel, Field, StrictInt
-
 
 class Usage(BaseModel):
     """
     Usage
     """
-
-    tokens: Optional[StrictInt] = Field(
-        None, description="The number of tokens used for the request."
-    )
+    tokens: Optional[StrictInt] = Field(None, description="The number of tokens used for the request.")
     __properties = ["tokens"]
 
     class Config:
         """Pydantic configuration"""
-
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -53,7 +48,10 @@ class Usage(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
+        _dict = self.dict(by_alias=True,
+                          exclude={
+                          },
+                          exclude_none=True)
         return _dict
 
     @classmethod
@@ -65,5 +63,9 @@ class Usage(BaseModel):
         if not isinstance(obj, dict):
             return Usage.parse_obj(obj)
 
-        _obj = Usage.parse_obj({"tokens": obj.get("tokens")})
+        _obj = Usage.parse_obj({
+            "tokens": obj.get("tokens")
+        })
         return _obj
+
+

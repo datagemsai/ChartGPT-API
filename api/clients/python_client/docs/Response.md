@@ -1,19 +1,20 @@
 # Response
 
+Response
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**id** | **str** | The ID of the request. | [optional] 
-**created_at** | **int** | The timestamp of when the request was created. | [optional] 
-**finished_at** | **int** | The timestamp of when the request was finished. | [optional] 
-**status** | [**Status**](Status.md) |  | [optional] 
-**messages** | [**List[ResponseMessagesInner]**](ResponseMessagesInner.md) | The messages of the request. | [optional] 
-**data_source_url** | **str** | The data source URL of the request. | [optional] 
-**attempts** | [**List[Attempt]**](Attempt.md) | The attempts of the request. | [optional] 
+**attempts** | **object** | The attempts of the request. | [optional] 
+**created_at** | **object** | The timestamp of when the request was created. | [optional] 
+**data_source_url** | **object** | The data source URL of the request. | [optional] 
+**errors** | **object** | The errors of the request. | [optional] 
+**finished_at** | **object** | The timestamp of when the request was finished. | [optional] 
+**id** | **object** | The ID of the request. | [optional] 
+**messages** | **object** | The messages of the request. | [optional] 
 **output_type** | [**OutputType**](OutputType.md) |  | [optional] 
-**outputs** | [**List[Output]**](Output.md) | The outputs of the request. | [optional] 
-**errors** | [**List[Error]**](Error.md) | The errors of the request. | [optional] 
+**outputs** | **object** | The outputs of the request. | [optional] 
+**status** | [**Status**](Status.md) |  | [optional] 
 **usage** | [**ResponseUsage**](ResponseUsage.md) |  | [optional] 
 
 ## Example
