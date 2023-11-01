@@ -1,15 +1,16 @@
 # Request
 
+Request
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**messages** | [**List[RequestMessagesInner]**](RequestMessagesInner.md) | The messages based on which the response will be generated. | [optional] 
-**data_source_url** | **str** | The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used. | [optional] [default to '']
+**data_source_url** | **object** | The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used. | [optional] 
+**max_attempts** | **object** | The maximum number of attempts to generate an output. | [optional] 
+**max_outputs** | **object** | The maximum number of outputs to generate. | [optional] 
+**max_tokens** | **object** | The maximum number of tokens to use for generating an output. | [optional] 
+**messages** | **object** | The messages based on which the response will be generated. | [optional] 
 **output_type** | [**OutputType**](OutputType.md) |  | [optional] 
-**max_outputs** | **int** | The maximum number of outputs to generate. | [optional] [default to 10]
-**max_attempts** | **int** | The maximum number of attempts to generate an output. | [optional] [default to 10]
-**max_tokens** | **int** | The maximum number of tokens to use for generating an output. | [optional] [default to 10]
 
 ## Example
 

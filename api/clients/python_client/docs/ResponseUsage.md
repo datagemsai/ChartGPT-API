@@ -5,7 +5,7 @@ The usage of the request.
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**tokens** | **int** | The number of tokens used for the request. | [optional] 
+**tokens** | **object** | The number of tokens used for the request. | [optional] 
 
 ## Example
 
