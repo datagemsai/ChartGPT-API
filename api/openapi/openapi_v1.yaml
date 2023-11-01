@@ -55,8 +55,8 @@ components:
           type: array
       title: HTTPValidationError
       type: object
-    Messages:
-      description: The messages based on which the response will be generated.
+    Message:
+      description: The message based on which the response will be generated.
       properties:
         content:
           description: The content of the message.
@@ -72,7 +72,7 @@ components:
           type: string
         role:
           $ref: '#/components/schemas/Role'
-      title: Messages
+      title: Message
       type: object
     Output:
       description: Output
@@ -124,6 +124,10 @@ components:
             be used.
           title: Data Source Url
           type: string
+        job_id:
+          description: The job ID of the request.
+          title: Job Id
+          type: string
         max_attempts:
           default: 10
           description: The maximum number of attempts to generate an output.
@@ -142,7 +146,7 @@ components:
         messages:
           description: The messages based on which the response will be generated.
           items:
-            $ref: '#/components/schemas/Messages'
+            $ref: '#/components/schemas/Message'
           title: Messages
           type: array
         output_type:
@@ -176,14 +180,14 @@ components:
           description: The timestamp of when the request was finished.
           title: Finished At
           type: integer
-        id:
-          description: The ID of the request.
-          title: Id
+        job_id:
+          description: The job ID of the response.
+          title: Job Id
           type: string
         messages:
           description: The messages of the request.
           items:
-            $ref: '#/components/schemas/Messages'
+            $ref: '#/components/schemas/Message'
           title: Messages
           type: array
         output_type:
@@ -253,14 +257,16 @@ components:
       name: X-API-KEY
       type: apiKey
 info:
-  title: FastAPI
+  description: The ChartGPT API is a REST API that generates insights from data based
+    on natural language questions.
+  title: ChartGPT API
   version: 0.1.0
 openapi: 3.1.0
 paths:
   /health:
     get:
       description: Ping the API to check if it is running.
-      operationId: alth_get
+      operationId: ping_health_get
       responses:
         '200':
           content:
@@ -273,7 +279,7 @@ paths:
   /v1/ask_chartgpt:
     post:
       description: Answer a user query using the ChartGPT API.
-      operationId: hartgpt_v1_ask_chartgpt_post
+      operationId: ask_chartgpt_v1_ask_chartgpt_post
       parameters:
       - in: query
         name: stream
@@ -308,7 +314,7 @@ paths:
   /v1/ask_chartgpt/stream:
     post:
       description: Stream the response from the ChartGPT API.
-      operationId: hartgpt_stream_v1_ask_chartgpt_stream_post
+      operationId: ask_chartgpt_stream_v1_ask_chartgpt_stream_post
       requestBody:
         content:
           application/json:

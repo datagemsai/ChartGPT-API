@@ -151,7 +151,7 @@ async def data_generator(
     try:
         # Respond with the job ID to indicate that the job has started
         response = Response(
-            id=job_id,
+            job_id=job_id,
             created_at=created_at,
             status="stream",
             messages=request.messages,
@@ -168,7 +168,7 @@ async def data_generator(
             if isinstance(result, Attempt):
                 attempt = result
                 response = Response(
-                    id=job_id,
+                    job_id=job_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -186,7 +186,7 @@ async def data_generator(
             elif isinstance(result, Output):
                 output = result
                 response = Response(
-                    id=job_id,
+                    job_id=job_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -204,7 +204,7 @@ async def data_generator(
             elif isinstance(result, QueryResult):
                 query_result = result
                 response = Response(
-                    id=job_id,
+                    job_id=job_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -230,7 +230,7 @@ async def data_generator(
         # TODO Return user friendly errors
         logger.error("Stream PythonExecutionError: %s", ex)
         response = Response(
-            id=job_id,
+            job_id=job_id,
             created_at=created_at,
             finished_at=int(time.time()),
             status="failed",
@@ -266,7 +266,7 @@ async def ask_chartgpt(
     """Answer a user query using the ChartGPT API."""
     try:
         job_id = utils.generate_job_id()
-        request.id = job_id
+        request.job_id = job_id
         logger.info("Request: %s", request)
         await db["requests"].insert_one(request.dict())
         created_at = int(time.time())
@@ -352,7 +352,7 @@ async def ask_chartgpt(
                     content={"error": message},
                 )
             response = Response(
-                id=job_id,
+                job_id=job_id,
                 created_at=created_at,
                 finished_at=finished_at,
                 status="succeeded",

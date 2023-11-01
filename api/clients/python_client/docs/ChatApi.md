@@ -4,12 +4,12 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**hartgpt_stream_v1_ask_chartgpt_stream_post**](ChatApi.md#hartgpt_stream_v1_ask_chartgpt_stream_post) | **POST** /v1/ask_chartgpt/stream | Ask Chartgpt Stream
-[**hartgpt_v1_ask_chartgpt_post**](ChatApi.md#hartgpt_v1_ask_chartgpt_post) | **POST** /v1/ask_chartgpt | Ask Chartgpt
+[**ask_chartgpt_stream_v1_ask_chartgpt_stream_post**](ChatApi.md#ask_chartgpt_stream_v1_ask_chartgpt_stream_post) | **POST** /v1/ask_chartgpt/stream | Ask Chartgpt Stream
+[**ask_chartgpt_v1_ask_chartgpt_post**](ChatApi.md#ask_chartgpt_v1_ask_chartgpt_post) | **POST** /v1/ask_chartgpt | Ask Chartgpt
 
 
-# **hartgpt_stream_v1_ask_chartgpt_stream_post**
-> Response hartgpt_stream_v1_ask_chartgpt_stream_post(request)
+# **ask_chartgpt_stream_v1_ask_chartgpt_stream_post**
+> Response ask_chartgpt_stream_v1_ask_chartgpt_stream_post(request)
 
 Ask Chartgpt Stream
 
@@ -52,11 +52,11 @@ with chartgpt_client.ApiClient(configuration) as api_client:
 
     try:
         # Ask Chartgpt Stream
-        api_response = api_instance.hartgpt_stream_v1_ask_chartgpt_stream_post(request)
-        print("The response of ChatApi->hartgpt_stream_v1_ask_chartgpt_stream_post:\n")
+        api_response = api_instance.ask_chartgpt_stream_v1_ask_chartgpt_stream_post(request)
+        print("The response of ChatApi->ask_chartgpt_stream_v1_ask_chartgpt_stream_post:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling ChatApi->hartgpt_stream_v1_ask_chartgpt_stream_post: %s\n" % e)
+        print("Exception when calling ChatApi->ask_chartgpt_stream_v1_ask_chartgpt_stream_post: %s\n" % e)
 ```
 
 
@@ -88,8 +88,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **hartgpt_v1_ask_chartgpt_post**
-> Response hartgpt_v1_ask_chartgpt_post(request, stream=stream)
+# **ask_chartgpt_v1_ask_chartgpt_post**
+> Response ask_chartgpt_v1_ask_chartgpt_post(request, stream=stream)
 
 Ask Chartgpt
 
@@ -133,11 +133,11 @@ with chartgpt_client.ApiClient(configuration) as api_client:
 
     try:
         # Ask Chartgpt
-        api_response = api_instance.hartgpt_v1_ask_chartgpt_post(request, stream=stream)
-        print("The response of ChatApi->hartgpt_v1_ask_chartgpt_post:\n")
+        api_response = api_instance.ask_chartgpt_v1_ask_chartgpt_post(request, stream=stream)
+        print("The response of ChatApi->ask_chartgpt_v1_ask_chartgpt_post:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling ChatApi->hartgpt_v1_ask_chartgpt_post: %s\n" % e)
+        print("Exception when calling ChatApi->ask_chartgpt_v1_ask_chartgpt_post: %s\n" % e)
 ```
 
 

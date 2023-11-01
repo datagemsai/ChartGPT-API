@@ -15,7 +15,7 @@ chartgpt_client/models/__init__.py
 chartgpt_client/models/attempt.py
 chartgpt_client/models/error.py
 chartgpt_client/models/http_validation_error.py
-chartgpt_client/models/messages.py
+chartgpt_client/models/message.py
 chartgpt_client/models/output.py
 chartgpt_client/models/output_type.py
 chartgpt_client/models/request.py
@@ -31,7 +31,7 @@ docs/ChatApi.md
 docs/Error.md
 docs/HTTPValidationError.md
 docs/HealthApi.md
-docs/Messages.md
+docs/Message.md
 docs/Output.md
 docs/OutputType.md
 docs/Request.md
@@ -47,9 +47,5 @@ setup.cfg
 setup.py
 test-requirements.txt
 test/__init__.py
-test/test_chat_api.py
-test/test_health_api.py
-test/test_http_validation_error.py
-test/test_messages.py
-test/test_validation_error.py
+test/test_message.py
 tox.ini
