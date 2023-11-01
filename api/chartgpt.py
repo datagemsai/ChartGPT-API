@@ -25,7 +25,6 @@ import plotly
 import plotly.graph_objs as go
 # Override Streamlit styling
 import plotly.io as pio
-from chartgpt_client import Attempt, Error, Output, OutputType, Request
 from google.api_core.exceptions import InternalServerError
 from google.cloud import bigquery
 from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
@@ -40,6 +39,7 @@ from tenacity import (
 )
 from api import errors  # for exponential backoff
 
+from api.models import Attempt, Error, Output, OutputType, Request
 import api.utils
 from api import log, utils
 from api.config import (
