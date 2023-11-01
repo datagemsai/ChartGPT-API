@@ -73,7 +73,7 @@ project_production:
 # Build App
 
 _build_app:
-	gcloud builds submit --region=europe-west1 --config cloudbuild.yaml
+	gcloud builds submit --region=europe-west1 --config cloudbuild.app.yaml
 
 build_app_staging: project_staging _build_app
 build_app_production: project_production _build_app
@@ -89,7 +89,8 @@ build_caddy_production: project_production _build_caddy
 # Build API
 
 _build_api:
-	gcloud builds submit --region=europe-west1 --config api/cloudbuild.yaml
+	gcloud builds submit --region=europe-west1 --config cloudbuild.api.yaml \
+		--substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_api_staging: project_staging _build_api
 build_api_production: project_production _build_api
@@ -97,15 +98,15 @@ build_api_production: project_production _build_api
 # Build Bots
 
 _build_slack_bot:
-	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+	gcloud builds submit --region=europe-west1 --config cloudbuild.bots.yaml \
 		--substitutions=_IMAGE_NAME=chartgpt-slack-bot,_DIR=bots/slack
 
 _build_discord_bot:
-	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+	gcloud builds submit --region=europe-west1 --config cloudbuild.bots.yaml \
 		--substitutions=_IMAGE_NAME=chartgpt-discord-bot,_DIR=bots/discord
 
 _build_telegram_bot:
-	gcloud builds submit --region=europe-west1 --config bots/cloudbuild.yaml \
+	gcloud builds submit --region=europe-west1 --config cloudbuild.bots.yaml \
 		--substitutions=_IMAGE_NAME=chartgpt-telegram-bot,_DIR=bots/telegram
 
 _build_bots: _build_slack_bot _build_discord_bot _build_telegram_bot
@@ -137,11 +138,3 @@ terraform_deploy_staging: project_staging
 terraform_deploy_production: project_production
 	terraform -chdir=infrastructure workspace select production
 	terraform -chdir=infrastructure apply --auto-approve -var-file="variables/production.tfvars"
-
-# Google App Engine Deployment
-
-# deploy_app_production:
-# 	gcloud app deploy --project=chartgpt-production app_production.yaml
-
-# deploy_app_staging:
-# 	gcloud app deploy --project=chartgpt-staging app_staging.yaml
