@@ -4,11 +4,11 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**alth_get**](HealthApi.md#alth_get) | **GET** /health | Ping
+[**ping_health_get**](HealthApi.md#ping_health_get) | **GET** /health | Ping
 
 
-# **alth_get**
-> object alth_get()
+# **ping_health_get**
+> object ping_health_get()
 
 Ping
 
@@ -37,11 +37,11 @@ with chartgpt_client.ApiClient(configuration) as api_client:
 
     try:
         # Ping
-        api_response = api_instance.alth_get()
-        print("The response of HealthApi->alth_get:\n")
+        api_response = api_instance.ping_health_get()
+        print("The response of HealthApi->ping_health_get:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling HealthApi->alth_get: %s\n" % e)
+        print("Exception when calling HealthApi->ping_health_get: %s\n" % e)
 ```
 
 

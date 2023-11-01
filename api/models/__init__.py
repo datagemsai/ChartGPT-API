@@ -3,7 +3,7 @@ from api.models.error import Error
 from api.models.output import Output
 from api.models.output_type import OutputType
 from api.models.request import Request
-from api.models.messages import Messages
+from api.models.message import Message
 from api.models.response import Response
 from api.models.response_usage import ResponseUsage
 from api.models.role import Role

@@ -14,14 +14,14 @@ class Request(BaseModel):
     """
     Request
     """
-    id: Optional[StrictStr] = Field(None, description="The ID of the request.")
+    job_id: Optional[StrictStr] = Field(None, description="The job ID of the request.")
     messages: Optional[conlist(Message)] = Field(None, description="The messages based on which the response will be generated.")
     data_source_url: Optional[constr(strict=True)] = Field('', description="The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used.")
     output_type: Optional[OutputType] = None
     max_outputs: Optional[StrictInt] = Field(10, description="The maximum number of outputs to generate.")
     max_attempts: Optional[StrictInt] = Field(10, description="The maximum number of attempts to generate an output.")
     max_tokens: Optional[StrictInt] = Field(10, description="The maximum number of tokens to use for generating an output.")
-    __properties = ["id", "messages", "data_source_url", "output_type", "max_outputs", "max_attempts", "max_tokens"]
+    __properties = ["job_id", "messages", "data_source_url", "output_type", "max_outputs", "max_attempts", "max_tokens"]
 
     @validator('data_source_url')
     def data_source_url_validate_regular_expression(cls, value):
@@ -76,7 +76,7 @@ class Request(BaseModel):
             return Request.parse_obj(obj)
 
         _obj = Request.parse_obj({
-            "id": obj.get("id"),
+            "job_id": obj.get("job_id"),
             "messages": [Message.from_dict(_item) for _item in obj.get("messages")] if obj.get("messages") is not None else None,
             "data_source_url": obj.get("data_source_url") if obj.get("data_source_url") is not None else '',
             "output_type": obj.get("output_type"),

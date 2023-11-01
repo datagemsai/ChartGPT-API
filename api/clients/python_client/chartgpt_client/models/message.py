@@ -18,19 +18,19 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from typing import Any, Optional
+from pydantic import BaseModel, Field
 from chartgpt_client.models.role import Role
 
-class ResponseMessagesInner(BaseModel):
+class Message(BaseModel):
     """
-    The message of the request.
+    The message based on which the response will be generated.
     """
-    id: Optional[StrictStr] = Field(None, description="The ID of the message.")
-    created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the message was created.")
-    content: Optional[StrictStr] = Field(None, description="The content of the message.")
+    content: Optional[Any] = Field(None, description="The content of the message.")
+    created_at: Optional[Any] = Field(None, description="The timestamp of when the message was created.")
+    id: Optional[Any] = Field(None, description="The ID of the message.")
     role: Optional[Role] = None
-    __properties = ["id", "created_at", "content", "role"]
+    __properties = ["content", "created_at", "id", "role"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +46,8 @@ class ResponseMessagesInner(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ResponseMessagesInner:
-        """Create an instance of ResponseMessagesInner from a JSON string"""
+    def from_json(cls, json_str: str) -> Message:
+        """Create an instance of Message from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -56,21 +56,36 @@ class ResponseMessagesInner(BaseModel):
                           exclude={
                           },
                           exclude_none=True)
+        # set to None if content (nullable) is None
+        # and __fields_set__ contains the field
+        if self.content is None and "content" in self.__fields_set__:
+            _dict['content'] = None
+
+        # set to None if created_at (nullable) is None
+        # and __fields_set__ contains the field
+        if self.created_at is None and "created_at" in self.__fields_set__:
+            _dict['created_at'] = None
+
+        # set to None if id (nullable) is None
+        # and __fields_set__ contains the field
+        if self.id is None and "id" in self.__fields_set__:
+            _dict['id'] = None
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ResponseMessagesInner:
-        """Create an instance of ResponseMessagesInner from a dict"""
+    def from_dict(cls, obj: dict) -> Message:
+        """Create an instance of Message from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ResponseMessagesInner.parse_obj(obj)
+            return Message.parse_obj(obj)
 
-        _obj = ResponseMessagesInner.parse_obj({
-            "id": obj.get("id"),
-            "created_at": obj.get("created_at"),
+        _obj = Message.parse_obj({
             "content": obj.get("content"),
+            "created_at": obj.get("created_at"),
+            "id": obj.get("id"),
             "role": obj.get("role")
         })
         return _obj
