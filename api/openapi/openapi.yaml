@@ -55,25 +55,6 @@ components:
           type: array
       title: HTTPValidationError
       type: object
-    Messages:
-      description: The messages based on which the response will be generated.
-      properties:
-        content:
-          description: The content of the message.
-          title: Content
-          type: string
-        created_at:
-          description: The timestamp of when the message was created.
-          title: Created At
-          type: integer
-        id:
-          description: The ID of the message.
-          title: Id
-          type: string
-        role:
-          $ref: '#/components/schemas/Role'
-      title: Messages
-      type: object
     Output:
       description: Output
       properties:
@@ -142,12 +123,31 @@ components:
         messages:
           description: The messages based on which the response will be generated.
           items:
-            $ref: '#/components/schemas/Messages'
+            $ref: '#/components/schemas/RequestMessagesInner'
           title: Messages
           type: array
         output_type:
           $ref: '#/components/schemas/OutputType'
       title: Request
+      type: object
+    RequestMessagesInner:
+      description: The message based on which the response will be generated.
+      properties:
+        content:
+          description: The content of the message.
+          title: Content
+          type: string
+        created_at:
+          description: The timestamp of when the message was created.
+          title: Created At
+          type: integer
+        id:
+          description: The ID of the message.
+          title: Id
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+      title: RequestMessagesInner
       type: object
     Response:
       description: Response
@@ -183,7 +183,7 @@ components:
         messages:
           description: The messages of the request.
           items:
-            $ref: '#/components/schemas/Messages'
+            $ref: '#/components/schemas/ResponseMessagesInner'
           title: Messages
           type: array
         output_type:
@@ -199,6 +199,25 @@ components:
         usage:
           $ref: '#/components/schemas/ResponseUsage'
       title: Response
+      type: object
+    ResponseMessagesInner:
+      description: The message of the request.
+      properties:
+        content:
+          description: The content of the message.
+          title: Content
+          type: string
+        created_at:
+          description: The timestamp of when the message was created.
+          title: Created At
+          type: integer
+        id:
+          description: The ID of the message.
+          title: Id
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+      title: ResponseMessagesInner
       type: object
     ResponseUsage:
       description: The usage of the request.
