@@ -11,7 +11,7 @@ Standard ***REMOVED*** Python environment using dependencies from [requirements.
 
 ### Secrets and Environment Variables
 
-For production, secrets and environment variables are set in a `secrets.yaml` file during deployment.
+For production, secrets and environment variables are set in a `app_secrets_{environment}.yaml` file during deployment.
 
 For local development, secrets and environment variables are loaded using the Python `python-dotenv` package from a `.env` file.
 
