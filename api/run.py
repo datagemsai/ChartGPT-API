@@ -3,7 +3,7 @@ import time
 from logging.config import dictConfig
 from typing import AsyncGenerator, Optional
 
-from chartgpt_client import (Attempt, Error, Output, OutputType, Request,
+from api.models import (Attempt, Error, Output, OutputType, Request,
                              Response, Usage)
 from fastapi import FastAPI, HTTPException, Security, status
 from fastapi.responses import JSONResponse, StreamingResponse
