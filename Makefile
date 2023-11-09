@@ -81,8 +81,7 @@ build_caddy_production: project_production _build_caddy
 # Build API
 
 _build_api:
-	gcloud builds submit --region=europe-west1 --config cloudbuild.api.yaml \
-		--substitutions=_IMAGE_TAG=${GIT_HASH}
+	gcloud builds submit --region=europe-west1 --config cloudbuild.api.yaml
 
 build_api_staging: project_staging _build_api
 build_api_production: project_production _build_api
