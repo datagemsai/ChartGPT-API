@@ -5,7 +5,7 @@ variable "deployment" {
 
 variable "base_domain" {
   type    = string
-  default = "chartgpt-staging.***REMOVED***"
+  default = "staging.***REMOVED***"
 }
 
 variable "project_id" {
@@ -27,8 +27,8 @@ locals {
   secrets                            = lookup(yamldecode(file("../app_secrets_${var.deployment}.yaml")), "env_variables", {})
   bot_secrets                        = lookup(yamldecode(file("../bots/secrets_${var.deployment}.yaml")), "env_variables", {})
   chartgpt_api_image_latest          = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-api@${data.docker_registry_image.chartgpt_api_image.sha256_digest}"
-  chartgpt_app_image_latest          = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app@${data.docker_registry_image.chartgpt_app_image.sha256_digest}"
-  caddy_image_latest                 = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy@${data.docker_registry_image.caddy_image.sha256_digest}"
+  # chartgpt_app_image_latest          = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app@${data.docker_registry_image.chartgpt_app_image.sha256_digest}"
+  # caddy_image_latest                 = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy@${data.docker_registry_image.caddy_image.sha256_digest}"
   chartgpt_slack_bot_image_latest    = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-slack-bot@${data.docker_registry_image.chartgpt_slack_bot_image.sha256_digest}"
   chartgpt_telegram_bot_image_latest = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-telegram-bot@${data.docker_registry_image.chartgpt_telegram_bot_image.sha256_digest}"
   chartgpt_discord_bot_image_latest  = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-discord-bot@${data.docker_registry_image.chartgpt_discord_bot_image.sha256_digest}"
@@ -90,14 +90,14 @@ data "docker_registry_image" "chartgpt_api_image" {
 }
 
 # ChartGPT App Docker image
-data "docker_registry_image" "chartgpt_app_image" {
-  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app"
-}
+# data "docker_registry_image" "chartgpt_app_image" {
+#   name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-app"
+# }
 
 # Caddy Docker image
-data "docker_registry_image" "caddy_image" {
-  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy"
-}
+# data "docker_registry_image" "caddy_image" {
+#   name = "${var.docker_registry}/${var.project_id}/${var.project_id}/caddy"
+# }
 
 # ChartGPT Slack Bot Docker image
 data "docker_registry_image" "chartgpt_slack_bot_image" {
@@ -120,7 +120,7 @@ module "chartgpt_api" {
   project_id      = var.project_id
   region          = var.region
   docker_registry = var.docker_registry
-  deployment      = var.deployment
+  base_domain      = var.base_domain
   secrets         = local.secrets
   docker_image    = local.chartgpt_api_image_latest
   service_account_email = module.google_cloud_service_accounts.chartgpt_api_service_account_email
@@ -131,36 +131,36 @@ module "chartgpt_api" {
   ]
 }
 
-module "chartgpt_app" {
-  source          = "./app"
-  project_id      = var.project_id
-  region          = var.region
-  docker_registry = var.docker_registry
-  deployment      = var.deployment
-  secrets         = local.secrets
-  docker_image    = local.chartgpt_app_image_latest
-  service_account_email = module.google_cloud_service_accounts.chartgpt_api_service_account_email
-  depends_on      = [
-    google_project_service.run_api,
-    module.secret-manager,
-    module.google_cloud_service_accounts
-  ]
-}
+# module "chartgpt_app" {
+#   source          = "./app"
+#   project_id      = var.project_id
+#   region          = var.region
+#   docker_registry = var.docker_registry
+#   base_domain      = var.base_domain
+#   secrets         = local.secrets
+#   docker_image    = local.chartgpt_app_image_latest
+#   service_account_email = module.google_cloud_service_accounts.chartgpt_api_service_account_email
+#   depends_on      = [
+#     google_project_service.run_api,
+#     module.secret-manager,
+#     module.google_cloud_service_accounts
+#   ]
+# }
 
-module "caddy" {
-  source          = "./caddy"
-  project_id      = var.project_id
-  region          = var.region
-  base_domain     = var.base_domain
-  docker_registry = var.docker_registry
-  deployment      = var.deployment
-  secrets         = local.secrets
-  docker_image    = local.caddy_image_latest
-  depends_on      = [
-    google_project_service.run_api,
-    module.secret-manager
-  ]
-}
+# module "caddy" {
+#   source          = "./caddy"
+#   project_id      = var.project_id
+#   region          = var.region
+#   base_domain     = var.base_domain
+#   docker_registry = var.docker_registry
+#   deployment      = var.deployment
+#   secrets         = local.secrets
+#   docker_image    = local.caddy_image_latest
+#   depends_on      = [
+#     google_project_service.run_api,
+#     module.secret-manager
+#   ]
+# }
 
 module "bots" {
   source                = "./bots"
