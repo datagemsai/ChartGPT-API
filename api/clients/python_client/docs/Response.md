@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **data_source_url** | **object** | The data source URL of the request. | [optional] 
 **errors** | **object** | The errors of the request. | [optional] 
 **finished_at** | **object** | The timestamp of when the request was finished. | [optional] 
-**job_id** | **object** | The job ID of the response. | [optional] 
+**session_id** | **object** | The job ID of the response. | [optional] 
 **messages** | **object** | The messages of the request. | [optional] 
 **output_type** | [**OutputType**](OutputType.md) |  | [optional] 
 **outputs** | **object** | The outputs of the request. | [optional] 

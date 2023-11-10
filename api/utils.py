@@ -83,7 +83,7 @@ def generate_uuid() -> str:
     return r_uuid.replace("=", "")
 
 
-def generate_job_id():
+def generate_session_id():
     data = str(time.time()) + str(uuid.uuid4())
     return hashlib.md5(data.encode("utf-8")).hexdigest()
 

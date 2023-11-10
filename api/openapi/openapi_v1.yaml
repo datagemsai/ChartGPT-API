@@ -124,10 +124,6 @@ components:
             be used.
           title: Data Source Url
           type: string
-        job_id:
-          description: The job ID of the request.
-          title: Job Id
-          type: string
         max_attempts:
           default: 10
           description: The maximum number of attempts to generate an output.
@@ -151,6 +147,10 @@ components:
           type: array
         output_type:
           $ref: '#/components/schemas/OutputType'
+        session_id:
+          description: The session ID of the request.
+          title: Session Id
+          type: string
       title: Request
       type: object
     Response:
@@ -180,10 +180,6 @@ components:
           description: The timestamp of when the request was finished.
           title: Finished At
           type: integer
-        job_id:
-          description: The job ID of the response.
-          title: Job Id
-          type: string
         messages:
           description: The messages of the request.
           items:
@@ -198,6 +194,10 @@ components:
             $ref: '#/components/schemas/Output'
           title: Outputs
           type: array
+        session_id:
+          description: The session ID of the response.
+          title: Session Id
+          type: string
         status:
           $ref: '#/components/schemas/Status'
         usage:

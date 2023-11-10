@@ -19,7 +19,7 @@ class Response(BaseModel):
     """
     Response
     """
-    job_id: Optional[StrictStr] = Field(None, description="The job ID of the response.")
+    session_id: Optional[StrictStr] = Field(None, description="The session ID of the response.")
     created_at: Optional[StrictInt] = Field(None, description="The timestamp of when the request was created.")
     finished_at: Optional[StrictInt] = Field(None, description="The timestamp of when the request was finished.")
     status: Optional[Status] = None
@@ -30,7 +30,7 @@ class Response(BaseModel):
     outputs: Optional[conlist(Output)] = Field(None, description="The outputs of the request.")
     errors: Optional[conlist(Error)] = Field(None, description="The errors of the request.")
     usage: Optional[ResponseUsage] = None
-    __properties = ["job_id", "created_at", "finished_at", "status", "messages", "data_source_url", "attempts", "output_type", "outputs", "errors", "usage"]
+    __properties = ["session_id", "created_at", "finished_at", "status", "messages", "data_source_url", "attempts", "output_type", "outputs", "errors", "usage"]
 
     class Config:
         """Pydantic configuration"""
@@ -99,7 +99,7 @@ class Response(BaseModel):
             return Response.parse_obj(obj)
 
         _obj = Response.parse_obj({
-            "job_id": obj.get("job_id"),
+            "session_id": obj.get("session_id"),
             "created_at": obj.get("created_at"),
             "finished_at": obj.get("finished_at"),
             "status": obj.get("status"),
