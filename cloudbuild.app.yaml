@@ -7,7 +7,7 @@ steps:
   args: [
     'build',
     '-t',
-    '${_IMAGE_URL}:${SHORT_SHA}',
+    '${_IMAGE_URL}:${_IMAGE_TAG}',
     '--cache-from',
     '${_IMAGE_URL}:latest',
     '-f',
@@ -18,17 +18,18 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: [
     'tag',
-    '${_IMAGE_URL}:${SHORT_SHA}',
+    '${_IMAGE_URL}:${_IMAGE_TAG}',
     '${_IMAGE_URL}:latest'
   ]
 
 images:
-- '${_IMAGE_URL}:${SHORT_SHA}'
+- '${_IMAGE_URL}:${_IMAGE_TAG}'
 - '${_IMAGE_URL}:latest'
 substitutions:
   _DOCKER_REGISTRY: 'europe-west3-docker.pkg.dev'
   _IMAGE_NAME: 'chartgpt-app'
   _IMAGE_URL: '${_DOCKER_REGISTRY}/${PROJECT_ID}/${PROJECT_ID}/${_IMAGE_NAME}'
-  _IMAGE_TAG: 'latest'
+  # NOTE: SHORT_SHA is only available in the Google Cloud Build environment
+  _IMAGE_TAG: '${SHORT_SHA}'
 options:
   dynamicSubstitutions: true
