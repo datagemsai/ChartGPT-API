@@ -268,7 +268,10 @@ async def ask_chartgpt(
         session_id = utils.generate_session_id()
         request.session_id = session_id
         logger.info("Request: %s", request)
-        await db["requests"].insert_one(request.dict())
+        await db["requests"].insert_one({
+            **request.dict(),
+            "api_key": api_key
+        })
         created_at = int(time.time())
 
         if not request.messages:
