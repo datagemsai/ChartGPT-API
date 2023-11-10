@@ -16,7 +16,7 @@ import motor.motor_asyncio
 import os
 
 from api import auth, utils
-from api.chartgpt_v2 import answer_user_query
+from api.chartgpt import answer_user_query
 from api.errors import ContextLengthError, PythonExecutionError
 from api.security.guards import is_nda_broken
 from api.log import log_response, logger
