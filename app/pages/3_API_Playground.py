@@ -154,7 +154,7 @@ def main(user_id, user_email):
     with st.form(key="chart_api_request_stream"):
         st.markdown("### API endpoint: `/v1/ask_chartgpt/stream`")
         st.info(
-            f"Demo coming soon! 🚀 In the meantime check out the [ChartGPT OpenAPI spec]({os.environ['CHARTGPT_API_HOST']}/ui)."
+            f"Demo coming soon! 🚀 In the meantime check out the [ChartGPT OpenAPI spec]({os.environ['CHARTGPT_API_HOST']}/docs)."
         )
         _ = st.form_submit_button("Submit")
 
