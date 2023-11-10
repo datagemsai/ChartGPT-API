@@ -23,6 +23,14 @@ format:
 	black . --extend-exclude=${EXCLUDE}
 	isort .
 
+# OpenAPI Specification
+
+generate_openapi_python_client:
+	openapi-generator generate -i api/openapi/openapi_v1.yaml -g python -o ./api/clients/python_client/ --package-name 'chartgpt_client'
+
+install_openapi_python_client:
+	pip install api/clients/python_client/
+
 # Start web app, API, Discord bot
 
 start_app_staging:

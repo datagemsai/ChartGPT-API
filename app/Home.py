@@ -3,13 +3,10 @@
 
 import datetime
 import re
-from dataclasses import dataclass
 from enum import Enum
 
-import google.cloud.bigquery
 import plotly.io as pio
 import streamlit as st
-from google.cloud.bigquery import Client
 from langchain.callbacks import get_openai_callback
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.schema import OutputParserException
@@ -18,15 +15,15 @@ import app
 import app.patches
 import app.settings
 from api.connectors.bigquery import bigquery_client as client
-from api.guards import is_nda_broken
+from api.security.guards import is_nda_broken_sync
 from app import datasets, db_charts, db_queries
 from app.auth import check_user_credits, requires_auth
 from app.components.notices import Notices
 from app.components.sidebar import Sidebar
 from app.config.datasets import Dataset
-from app.utils import copy_url_to_clipboard
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
 from chartgpt.app import get_agent
+
 
 # Show notices
 Notices()
@@ -267,7 +264,7 @@ def main(user_id, _user_email):
             )
             st.write(assistant_response)
             try:
-                if not is_nda_broken(question):
+                if not is_nda_broken_sync(question):
                     with get_openai_callback() as cb:
                         container = st.container()
                         st.session_state["text"] = ""

@@ -25,7 +25,6 @@ import plotly
 import plotly.graph_objs as go
 # Override Streamlit styling
 import plotly.io as pio
-from chartgpt_client import Attempt, Error, Output, OutputType, Request
 from google.api_core.exceptions import InternalServerError
 from google.cloud import bigquery
 from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
@@ -40,6 +39,7 @@ from tenacity import (
 )
 from api import errors  # for exponential backoff
 
+from api.models import Attempt, Error, Output, OutputType, Request
 import api.utils
 from api import log, utils
 from api.config import (
@@ -199,6 +199,38 @@ async def validate_sql_query(query: str) -> List[str]:
     except Exception as e:
         errors = [str(e)]
     return errors
+
+
+@log.wrap(log.entering, log.exiting)
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))
+def openai_chat_completion_sync(
+    model,
+    messages,
+    max_tokens: Optional[int] = None,
+    functions: Optional[List] = None,
+    function_call: Optional[Dict] = None,
+    temperature: float = DEFAULT_GPT_TEMPERATURE,
+):
+    try:
+        args = []
+        kwargs = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
+        if functions:
+            kwargs["functions"] = functions
+        if function_call:
+            kwargs["function_call"] = function_call
+        response = openai.ChatCompletion.create(*args, **kwargs)
+        logger.debug("OpenAI ChatCompletion temperature: %s", temperature)
+        logger.debug("OpenAI ChatCompletion response usage: %s", response.get('usage'))
+        return response
+    except openai.InvalidRequestError as exc:
+        logger.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
+        raise exc
 
 
 @log.wrap(log.entering, log.exiting)

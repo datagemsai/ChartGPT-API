@@ -12,13 +12,12 @@
 """  # noqa: E501
 
 
-import datetime
 import unittest
+import datetime
 
 import chartgpt_client
 from chartgpt_client.models.status import Status  # noqa: E501
 from chartgpt_client.rest import ApiException
-
 
 class TestStatus(unittest.TestCase):
     """Status unit test stubs"""
@@ -29,10 +28,26 @@ class TestStatus(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def make_instance(self, include_optional):
+        """Test Status
+            include_option is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # uncomment below to create an instance of `Status`
+        """
+        model = chartgpt_client.models.status.Status()  # noqa: E501
+        if include_optional :
+            return Status(
+            )
+        else :
+            return Status(
+        )
+        """
+
     def testStatus(self):
         """Test Status"""
-        # inst = Status()
+        # inst_req_only = self.make_instance(include_optional=False)
+        # inst_req_and_optional = self.make_instance(include_optional=True)
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy
 import pandas as pd
 import plotly
-from chartgpt_client import OutputType
+from api.models.output_type import OutputType
 from plotly.graph_objs import Figure
 
 
