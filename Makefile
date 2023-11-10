@@ -65,7 +65,8 @@ project_production:
 # Build App
 
 _build_app:
-	gcloud builds submit --region=europe-west1 --config cloudbuild.app.yaml
+	gcloud builds submit --region=europe-west1 --config cloudbuild.app.yaml \
+	--substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_app_staging: project_staging _build_app
 build_app_production: project_production _build_app
@@ -81,7 +82,8 @@ build_caddy_production: project_production _build_caddy
 # Build API
 
 _build_api:
-	gcloud builds submit --region=europe-west1 --config cloudbuild.api.yaml
+	gcloud builds submit --region=europe-west1 --config cloudbuild.api.yaml \
+	--substitutions=_IMAGE_TAG=${GIT_HASH}
 
 build_api_staging: project_staging _build_api
 build_api_production: project_production _build_api
@@ -90,15 +92,15 @@ build_api_production: project_production _build_api
 
 _build_slack_bot:
 	gcloud builds submit --region=europe-west1 --config cloudbuild.bots.yaml \
-		--substitutions=_IMAGE_NAME=chartgpt-slack-bot,_DIR=bots/slack
+		--substitutions=_IMAGE_NAME=chartgpt-slack-bot,_DIR=bots/slack,_IMAGE_TAG=${GIT_HASH}
 
 _build_discord_bot:
 	gcloud builds submit --region=europe-west1 --config cloudbuild.bots.yaml \
-		--substitutions=_IMAGE_NAME=chartgpt-discord-bot,_DIR=bots/discord
+		--substitutions=_IMAGE_NAME=chartgpt-discord-bot,_DIR=bots/discord,_IMAGE_TAG=${GIT_HASH}
 
 _build_telegram_bot:
 	gcloud builds submit --region=europe-west1 --config cloudbuild.bots.yaml \
-		--substitutions=_IMAGE_NAME=chartgpt-telegram-bot,_DIR=bots/telegram
+		--substitutions=_IMAGE_NAME=chartgpt-telegram-bot,_DIR=bots/telegram,_IMAGE_TAG=${GIT_HASH}
 
 _build_bots: _build_slack_bot _build_discord_bot _build_telegram_bot
 
