@@ -6,7 +6,7 @@ Request
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **data_source_url** | **object** | The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used. | [optional] 
-**job_id** | **object** | The job ID of the request. | [optional] 
+**session_id** | **object** | The job ID of the request. | [optional] 
 **max_attempts** | **object** | The maximum number of attempts to generate an output. | [optional] 
 **max_outputs** | **object** | The maximum number of outputs to generate. | [optional] 
 **max_tokens** | **object** | The maximum number of tokens to use for generating an output. | [optional] 

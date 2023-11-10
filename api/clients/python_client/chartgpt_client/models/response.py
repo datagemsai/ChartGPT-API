@@ -33,13 +33,13 @@ class Response(BaseModel):
     data_source_url: Optional[Any] = Field(None, description="The data source URL of the request.")
     errors: Optional[Any] = Field(None, description="The errors of the request.")
     finished_at: Optional[Any] = Field(None, description="The timestamp of when the request was finished.")
-    job_id: Optional[Any] = Field(None, description="The job ID of the response.")
+    session_id: Optional[Any] = Field(None, description="The job ID of the response.")
     messages: Optional[Any] = Field(None, description="The messages of the request.")
     output_type: Optional[OutputType] = None
     outputs: Optional[Any] = Field(None, description="The outputs of the request.")
     status: Optional[Status] = None
     usage: Optional[ResponseUsage] = None
-    __properties = ["attempts", "created_at", "data_source_url", "errors", "finished_at", "job_id", "messages", "output_type", "outputs", "status", "usage"]
+    __properties = ["attempts", "created_at", "data_source_url", "errors", "finished_at", "session_id", "messages", "output_type", "outputs", "status", "usage"]
 
     class Config:
         """Pydantic configuration"""
@@ -93,10 +93,10 @@ class Response(BaseModel):
         if self.finished_at is None and "finished_at" in self.__fields_set__:
             _dict['finished_at'] = None
 
-        # set to None if job_id (nullable) is None
+        # set to None if session_id (nullable) is None
         # and __fields_set__ contains the field
-        if self.job_id is None and "job_id" in self.__fields_set__:
-            _dict['job_id'] = None
+        if self.session_id is None and "session_id" in self.__fields_set__:
+            _dict['session_id'] = None
 
         # set to None if messages (nullable) is None
         # and __fields_set__ contains the field
@@ -125,7 +125,7 @@ class Response(BaseModel):
             "data_source_url": obj.get("data_source_url"),
             "errors": obj.get("errors"),
             "finished_at": obj.get("finished_at"),
-            "job_id": obj.get("job_id"),
+            "session_id": obj.get("session_id"),
             "messages": obj.get("messages"),
             "output_type": obj.get("output_type"),
             "outputs": obj.get("outputs"),

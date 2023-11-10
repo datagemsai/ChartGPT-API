@@ -32,13 +32,13 @@ dictConfig(
     {
         "version": 1,
         "filters": {
-            "job_id": {
-                "()": "api.log.JobIdFilter",
+            "session_id": {
+                "()": "api.log.SessionIdFilter",
             },
         },
         "formatters": {
             "default": {
-                "format": "[%(asctime)s job_id:%(job_id)s %(module)s->%(funcName)s():%(lineno)s] %(levelname)s: %(message)s"
+                "format": "[%(asctime)s session_id:%(session_id)s %(module)s->%(funcName)s():%(lineno)s] %(levelname)s: %(message)s"
             }
         },
         "handlers": {
@@ -46,7 +46,7 @@ dictConfig(
                 "class": "logging.StreamHandler",
                 "stream": "ext://flask.logging.wsgi_errors_stream",
                 "formatter": "default",
-                "filters": ["job_id"],
+                "filters": ["session_id"],
             },
         },
         "root": {"level": "INFO", "handlers": ["wsgi"]},
@@ -143,7 +143,7 @@ async def handle_response(response: Response, queue: asyncio.Queue) -> None:
 
 async def data_generator(
         request: Request,
-        job_id: str,
+        session_id: str,
         created_at: int,
         queue: asyncio.Queue,
         stop_event: asyncio.Event,
@@ -151,7 +151,7 @@ async def data_generator(
     try:
         # Respond with the job ID to indicate that the job has started
         response = Response(
-            job_id=job_id,
+            session_id=session_id,
             created_at=created_at,
             status="stream",
             messages=request.messages,
@@ -168,7 +168,7 @@ async def data_generator(
             if isinstance(result, Attempt):
                 attempt = result
                 response = Response(
-                    job_id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -186,7 +186,7 @@ async def data_generator(
             elif isinstance(result, Output):
                 output = result
                 response = Response(
-                    job_id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -204,7 +204,7 @@ async def data_generator(
             elif isinstance(result, QueryResult):
                 query_result = result
                 response = Response(
-                    job_id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -230,7 +230,7 @@ async def data_generator(
         # TODO Return user friendly errors
         logger.error("Stream PythonExecutionError: %s", ex)
         response = Response(
-            job_id=job_id,
+            session_id=session_id,
             created_at=created_at,
             finished_at=int(time.time()),
             status="failed",
@@ -265,8 +265,8 @@ async def ask_chartgpt(
 ) -> Response:
     """Answer a user query using the ChartGPT API."""
     try:
-        job_id = utils.generate_job_id()
-        request.job_id = job_id
+        session_id = utils.generate_session_id()
+        request.session_id = session_id
         logger.info("Request: %s", request)
         await db["requests"].insert_one(request.dict())
         created_at = int(time.time())
@@ -311,7 +311,7 @@ async def ask_chartgpt(
                 
                 data_task = asyncio.create_task(data_generator(
                     request=request,
-                    job_id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     queue=queue,
                     stop_event=stop_event,
@@ -352,7 +352,7 @@ async def ask_chartgpt(
                     content={"error": message},
                 )
             response = Response(
-                job_id=job_id,
+                session_id=session_id,
                 created_at=created_at,
                 finished_at=finished_at,
                 status="succeeded",
