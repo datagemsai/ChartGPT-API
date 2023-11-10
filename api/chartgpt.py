@@ -25,7 +25,6 @@ import plotly
 import plotly.graph_objs as go
 # Override Streamlit styling
 import plotly.io as pio
-from chartgpt_client import Attempt, Error, Output, OutputType, Request
 from google.api_core.exceptions import InternalServerError
 from google.cloud import bigquery
 from IPython.core.interactiveshell import ExecutionResult, InteractiveShell
@@ -40,6 +39,7 @@ from tenacity import (
 )
 from api import errors  # for exponential backoff
 
+from api.models import Attempt, Error, Output, OutputType, Request
 import api.utils
 from api import log, utils
 from api.config import (
@@ -52,11 +52,15 @@ from api.config import (
 from api.connectors.bigquery import bigquery_client
 from api.errors import ContextLengthError, PythonExecutionError, SQLValidationError
 from api.log import logger
-from api.prompts import (CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
-                         CODE_GENERATION_IMPORTS,
-                         CODE_GENERATION_PROMPT_TEMPLATE, EXAMPLE_QUERY_RESPONSE_MESSAGES,
-                         SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
-                         SQL_QUERY_GENERATION_PROMPT_TEMPLATE)
+from api.prompts.templates import (
+    CODE_GENERATION_ERROR_PROMPT_TEMPLATE,
+    CODE_GENERATION_IMPORTS,
+    CODE_GENERATION_PROMPT_TEMPLATE,
+    SQL_QUERY_GENERATION_ERROR_PROMPT_TEMPLATE,
+    SQL_QUERY_GENERATION_PROMPT_TEMPLATE,
+    get_relevant_examples,
+    convert_examples_to_llm_messages,
+)
 from api.security.secure_ast import assert_secure_code
 from api.types import (  # Request,; Attempt,; Output,; AnyOutputType,
     CodeGenerationConfig, Message, PythonExecutionResult, QueryResult, Role,
@@ -195,6 +199,38 @@ async def validate_sql_query(query: str) -> List[str]:
     except Exception as e:
         errors = [str(e)]
     return errors
+
+
+@log.wrap(log.entering, log.exiting)
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(5))
+def openai_chat_completion_sync(
+    model,
+    messages,
+    max_tokens: Optional[int] = None,
+    functions: Optional[List] = None,
+    function_call: Optional[Dict] = None,
+    temperature: float = DEFAULT_GPT_TEMPERATURE,
+):
+    try:
+        args = []
+        kwargs = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
+        if functions:
+            kwargs["functions"] = functions
+        if function_call:
+            kwargs["function_call"] = function_call
+        response = openai.ChatCompletion.create(*args, **kwargs)
+        logger.debug("OpenAI ChatCompletion temperature: %s", temperature)
+        logger.debug("OpenAI ChatCompletion response usage: %s", response.get('usage'))
+        return response
+    except openai.InvalidRequestError as exc:
+        logger.exception(f"{exc}.\nMessages with length {len(messages)}: {messages}")
+        raise exc
 
 
 @log.wrap(log.entering, log.exiting)
@@ -494,8 +530,12 @@ async def execute_python_code(
 
     shell = InteractiveShell.instance()
     try:
-        # TODO Assert that the code is secure
-        # assert_secure_code(code)
+        try:
+            # TODO For now we just log the error to Sentry,
+            # but once the app is deployed publicly, we should lock this down
+            assert_secure_code(code)
+        except Exception:
+            pass
 
         # with io.capture_output() as captured:
         with contextlib.redirect_stdout(StringIO()) as captured_stdout:
@@ -722,10 +762,23 @@ async def answer_user_query(
         # Limit to last 3 user messages
         for message in _user_messages[-3:]
     ]
+    
+    examples = get_relevant_examples(
+        query=user_messages[-1]["content"],
+        data_source_url=request.data_source_url,
+    )
+    example_messages_without_sql = convert_examples_to_llm_messages(
+        examples,
+        include_sql_query=False
+    )
+    example_messages_without_code = convert_examples_to_llm_messages(
+        examples,
+        include_code=False
+    )
+
     messages = (
         [{"role": Role.SYSTEM.value, "content": inspect.cleandoc(sql_query_generation_prompt)}]
-        # + SQL_QUERY_GENERATION_EXAMPLE_MESSAGES
-        + EXAMPLE_QUERY_RESPONSE_MESSAGES
+        + example_messages_without_code
         + user_messages
     )
 
@@ -836,7 +889,7 @@ async def answer_user_query(
 
     code_generation_messages = (
         [{"role": Role.SYSTEM.value, "content": inspect.cleandoc(code_generation_prompt)}]
-        + EXAMPLE_QUERY_RESPONSE_MESSAGES
+        + example_messages_without_sql
         + user_messages
     )
 

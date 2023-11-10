@@ -1,11 +1,12 @@
 variable "project_id" {}
 variable "region" {}
 variable "docker_registry" {}
-variable "deployment" {}
+variable "base_domain" {}
 variable "docker_image" {}
 variable "secrets" {
   type = map(string)
 }
+variable "service_account_email" {}
 
 resource "google_cloud_run_v2_service" "chartgpt_app_service" {
   project  = var.project_id
@@ -41,7 +42,7 @@ resource "google_cloud_run_v2_service" "chartgpt_app_service" {
         }
       }
     }
-    service_account = "chartgpt-app-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
+    service_account = var.service_account_email
   }
 
   traffic {
@@ -53,7 +54,7 @@ resource "google_cloud_run_v2_service" "chartgpt_app_service" {
 resource "google_cloud_run_domain_mapping" "chartgpt_app_service" {
   project  = var.project_id
   location = var.region
-  name     = "chartgpt-app-${var.deployment}.***REMOVED***"
+  name     = "streamlit.${var.base_domain}"
 
   metadata {
     namespace = var.project_id

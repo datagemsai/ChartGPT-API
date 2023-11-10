@@ -1,278 +1,341 @@
-openapi: "3.0.0"
-
+components:
+  schemas:
+    Attempt:
+      description: Attempt
+      properties:
+        created_at:
+          description: The timestamp of when the attempt was created.
+          title: Created At
+          type: integer
+        errors:
+          description: The errors of the attempt.
+          items:
+            $ref: '#/components/schemas/Error'
+          title: Errors
+          type: array
+        index:
+          description: The index of the attempt.
+          title: Index
+          type: integer
+        outputs:
+          description: The outputs of the attempt.
+          items:
+            $ref: '#/components/schemas/Output'
+          title: Outputs
+          type: array
+      title: Attempt
+      type: object
+    Error:
+      description: Error
+      properties:
+        created_at:
+          description: The timestamp of when the error was created.
+          title: Created At
+          type: integer
+        index:
+          description: The index of the error.
+          title: Index
+          type: integer
+        type:
+          description: The type of the error.
+          title: Type
+          type: string
+        value:
+          description: The value of the error.
+          title: Value
+          type: string
+      title: Error
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    Message:
+      description: The message based on which the response will be generated.
+      properties:
+        content:
+          description: The content of the message.
+          title: Content
+          type: string
+        created_at:
+          description: The timestamp of when the message was created.
+          title: Created At
+          type: integer
+        id:
+          description: The ID of the message.
+          title: Id
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+      title: Message
+      type: object
+    Output:
+      description: Output
+      properties:
+        created_at:
+          description: The timestamp of when the output was created.
+          title: Created At
+          type: integer
+        description:
+          description: The description of the output.
+          title: Description
+          type: string
+        index:
+          description: The index of the output.
+          title: Index
+          type: integer
+        type:
+          description: The type of the output.
+          title: Type
+          type: string
+        value:
+          description: The value of the output.
+          title: Value
+          type: string
+      title: Output
+      type: object
+    OutputType:
+      description: The output type of the response.
+      enum:
+      - any
+      - int
+      - float
+      - string
+      - bool
+      - plotly_chart
+      - pandas_dataframe
+      - sql_query
+      - python_code
+      - python_output
+      title: OutputType
+      type: string
+    Request:
+      description: Request
+      properties:
+        data_source_url:
+          default: ''
+          description: The data source URL based on which the response will be generated.
+            The entity is optional. If not specified, the default data source will
+            be used.
+          title: Data Source Url
+          type: string
+        max_attempts:
+          default: 10
+          description: The maximum number of attempts to generate an output.
+          title: Max Attempts
+          type: integer
+        max_outputs:
+          default: 10
+          description: The maximum number of outputs to generate.
+          title: Max Outputs
+          type: integer
+        max_tokens:
+          default: 10
+          description: The maximum number of tokens to use for generating an output.
+          title: Max Tokens
+          type: integer
+        messages:
+          description: The messages based on which the response will be generated.
+          items:
+            $ref: '#/components/schemas/Message'
+          title: Messages
+          type: array
+        output_type:
+          $ref: '#/components/schemas/OutputType'
+        session_id:
+          description: The session ID of the request.
+          title: Session Id
+          type: string
+      title: Request
+      type: object
+    Response:
+      description: Response
+      properties:
+        attempts:
+          description: The attempts of the request.
+          items:
+            $ref: '#/components/schemas/Attempt'
+          title: Attempts
+          type: array
+        created_at:
+          description: The timestamp of when the request was created.
+          title: Created At
+          type: integer
+        data_source_url:
+          description: The data source URL of the request.
+          title: Data Source Url
+          type: string
+        errors:
+          description: The errors of the request.
+          items:
+            $ref: '#/components/schemas/Error'
+          title: Errors
+          type: array
+        finished_at:
+          description: The timestamp of when the request was finished.
+          title: Finished At
+          type: integer
+        messages:
+          description: The messages of the request.
+          items:
+            $ref: '#/components/schemas/Message'
+          title: Messages
+          type: array
+        output_type:
+          $ref: '#/components/schemas/OutputType'
+        outputs:
+          description: The outputs of the request.
+          items:
+            $ref: '#/components/schemas/Output'
+          title: Outputs
+          type: array
+        session_id:
+          description: The session ID of the response.
+          title: Session Id
+          type: string
+        status:
+          $ref: '#/components/schemas/Status'
+        usage:
+          $ref: '#/components/schemas/ResponseUsage'
+      title: Response
+      type: object
+    ResponseUsage:
+      description: The usage of the request.
+      properties:
+        tokens:
+          description: The number of tokens used for the request.
+          title: Tokens
+          type: integer
+      title: ResponseUsage
+      type: object
+    Role:
+      description: The role of the message.
+      enum:
+      - system
+      - user
+      - assistant
+      - function
+      title: Role
+      type: string
+    Status:
+      description: The status of the request.
+      enum:
+      - succeeded
+      - failed
+      - stream
+      title: Status
+      type: string
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    APIKeyHeader:
+      in: header
+      name: X-API-KEY
+      type: apiKey
 info:
-  version: "0.1.0"
-  title: "ChartGPT API"
-  description: "The ChartGPT API is a REST API that generates insights from data based on natural language questions."
-
-servers:
-  - url: "https://api.chartgpt.***REMOVED***"
-
+  description: The ChartGPT API is a REST API that generates insights from data based
+    on natural language questions.
+  title: ChartGPT API
+  version: 0.1.0
+openapi: 3.1.0
 paths:
+  /health:
+    get:
+      description: Ping the API to check if it is running.
+      operationId: ping_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Ping
+      tags:
+      - health
   /v1/ask_chartgpt:
     post:
-      summary: "Ask ChartGPT a question"
-      description: "This endpoint takes a question and returns a response."
-      operationId: api.request.ask_chartgpt
+      description: Answer a user query using the ChartGPT API.
+      operationId: ask_chartgpt_v1_ask_chartgpt_post
+      parameters:
+      - in: query
+        name: stream
+        required: false
+        schema:
+          default: false
+          title: Stream
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              '$ref': '#/components/schemas/Request'
+              $ref: '#/components/schemas/Request'
+        required: true
       responses:
         '200':
-          description: "Successful response"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-        '400':
-          description: "Bad request"
-        '401':
-          $ref: "#/components/responses/UnauthorizedError"
-        '500':
-          description: "Internal server error"
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - APIKeyHeader: []
+      summary: Ask Chartgpt
+      tags:
+      - chat
   /v1/ask_chartgpt/stream:
     post:
-      summary: "Ask ChartGPT a question"
-      description: "This endpoint takes a question and returns a streamed response."
-      operationId: api.request.ask_chartgpt_stream
+      description: Stream the response from the ChartGPT API.
+      operationId: ask_chartgpt_stream_v1_ask_chartgpt_stream_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              '$ref': '#/components/schemas/Request'
+              $ref: '#/components/schemas/Request'
+        required: true
       responses:
         '200':
-          description: "Successful response"
           content:
-            text/event-stream:
+            application/json:
               schema:
-                type: string
-                description: "Streaming JSON data delimited by `data: ` and `<end>\n`"
-        '400':
-          description: "Bad request"
-        '401':
-          $ref: "#/components/responses/UnauthorizedError"
-        '500':
-          description: "Internal server error"
-
-# Apply the API key globally to all operations
-security:
-  - ApiKeyAuth: []     # use the same name as under securitySchemes
-
-components:
-  # Define the key name and location
-  securitySchemes:
-    ApiKeyAuth:        # arbitrary name for the security scheme
-      type: apiKey
-      in: header       # can be "header", "query" or "cookie"
-      name: X-API-KEY  # name of the header, query parameter or cookie
-  responses:
-    UnauthorizedError:
-      description: API key is missing or invalid
-      headers:
-        WWW_Authenticate:
-          schema:
-            type: string
-  schemas:
-    Request:
-      type: object
-      properties:
-        messages:
-          type: array
-          description: "The messages based on which the response will be generated."
-          items:
-            type: object
-            description: "The message based on which the response will be generated."
-            properties:
-              id:
-                type: string
-                description: "The ID of the message."
-              created_at:
-                type: integer
-                description: "The timestamp of when the message was created."
-              content:
-                type: string
-                description: "The content of the message."
-              role:
-                $ref: '#/components/schemas/Role'
-        data_source_url:
-          type: string
-          description: "The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used."
-          pattern: "^(?:([a-z]+)/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)(?:/([a-zA-Z0-9_-]+))?)?$"
-          example: "data_source/project/collection/entity"
-          default: ""
-        output_type:
-          $ref: '#/components/schemas/OutputType'
-        max_outputs:
-          type: integer
-          description: "The maximum number of outputs to generate."
-          default: 10
-        max_attempts:
-          type: integer
-          description: "The maximum number of attempts to generate an output."
-          default: 10
-        max_tokens:
-          type: integer
-          description: "The maximum number of tokens to use for generating an output."
-          default: 10
-        # stream:
-        #   type: boolean
-        #   description: "Whether to stream the response."
-        #   default: false
-    Response:
-      type: object
-      # TODO Determine which parameters should always be required
-      # required:
-      # - id
-      properties:
-        id:
-          type: string
-          description: "The ID of the request."
-        created_at:
-          type: integer
-          description: "The timestamp of when the request was created."
-        finished_at:
-          type: integer
-          description: "The timestamp of when the request was finished."
-        status:
-          $ref: "#/components/schemas/Status"
-        messages:
-          type: array
-          description: "The messages of the request."
-          items:
-            type: object
-            description: "The message of the request."
-            properties:
-              id:
-                type: string
-                description: "The ID of the message."
-              created_at:
-                type: integer
-                description: "The timestamp of when the message was created."
-              content:
-                type: string
-                description: "The content of the message."
-              role:
-                $ref: '#/components/schemas/Role'
-        data_source_url:
-          type: string
-          description: "The data source URL of the request."
-        attempts:
-          type: array
-          description: "The attempts of the request."
-          items:
-            $ref: "#/components/schemas/Attempt"
-        output_type:
-          $ref: '#/components/schemas/OutputType'
-        outputs:
-          type: array
-          description: "The outputs of the request."
-          items:
-            $ref: "#/components/schemas/Output"
-        errors:
-          type: array
-          description: "The errors of the request."
-          items:
-            $ref: "#/components/schemas/Error"
-        usage:
-          type: object
-          description: "The usage of the request."
-          properties:
-            tokens:
-              type: integer
-              description: "The number of tokens used for the request."
-    Attempt:
-      type: object
-      properties:
-        index:
-          type: integer
-          description: "The index of the attempt."
-        created_at:
-          type: integer
-          description: "The timestamp of when the attempt was created."
-        outputs:
-          type: array
-          description: "The outputs of the attempt."
-          items:
-            $ref: "#/components/schemas/Output"
-        errors:
-          type: array
-          description: "The errors of the attempt."
-          items:
-            $ref: "#/components/schemas/Error"
-    Output:
-      type: object
-      properties:
-        index:
-          type: integer
-          description: "The index of the output."
-        created_at:
-          type: integer
-          description: "The timestamp of when the output was created."
-        description:
-          type: string
-          description: "The description of the output."
-        type:
-          type: string
-          description: "The type of the output."
-        value:
-          type: string
-          description: "The value of the output."
-    Error:
-      type: object
-      properties:
-        index:
-          type: integer
-          description: "The index of the error."
-        created_at:
-          type: integer
-          description: "The timestamp of when the error was created."
-        type:
-          type: string
-          description: "The type of the error."
-        value:
-          type: string
-          description: "The value of the error."
-    Usage:
-      type: object
-      properties:
-        tokens:
-          type: integer
-          description: "The number of tokens used for the request."
-    Status:
-      type: string
-      description: "The status of the request."
-      enum:
-        - succeeded
-        - failed
-        - stream  # For streaming response
-    OutputType:
-      description: "The output type of the response."
-      type: string
-      default: any
-      enum:
-        # Standard types
-        - any
-        - int
-        - float
-        - string
-        - bool
-        # Complex types
-        - plotly_chart
-        - pandas_dataframe
-        # String types
-        - sql_query
-        - python_code
-        - python_output
-    Role:
-      description: "The role of the message."
-      type: string
-      enum:
-        - system
-        - user
-        - assistant
-        - function
+                $ref: '#/components/schemas/Response'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - APIKeyHeader: []
+      summary: Ask Chartgpt Stream
+      tags:
+      - chat

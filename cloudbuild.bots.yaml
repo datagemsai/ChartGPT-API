@@ -1,0 +1,36 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull ${_IMAGE_URL}:latest || exit 0']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '-t',
+    '${_IMAGE_URL}:${_IMAGE_TAG}',
+    '--cache-from',
+    '${_IMAGE_URL}:latest',
+    '-f',
+    '${_DIR}/Dockerfile',
+    '.'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'tag',
+    '${_IMAGE_URL}:${_IMAGE_TAG}',
+    '${_IMAGE_URL}:latest'
+  ]
+
+images:
+- '${_IMAGE_URL}:${_IMAGE_TAG}'
+- '${_IMAGE_URL}:latest'
+substitutions:
+  _DOCKER_REGISTRY: 'europe-west3-docker.pkg.dev'
+  _IMAGE_NAME:
+  _DIR:
+  _IMAGE_URL: '${_DOCKER_REGISTRY}/${PROJECT_ID}/${PROJECT_ID}/${_IMAGE_NAME}'
+  # NOTE: SHORT_SHA is only available in the Google Cloud Build environment
+  _IMAGE_TAG: '${SHORT_SHA}'
+options:
+  dynamicSubstitutions: true

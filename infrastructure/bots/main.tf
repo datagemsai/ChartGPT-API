@@ -4,13 +4,10 @@
 variable "project_id" {}
 variable "region" {}
 variable "docker_registry" {}
-variable "deployment" {}
-variable "slack_docker_image" {}
-variable "telegram_docker_image" {}
-variable "discord_docker_image" {}
 variable "secrets" {
   type = map(string)
 }
+variable "service_account_email" {}
 
 locals {
   export_secrets = join("\n", [
@@ -22,6 +19,25 @@ locals {
     for secret in keys(var.secrets) :
     "-e ${secret}=$TF_${secret}"
   ])
+
+  slack_docker_image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-slack-bot@${data.docker_registry_image.chartgpt_slack_bot_image.sha256_digest}"
+  telegram_docker_image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-telegram-bot@${data.docker_registry_image.chartgpt_telegram_bot_image.sha256_digest}"
+  discord_docker_image = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-discord-bot@${data.docker_registry_image.chartgpt_discord_bot_image.sha256_digest}"
+}
+
+# ChartGPT Slack Bot Docker image
+data "docker_registry_image" "chartgpt_slack_bot_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-slack-bot"
+}
+
+# ChartGPT Telegram Bot Docker image
+data "docker_registry_image" "chartgpt_telegram_bot_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-telegram-bot"
+}
+
+# ChartGPT Discord Bot Docker image
+data "docker_registry_image" "chartgpt_discord_bot_image" {
+  name = "${var.docker_registry}/${var.project_id}/${var.project_id}/chartgpt-discord-bot"
 }
 
 resource "google_compute_instance" "chartgpt-bots" {
@@ -46,6 +62,7 @@ resource "google_compute_instance" "chartgpt-bots" {
   can_ip_forward      = false
   deletion_protection = false
   enable_display      = false
+  allow_stopping_for_update = true
 
   labels = {
     goog-ec-src = "vm_add-tf"
@@ -67,7 +84,7 @@ resource "google_compute_instance" "chartgpt-bots" {
   }
 
   service_account {
-    email  = "chartgpt-app-${var.deployment}@${var.project_id}.iam.gserviceaccount.com"
+    email  = var.service_account_email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
@@ -93,8 +110,8 @@ resource "google_compute_instance" "chartgpt-bots" {
     ${local.export_secrets}
 
     # Run Docker containers
-    docker run -d ${local.docker_env_vars} ${var.slack_docker_image}
-    docker run -d ${local.docker_env_vars} ${var.telegram_docker_image}
-    docker run -d ${local.docker_env_vars} ${var.discord_docker_image}
+    docker run -d ${local.docker_env_vars} ${local.slack_docker_image}
+    docker run -d ${local.docker_env_vars} ${local.telegram_docker_image}
+    docker run -d ${local.docker_env_vars} ${local.discord_docker_image}
   EOT
 }

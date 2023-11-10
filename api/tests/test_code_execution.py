@@ -6,7 +6,7 @@ import pytest
 
 from api import utils
 from api.chartgpt import execute_python_code
-from api.prompts import CODE_GENERATION_IMPORTS
+from api.prompts.templates import CODE_GENERATION_IMPORTS
 from api.types import (CodeGenerationConfig, accepted_output_types,
                        assert_matches_accepted_type)
 from api.utils import clean_jupyter_shell_output

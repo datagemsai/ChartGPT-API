@@ -77,8 +77,6 @@ allowed_imports = {
     "timedelta",
     # GPT suggested:
     "google.cloud.bigquery",
-    "numpy",
-    "math",
     "plotly.subplots",
     # "matplotlib",
     # "matplotlib.pyplot",
@@ -190,7 +188,7 @@ def allowed_node(node):
             if hasattr(node, "attr")
             else (node.id.startswith("._") or node.id.startswith(".__"))
         ):
-            raise ValueError(f"Accessing private members is not allowed")
+            raise ValueError("Accessing private members is not allowed")
 
 
 def analyze_ast(node, max_depth=float("inf"), current_depth=0):

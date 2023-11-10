@@ -55,10 +55,10 @@ import chartgpt_client
 from chartgpt_client.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.chartgpt.***REMOVED***
+# Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
 configuration = chartgpt_client.Configuration(
-    host = "https://api.chartgpt.***REMOVED***"
+    host = "http://localhost"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -66,53 +66,54 @@ configuration = chartgpt_client.Configuration(
 # Examples for each auth method are provided below, use the example that
 # satisfies your auth use case.
 
-# Configure API key authorization: ApiKeyAuth
-configuration.api_key['ApiKeyAuth'] = os.environ["API_KEY"]
+# Configure API key authorization: APIKeyHeader
+configuration.api_key['APIKeyHeader'] = os.environ["API_KEY"]
 
 # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-# configuration.api_key_prefix['ApiKeyAuth'] = 'Bearer'
+# configuration.api_key_prefix['APIKeyHeader'] = 'Bearer'
 
 
 # Enter a context with an instance of the API client
 with chartgpt_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = chartgpt_client.DefaultApi(api_client)
+    api_instance = chartgpt_client.ChatApi(api_client)
     request = chartgpt_client.Request() # Request | 
 
     try:
-        # Ask ChartGPT a question
-        api_response = api_instance.api_request_ask_chartgpt(request)
-        print("The response of DefaultApi->api_request_ask_chartgpt:\n")
+        # Ask Chartgpt Stream
+        api_response = api_instance.ask_chartgpt_stream_v1_ask_chartgpt_stream_post(request)
+        print("The response of ChatApi->ask_chartgpt_stream_v1_ask_chartgpt_stream_post:\n")
         pprint(api_response)
     except ApiException as e:
-        print("Exception when calling DefaultApi->api_request_ask_chartgpt: %s\n" % e)
+        print("Exception when calling ChatApi->ask_chartgpt_stream_v1_ask_chartgpt_stream_post: %s\n" % e)
 
 ```
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://api.chartgpt.***REMOVED****
+All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DefaultApi* | [**api_request_ask_chartgpt**](docs/DefaultApi.md#api_request_ask_chartgpt) | **POST** /v1/ask_chartgpt | Ask ChartGPT a question
-*DefaultApi* | [**api_request_ask_chartgpt_stream**](docs/DefaultApi.md#api_request_ask_chartgpt_stream) | **POST** /v1/ask_chartgpt/stream | Ask ChartGPT a question
+*ChatApi* | [**ask_chartgpt_stream_v1_ask_chartgpt_stream_post**](docs/ChatApi.md#ask_chartgpt_stream_v1_ask_chartgpt_stream_post) | **POST** /v1/ask_chartgpt/stream | Ask Chartgpt Stream
+*ChatApi* | [**ask_chartgpt_v1_ask_chartgpt_post**](docs/ChatApi.md#ask_chartgpt_v1_ask_chartgpt_post) | **POST** /v1/ask_chartgpt | Ask Chartgpt
+*HealthApi* | [**ping_health_get**](docs/HealthApi.md#ping_health_get) | **GET** /health | Ping
 
 
 ## Documentation For Models
 
  - [Attempt](docs/Attempt.md)
  - [Error](docs/Error.md)
+ - [HTTPValidationError](docs/HTTPValidationError.md)
+ - [Message](docs/Message.md)
  - [Output](docs/Output.md)
  - [OutputType](docs/OutputType.md)
  - [Request](docs/Request.md)
- - [RequestMessagesInner](docs/RequestMessagesInner.md)
  - [Response](docs/Response.md)
- - [ResponseMessagesInner](docs/ResponseMessagesInner.md)
  - [ResponseUsage](docs/ResponseUsage.md)
  - [Role](docs/Role.md)
  - [Status](docs/Status.md)
- - [Usage](docs/Usage.md)
+ - [ValidationError](docs/ValidationError.md)
 
 
 <a id="documentation-for-authorization"></a>
@@ -120,8 +121,8 @@ Class | Method | HTTP request | Description
 
 
 Authentication schemes defined for the API:
-<a id="ApiKeyAuth"></a>
-### ApiKeyAuth
+<a id="APIKeyHeader"></a>
+### APIKeyHeader
 
 - **Type**: API key
 - **API key parameter name**: X-API-KEY

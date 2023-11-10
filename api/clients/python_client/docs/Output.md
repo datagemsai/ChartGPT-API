@@ -1,14 +1,15 @@
 # Output
 
+Output
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**index** | **int** | The index of the output. | [optional] 
-**created_at** | **int** | The timestamp of when the output was created. | [optional] 
-**description** | **str** | The description of the output. | [optional] 
-**type** | **str** | The type of the output. | [optional] 
-**value** | **str** | The value of the output. | [optional] 
+**created_at** | **object** | The timestamp of when the output was created. | [optional] 
+**description** | **object** | The description of the output. | [optional] 
+**index** | **object** | The index of the output. | [optional] 
+**type** | **object** | The type of the output. | [optional] 
+**value** | **object** | The value of the output. | [optional] 
 
 ## Example
 

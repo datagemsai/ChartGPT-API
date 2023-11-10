@@ -1,0 +1,291 @@
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow"
+query = "Plot the average APR for the ***REMOVED*** protocol in the past 6 months."
+sql = """
+SELECT DATE(block_timestamp) as date, AVG(apr) as average_apr FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)) AND LOWER(protocol) = LOWER('***REMOVED***') GROUP BY date ORDER BY date
+"""
+code = """
+import plotly.express as px
+
+
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    fig = px.line(df, x='date', y='average_apr', title='Average APR for ***REMOVED*** protocol over the past 6 months')
+    return fig
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow"
+query = "Plot a bar chart of the USD lending volume for all protocols."
+sql = """
+SELECT protocol, SUM(amt_in_usd) as total_volume FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) GROUP BY protocol
+"""
+code = """
+
+import plotly
+import plotly.express as px
+import pandas as pd
+
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    fig = px.bar(df, x='protocol', y='total_volume', title='Total lending volume in USD for each protocol over the past 3 months')
+    return fig
+
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow"
+query = "Plot a stacked area chart of the USD lending volume for all protocols."
+sql = """
+SELECT DATE(block_timestamp) as date, protocol, SUM(amt_in_usd) as total_volume FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) GROUP BY date, protocol ORDER BY date
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    df_pivot = df.pivot(index='date', columns='protocol', values='total_volume').fillna(0)
+    fig = px.area(df_pivot, facet_col='protocol', facet_col_wrap=2)
+    return fig
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "What is the average sale duration of furnished vs. unfurnished properties over time?"
+sql = """
+SELECT `list_date`, `furnished`, AVG(`sale_duration`) as avg_sale_duration FROM `chartgpt-staging.real_estate.usa_real_estate_listings_synthetic` WHERE `list_date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) GROUP BY `list_date`, `furnished` ORDER BY `list_date`
+"""
+code = """
+import plotly.express as px
+
+
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    fig = px.line(df, x='list_date', y='avg_sale_duration', color='furnished', title='Average Sale Duration of Furnished vs. Unfurnished Properties Over Time')
+    return fig
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "Which states offer the best value for money in terms of house size? Show this on a map."
+sql = """
+SELECT `state`, AVG(`price`/`house_size`) as avg_price_per_sqft FROM `chartgpt-staging.real_estate.usa_real_estate_listings_synthetic` WHERE `list_date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) AND `house_size` > 0 GROUP BY `state`
+"""
+code = """
+import plotly.graph_objs as go
+
+
+def answer_question(df: pd.DataFrame) -> go.Figure:
+    fig = go.Figure(data=go.Choropleth(
+        locations=df['state'], # Spatial coordinates
+        z = df['avg_price_per_sqft'].astype(float), # Data to be color-coded
+        locationmode = 'USA-states', # set of locations match entries in `locations`
+        colorscale = 'Reds',
+        colorbar_title = "USD per sq ft",
+    ))
+
+    fig.update_layout(
+        title_text = 'Average Price per Square Foot by State',
+        geo_scope='usa', # limite map scope to USA
+    )
+
+    return fig
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "What is the most common feedback term for houses in New York?"
+sql = """
+SELECT `feedback` FROM `chartgpt-staging.real_estate.usa_real_estate_listings_synthetic` WHERE LOWER(`city`) = LOWER('New York')
+"""
+code = """
+
+import pandas as pd
+from collections import Counter
+import re
+
+def answer_question(df: pd.DataFrame) -> str:
+    # Remove None values
+    df = df.dropna()
+    
+    # Concatenate all feedback into one string
+    all_feedback = ' '.join(df['feedback'].tolist())
+    
+    # Split the string into individual words
+    words = re.findall(r'\w+', all_feedback.lower())
+    
+    # Count the frequency of each word
+    word_counts = Counter(words)
+    
+    # Find the most common word
+    most_common_word = word_counts.most_common(1)[0][0]
+    
+    return most_common_word
+
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "Which cities had the highest USD sale volume in 2022?"
+sql = """
+SELECT `city`, SUM(`price`) as sale_volume FROM `real_estate.usa_real_estate_listings_synthetic` WHERE EXTRACT(YEAR FROM `list_date`) = 2022 AND `status` = 'Sold' GROUP BY `city` ORDER BY sale_volume DESC LIMIT 10
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    top_cities = df.sort_values('sale_volume', ascending=False).head(10)
+    return top_cities
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "For properties that have had more than 10 viewings, how long, on average, does it take to sell them?"
+sql = """
+SELECT AVG(`sale_duration`) as average_sale_duration FROM `real_estate.usa_real_estate_listings_synthetic` WHERE `physical_viewings` > 10
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> float:
+    average_sale_duration = df['average_sale_duration'].values[0]
+    return average_sale_duration
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "What percentage of website visits for properties with 3 bedrooms and above convert into actual property viewings?"
+sql = """
+SELECT SUM(`web_visits`) as total_web_visits, SUM(`physical_viewings`) as total_physical_viewings FROM `real_estate.usa_real_estate_listings_synthetic` WHERE `bed` >= 3
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> float:
+    conversion_rate = df['total_physical_viewings'][0] / df['total_web_visits'][0] * 100
+    return conversion_rate
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/real_estate/usa_real_estate_listings_synthetic"
+query = "What combination of bedrooms and bathrooms had the highest average web visits in October 2022 in Los Angeles?"
+sql = """
+SELECT `bed`, `bath`, AVG(`web_visits`) as average_web_visits FROM `real_estate.usa_real_estate_listings_synthetic` WHERE `city` = 'Los Angeles' AND `list_date` >= '2022-10-01' AND `list_date` < '2022-11-01' GROUP BY `bed`, `bath` ORDER BY average_web_visits DESC LIMIT 1
+"""
+code = """
+
+import pandas as pd
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    return df.head(1)
+
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/aviation/airport_operations"
+query = "Plot average Taxi times (before and after) for each gate"
+sql = """
+SELECT `Gate_Number`, AVG(`Taxi_Times_Before`) as avg_taxi_before, AVG(`Taxi_Times_After`) as avg_taxi_after FROM `chartgpt-staging.aviation.airport_operations` WHERE `Date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) GROUP BY `Gate_Number`
+"""
+code = """
+
+import plotly.graph_objs as go
+
+def answer_question(df: pd.DataFrame) -> go.Figure:
+    # Sort dataframe by Gate_Number
+    df = df.sort_values('Gate_Number')
+
+    # Create a line for average taxi times before
+    trace_before = go.Scatter(
+        x = df['Gate_Number'],
+        y = df['avg_taxi_before'],
+        mode = 'lines',
+        name = 'Average Taxi Times Before'
+    )
+
+    # Create a line for average taxi times after
+    trace_after = go.Scatter(
+        x = df['Gate_Number'],
+        y = df['avg_taxi_after'],
+        mode = 'lines',
+        name = 'Average Taxi Times After'
+    )
+
+    # Define the layout
+    layout = go.Layout(
+        title = 'Average Taxi Times (Before and After) for Each Gate',
+        xaxis = dict(title = 'Gate Number'),
+        yaxis = dict(title = 'Average Taxi Time')
+    )
+
+    # Define the figure
+    fig = go.Figure(data = [trace_before, trace_after], layout = layout)
+    return fig
+
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/aviation/airport_operations"
+query = "Plot the passenger arrivals by terminal over time"
+sql = """
+SELECT `Date`, `Terminal`, `Passenger_Arrivals` FROM `chartgpt-staging.aviation.airport_operations` WHERE `Date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) ORDER BY `Date`
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
+    df_grouped = df.groupby(['Date', 'Terminal']).sum().reset_index()
+    fig = px.line(df_grouped, x='Date', y='Passenger_Arrivals', color='Terminal', title='Passenger Arrivals by Terminal Over Time')
+    return fig
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/aviation/airport_operations"
+query = "Given 2022 seasonal fluctuations, what volume of baggage can we anticipate between December 15th and December 31st?"
+sql = """
+SELECT `Date`, `Total_Baggage_Volume` FROM `chartgpt-staging.aviation.airport_operations` WHERE EXTRACT(MONTH FROM `Date`) = 12 AND `Date` < DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR) ORDER BY `Date`
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> float:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Year'] = df['Date'].dt.year
+    df['Day'] = df['Date'].dt.day
+    df_grouped = df.groupby(['Year', 'Day'])['Total_Baggage_Volume'].mean().reset_index()
+    df_dec_15 = df_grouped[df_grouped['Day'] == 15]
+    mean_baggage_volume_dec_15 = df_dec_15['Total_Baggage_Volume'].mean()
+    return mean_baggage_volume_dec_15
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/aviation/airport_operations"
+query = "Which gates had on average the largest volume of baggage in September?"
+sql = """
+SELECT `Gate_Number`, AVG(`Total_Baggage_Volume`) as average_baggage_volume FROM `chartgpt-staging.aviation.airport_operations` WHERE EXTRACT(MONTH FROM `Date`) = 9 GROUP BY `Gate_Number` ORDER BY average_baggage_volume DESC
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    sorted_df = df.sort_values(by='average_baggage_volume', ascending=False)
+    top_5_gates = sorted_df.head(5)
+    return top_5_gates
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/aviation/airport_operations"
+query = "From our historical gate usage data, which gates are most frequently delayed in turning over for incoming flights during morning rush hours (6:30 am - 9:30 am)?"
+sql = """
+SELECT `Gate_Number`, COUNT(`Gate_Turnover_Delay`) as delay_count FROM `chartgpt-staging.aviation.airport_operations` WHERE `Date` >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH) AND `Gate_Turnover_Delay` > 0 GROUP BY `Gate_Number` ORDER BY delay_count DESC LIMIT 100000;
+"""
+code = """
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    top_5_delayed_gates = df.sort_values('delay_count', ascending=False).head(5)
+    return top_5_delayed_gates
+"""
+
+[[query_responses]]
+data_source_url = "bigquery/chartgpt-staging/aviation/airport_operations"
+query = "Given 2022 seasonal fluctuations, what volume of baggage can we anticipate between December 15th and December 31st?"
+sql = """
+SELECT `Date`, `Total_Baggage_Volume` FROM `chartgpt-staging.aviation.airport_operations` WHERE EXTRACT(MONTH FROM `Date`) = 12 AND `Date` < DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR) ORDER BY `Date`
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> float:
+    # Convert 'Date' column to datetime format
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    # Filter data to only include records from December 15th to the end of the year
+    df = df[(df['Date'].dt.month == 12) & (df['Date'].dt.day >= 15)]
+
+    # Calculate average baggage volume for this period in previous years
+    avg_baggage_volume = df['Total_Baggage_Volume'].mean()
+
+    return avg_baggage_volume
+"""

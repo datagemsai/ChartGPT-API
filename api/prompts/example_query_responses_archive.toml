@@ -1,0 +1,261 @@
+[[query_responses]]
+query = "Provide a summary of area (mean of worst) for each diagnosis in the Breast Cancer dataset."
+sql = """
+SELECT `diagnosis`, AVG(`area_worst`) as average_area_worst, MIN(`area_worst`) as min_area_worst, MAX(`area_worst`) as max_area_worst
+FROM `chartgpt-staging.breast_cancer_dataset.breast_cancer_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `diagnosis`;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    area_worst_summary = df.groupby('diagnosis')['area_worst'].describe()
+    return area_worst_summary
+"""
+
+[[query_responses]]
+query = "Provide summary statistics for BMI in the Diabetes dataset."
+sql = """
+SELECT AVG(`bmi`) as average_bmi, MIN(`bmi`) as min_bmi, MAX(`bmi`) as max_bmi
+FROM `chartgpt-staging.diabetes_dataset.diabetes_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH));
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    bmi_summary = df['bmi'].describe().to_frame()
+    return bmi_summary
+"""
+
+[[query_responses]]
+query = "Provide a summary of LSTAT for each CHAS category in the Boston Housing dataset."
+sql = """
+SELECT `CHAS`, AVG(`LSTAT`) as average_lstat, MIN(`LSTAT`) as min_lstat, MAX(`LSTAT`) as max_lstat
+FROM `chartgpt-staging.boston_housing_dataset.boston_housing_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `CHAS`;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    lstat_summary = df.groupby('CHAS')['LSTAT'].describe()
+    return lstat_summary
+"""
+
+[[query_responses]]
+query = "Provide a summary of the fixed acidity for each quality rating in the Wine dataset."
+sql = """
+SELECT `quality`, AVG(`fixed_acidity`) as average_fixed_acidity, MIN(`fixed_acidity`) as min_fixed_acidity, MAX(`fixed_acidity`) as max_fixed_acidity
+FROM `chartgpt-staging.wine_dataset.wine_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `quality`;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    fixed_acidity_summary = df.groupby('quality')['fixed_acidity'].describe()
+    return fixed_acidity_summary
+"""
+
+[[query_responses]]
+query = "What is the standard deviation of radius (mean of worst) in the Breast Cancer dataset?"
+sql = """
+SELECT STDDEV(`radius_worst`) as std_radius_worst
+FROM `chartgpt-staging.breast_cancer_dataset.breast_cancer_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH));
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> float:
+    std_radius_worst = df['radius_worst'].std()
+    return std_radius_worst
+"""
+
+[[query_responses]]
+query = "What is the minimum blood pressure recorded in the Diabetes dataset?"
+sql = """
+SELECT MIN(`bp`) as min_blood_pressure
+FROM `chartgpt-staging.diabetes_dataset.diabetes_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH));
+"""
+code = """
+import pandas as pd
+import numpy
+
+
+def answer_question(df: pd.DataFrame) -> numpy.float64:
+    min_blood_pressure = df['bp'].min()
+    return min_blood_pressure
+"""
+
+[[query_responses]]
+query = "Which wine quality rating has the highest average alcohol content?"
+sql = """
+SELECT `quality`, AVG(`alcohol`) as avg_alcohol
+FROM `chartgpt-staging.wine_dataset.wine_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `quality`
+ORDER BY avg_alcohol DESC
+LIMIT 1;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> str:
+    avg_alcohol = df.groupby('quality')['alcohol'].mean()
+    highest_avg_alcohol_quality = avg_alcohol.idxmax()
+    return str(highest_avg_alcohol_quality)
+"""
+
+[[query_responses]]
+query = "What's the average alcohol level for wines with different quality ratings?"
+sql = """
+SELECT `quality`, AVG(`alcohol`) as avg_alcohol
+FROM `chartgpt-staging.wine_dataset.wine_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `quality`
+LIMIT 100000;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> pd.DataFrame:
+    avg_alcohol = df.groupby('quality')['alcohol'].mean().reset_index()
+    return avg_alcohol
+"""
+
+[[query_responses]]
+query = "How many survivors are recorded in the Titanic dataset?"
+sql = """
+SELECT COUNT(*) as survivors
+FROM `chartgpt-staging.titanic_dataset.titanic_table`
+WHERE `Survived` = 1 AND `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+LIMIT 100000;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> int:
+    survivors = df['Survived'].sum()
+    return survivors
+"""
+
+[[query_responses]]
+query = "What’s the distribution of homes regarding the proximity to the Charles River?"
+sql = """
+SELECT `CHAS`, COUNT(*) as count
+FROM `chartgpt-staging.boston_housing_dataset.boston_housing_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `CHAS`
+LIMIT 100000;
+"""
+code = """
+import pandas as pd
+import numpy
+
+
+def answer_question(df: pd.DataFrame) -> numpy.int64:
+    chas_count = df['CHAS'].value_counts().values[0]
+    return chas_count
+"""
+
+[[query_responses]]
+query = "Could you provide the average BMI in the Diabetes dataset?"
+sql = """
+SELECT AVG(`bmi`) as avg_bmi
+FROM `chartgpt-staging.diabetes_dataset.diabetes_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+LIMIT 100000;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> float:
+    avg_bmi = df['bmi'].mean()
+    return avg_bmi
+"""
+
+[[query_responses]]
+query = "Can you find the median texture (mean of worst) in the Breast Cancer dataset?"
+sql = """
+SELECT PERCENTILE_CONT(`texture_worst`, 0.5) OVER() as median_texture_worst
+FROM `chartgpt-staging.breast_cancer_dataset.breast_cancer_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+LIMIT 100000;
+"""
+code = """
+import pandas as pd
+import numpy
+
+
+def answer_question(df: pd.DataFrame) -> numpy.float64:
+    median_texture_worst = df['texture_worst'].median()
+    return median_texture_worst
+"""
+
+[[query_responses]]
+query = "What is the most frequent quality rating for wines?"
+sql = """
+SELECT `quality`, COUNT(*) as count
+FROM `chartgpt-staging.wine_dataset.wine_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+GROUP BY `quality`
+ORDER BY count DESC
+LIMIT 1;
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> str:
+    common_quality = df['quality'].mode()[0]
+    return str(common_quality)
+"""
+
+[[query_responses]]
+query = "Are there any missing ages in the Titanic dataset?"
+sql = """
+SELECT COUNT(*) > 0 as missing_ages
+FROM `chartgpt-staging.titanic_dataset.titanic_table`
+WHERE `Age` IS NULL AND `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH));
+"""
+code = """
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> bool:
+    missing_ages = df['Age'].isnull().any()
+    return missing_ages
+"""
+
+[[query_responses]]
+query = "Does the Boston Housing dataset contain any null values?"
+sql = """
+SELECT COUNT(*) > 0 as contains_null
+FROM `chartgpt-staging.boston_housing_dataset.boston_housing_table`
+WHERE `date` >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH))
+AND (_TABLE_SUFFIX IS NULL OR _TABLE_SUFFIX BETWEEN 'suffix_start' AND 'suffix_end');
+"""
+code = """
+import numpy
+import pandas as pd
+
+
+def answer_question(df: pd.DataFrame) -> numpy.bool_:
+    non_null = not df.isnull().values.any()
+    return non_null
+"""
