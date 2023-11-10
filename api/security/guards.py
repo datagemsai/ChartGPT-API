@@ -1,7 +1,8 @@
 # flake8: noqa
 import inspect
+from typing import List
 import toml
-from api.chartgpt import openai_chat_completion
+from api.chartgpt import openai_chat_completion, openai_chat_completion_sync
 from api.types import Role
 from api.log import logger
 
@@ -39,20 +40,43 @@ nda_response_messages = [
     item for sublist in nda_response_messages for item in sublist
 ]
 
+
+def get_nda_prompt_messages(question: str) -> List[str]:
+    """Get the messages for the NDA prompt."""
+    return [
+        {
+            "role": Role.SYSTEM.value,
+            "content": SYSTEM_PROMPT,
+        }
+    ] + nda_response_messages + [
+        {
+            "role": Role.USER.value,
+            "content": question,
+        }
+    ]
+
+
+def is_nda_broken_sync(question) -> bool:
+    """Check if the NDA is broken for a given question."""
+    try:
+        messages = get_nda_prompt_messages(question=question)
+        response = openai_chat_completion_sync(
+            "gpt-3.5-turbo",
+            messages,
+            temperature=0,
+        )
+        nda_broken = response["choices"][0]["message"]["content"].lower() == "true"
+        return nda_broken
+    except: # pylint: disable=bare-except
+        # Fail safe to prevent NDA from being broken
+        logger.exception("Failed to check if NDA is broken, assuming it is broken")
+        return True
+
+
 async def is_nda_broken(question) -> bool:
     """Check if the NDA is broken for a given question."""
     try:
-        messages = [
-            {
-                "role": Role.SYSTEM.value,
-                "content": SYSTEM_PROMPT,
-            }
-        ] + nda_response_messages + [
-            {
-                "role": Role.USER.value,
-                "content": question,
-            }
-        ]
+        messages = get_nda_prompt_messages(question=question)
         response = await openai_chat_completion(
             "gpt-3.5-turbo",
             messages,
