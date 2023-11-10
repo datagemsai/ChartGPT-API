@@ -13,34 +13,27 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Optional
+import json
 
-from pydantic import BaseModel, Field, StrictInt, StrictStr
 
+from typing import Any, Optional
+from pydantic import BaseModel, Field
 
 class Output(BaseModel):
     """
     Output
     """
-
-    index: Optional[StrictInt] = Field(None, description="The index of the output.")
-    created_at: Optional[StrictInt] = Field(
-        None, description="The timestamp of when the output was created."
-    )
-    description: Optional[StrictStr] = Field(
-        None, description="The description of the output."
-    )
-    type: Optional[StrictStr] = Field(None, description="The type of the output.")
-    value: Optional[StrictStr] = Field(None, description="The value of the output.")
-    __properties = ["index", "created_at", "description", "type", "value"]
+    created_at: Optional[Any] = Field(None, description="The timestamp of when the output was created.")
+    description: Optional[Any] = Field(None, description="The description of the output.")
+    index: Optional[Any] = Field(None, description="The index of the output.")
+    type: Optional[Any] = Field(None, description="The type of the output.")
+    value: Optional[Any] = Field(None, description="The value of the output.")
+    __properties = ["created_at", "description", "index", "type", "value"]
 
     class Config:
         """Pydantic configuration"""
-
         allow_population_by_field_name = True
         validate_assignment = True
 
@@ -59,7 +52,35 @@ class Output(BaseModel):
 
     def to_dict(self):
         """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True, exclude={}, exclude_none=True)
+        _dict = self.dict(by_alias=True,
+                          exclude={
+                          },
+                          exclude_none=True)
+        # set to None if created_at (nullable) is None
+        # and __fields_set__ contains the field
+        if self.created_at is None and "created_at" in self.__fields_set__:
+            _dict['created_at'] = None
+
+        # set to None if description (nullable) is None
+        # and __fields_set__ contains the field
+        if self.description is None and "description" in self.__fields_set__:
+            _dict['description'] = None
+
+        # set to None if index (nullable) is None
+        # and __fields_set__ contains the field
+        if self.index is None and "index" in self.__fields_set__:
+            _dict['index'] = None
+
+        # set to None if type (nullable) is None
+        # and __fields_set__ contains the field
+        if self.type is None and "type" in self.__fields_set__:
+            _dict['type'] = None
+
+        # set to None if value (nullable) is None
+        # and __fields_set__ contains the field
+        if self.value is None and "value" in self.__fields_set__:
+            _dict['value'] = None
+
         return _dict
 
     @classmethod
@@ -71,13 +92,13 @@ class Output(BaseModel):
         if not isinstance(obj, dict):
             return Output.parse_obj(obj)
 
-        _obj = Output.parse_obj(
-            {
-                "index": obj.get("index"),
-                "created_at": obj.get("created_at"),
-                "description": obj.get("description"),
-                "type": obj.get("type"),
-                "value": obj.get("value"),
-            }
-        )
+        _obj = Output.parse_obj({
+            "created_at": obj.get("created_at"),
+            "description": obj.get("description"),
+            "index": obj.get("index"),
+            "type": obj.get("type"),
+            "value": obj.get("value")
+        })
         return _obj
+
+

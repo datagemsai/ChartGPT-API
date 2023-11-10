@@ -12,27 +12,58 @@
 """  # noqa: E501
 
 
-import json
+from __future__ import annotations
 import pprint
 import re  # noqa: F401
+import json
 
-from aenum import Enum, no_arg
 
 
-class Role(str, Enum):
+from pydantic import BaseModel
+
+class Role(BaseModel):
     """
     The role of the message.
     """
+    __properties = []
 
-    """
-    allowed enum values
-    """
-    SYSTEM = "system"
-    USER = "user"
-    ASSISTANT = "assistant"
-    FUNCTION = "function"
+    class Config:
+        """Pydantic configuration"""
+        allow_population_by_field_name = True
+        validate_assignment = True
+
+    def to_str(self) -> str:
+        """Returns the string representation of the model using alias"""
+        return pprint.pformat(self.dict(by_alias=True))
+
+    def to_json(self) -> str:
+        """Returns the JSON representation of the model using alias"""
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Role:
         """Create an instance of Role from a JSON string"""
-        return Role(json.loads(json_str))
+        return cls.from_dict(json.loads(json_str))
+
+    def to_dict(self):
+        """Returns the dictionary representation of the model using alias"""
+        _dict = self.dict(by_alias=True,
+                          exclude={
+                          },
+                          exclude_none=True)
+        return _dict
+
+    @classmethod
+    def from_dict(cls, obj: dict) -> Role:
+        """Create an instance of Role from a dict"""
+        if obj is None:
+            return None
+
+        if not isinstance(obj, dict):
+            return Role.parse_obj(obj)
+
+        _obj = Role.parse_obj({
+        })
+        return _obj
+
+

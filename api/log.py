@@ -73,18 +73,18 @@ def get_unified_diff_changes(string1, string2):
     return "\n".join(changed_lines)
 
 
-class JobIdFilter(logging.Filter):
+class SessionIdFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        record.job_id = job_id() if flask.has_request_context() else ""
+        record.session_id = session_id() if flask.has_request_context() else ""
         return True
 
 
-def job_id():
-    if getattr(flask.g, "job_id", None):
-        return flask.g.job_id
+def session_id():
+    if getattr(flask.g, "session_id", None):
+        return flask.g.session_id
     else:
-        flask.g.job_id = None
-        return flask.g.job_id
+        flask.g.session_id = None
+        return flask.g.session_id
 
 
 def wrap(pre, post):

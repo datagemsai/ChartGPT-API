@@ -3,12 +3,17 @@ import time
 from logging.config import dictConfig
 from typing import AsyncGenerator, Optional
 
-from chartgpt_client import (Attempt, Error, Output, OutputType, Request,
+from api.models import (Attempt, Error, Output, OutputType, Request,
                              Response, Usage)
 from fastapi import FastAPI, HTTPException, Security, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.openapi.utils import get_openapi
+
+import motor
+import motor.motor_asyncio
+import os
 
 from api import auth, utils
 from api.chartgpt import answer_user_query
@@ -18,17 +23,22 @@ from api.log import log_response, logger
 from api.types import QueryResult
 
 
+# MongoDB client
+client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
+db = client.api
+
+
 dictConfig(
     {
         "version": 1,
         "filters": {
-            "job_id": {
-                "()": "api.log.JobIdFilter",
+            "session_id": {
+                "()": "api.log.SessionIdFilter",
             },
         },
         "formatters": {
             "default": {
-                "format": "[%(asctime)s job_id:%(job_id)s %(module)s->%(funcName)s():%(lineno)s] %(levelname)s: %(message)s"
+                "format": "[%(asctime)s session_id:%(session_id)s %(module)s->%(funcName)s():%(lineno)s] %(levelname)s: %(message)s"
             }
         },
         "handlers": {
@@ -36,7 +46,7 @@ dictConfig(
                 "class": "logging.StreamHandler",
                 "stream": "ext://flask.logging.wsgi_errors_stream",
                 "formatter": "default",
-                "filters": ["job_id"],
+                "filters": ["session_id"],
             },
         },
         "root": {"level": "INFO", "handlers": ["wsgi"]},
@@ -46,7 +56,28 @@ dictConfig(
     }
 )
 
+
 app = FastAPI()
+
+
+def openapi_config():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="ChartGPT API",
+        version="0.1.0",
+        # summary="",
+        description="The ChartGPT API is a REST API that generates insights from data based on natural language questions.",
+        routes=app.routes,
+    )
+    # openapi_schema["info"]["x-logo"] = {
+    #     "url": "https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png"
+    # }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = openapi_config
 
 
 api_key_header = APIKeyHeader(name="X-API-KEY")
@@ -82,12 +113,12 @@ async def uncaught_exception_handler(_: Request, exc: Exception):
     )
 
 
-def stream_response(response: Response) -> str:
-    """Format the stream response."""
+def format_response_event(response: Response) -> str:
+    """Format the response for event stream."""
     return f"data: {response.to_json()}\n\n"
 
 
-@app.get("/health")
+@app.get("/health", tags=["health"])
 async def ping():
     """Ping the API to check if it is running."""
     logger.info("Health check")
@@ -104,9 +135,15 @@ async def keep_alive_generator(queue: asyncio.Queue, stop_event: asyncio.Event) 
         pass
 
 
+async def handle_response(response: Response, queue: asyncio.Queue) -> None:
+    log_response(response)
+    await queue.put(format_response_event(response=response))
+    await db["responses"].insert_one(response.dict())
+
+
 async def data_generator(
         request: Request,
-        job_id: str,
+        session_id: str,
         created_at: int,
         queue: asyncio.Queue,
         stop_event: asyncio.Event,
@@ -114,7 +151,7 @@ async def data_generator(
     try:
         # Respond with the job ID to indicate that the job has started
         response = Response(
-            id=job_id,
+            session_id=session_id,
             created_at=created_at,
             status="stream",
             messages=request.messages,
@@ -124,15 +161,14 @@ async def data_generator(
             outputs=[],
             errors=[],
         )
-        log_response(response)
         await queue.put("event: stream_start\n")
-        await queue.put(stream_response(response=response))
+        await handle_response(response=response, queue=queue)
         async for result in answer_user_query(request=request, stream=True):
             finished_at = int(time.time())
             if isinstance(result, Attempt):
                 attempt = result
                 response = Response(
-                    id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -145,13 +181,12 @@ async def data_generator(
                     errors=[],
                     # usage=Usage(tokens=len(result.attempts)),
                 )
-                log_response(response)
                 await queue.put("event: attempt\n")
-                await queue.put(stream_response(response=response))
+                await handle_response(response=response, queue=queue)
             elif isinstance(result, Output):
                 output = result
                 response = Response(
-                    id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -164,13 +199,12 @@ async def data_generator(
                     errors=[],
                     # usage=Usage(tokens=len(result.attempts)),
                 )
-                log_response(response)
                 await queue.put("event: output\n")
-                await queue.put(stream_response(response=response))
+                await handle_response(response=response, queue=queue)
             elif isinstance(result, QueryResult):
                 query_result = result
                 response = Response(
-                    id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     finished_at=finished_at,
                     status="stream",
@@ -183,9 +217,8 @@ async def data_generator(
                     errors=query_result.errors,
                     usage=Usage(tokens=len(query_result.attempts)),
                 )
-                log_response(response)
                 await queue.put("event: output\n")
-                await queue.put(stream_response(response=response))
+                await handle_response(response=response, queue=queue)
             else:
                 logger.error("Unhandled result type: %s", type(result))
             # Sleep briefly so concurrent tasks can run
@@ -197,7 +230,7 @@ async def data_generator(
         # TODO Return user friendly errors
         logger.error("Stream PythonExecutionError: %s", ex)
         response = Response(
-            id=job_id,
+            session_id=session_id,
             created_at=created_at,
             finished_at=int(time.time()),
             status="failed",
@@ -213,54 +246,62 @@ async def data_generator(
                 value=str(ex),
             )],
         )
-        log_response(response)
         await queue.put("event: error\n")
-        await queue.put(stream_response(response=response))
+        await handle_response(response=response, queue=queue)
     except asyncio.CancelledError:
         pass
     finally:
         stop_event.set()
 
 
-@app.post("/v1/ask_chartgpt", response_model=Response)
+# TODO Complete get_data_source_sample_rows endpoint
+# @app.get("/v1/data_sources/{data_source_url}/sample_rows", tags=["data_sources"])
+# async def get_data_source_sample_rows(...)
+
+
+@app.post("/v1/ask_chartgpt", response_model=Response, tags=["chat"])
 async def ask_chartgpt(
     request: Request, api_key: str = Security(get_api_key), stream=False
 ) -> Response:
     """Answer a user query using the ChartGPT API."""
-    logger.info("Request: %s", request)
-    job_id = utils.generate_job_id()
-    # flask.g.job_id = job_id
-    created_at = int(time.time())
-
-    if not request.messages:
-        message = "Could not complete analysis: messages is empty"
-        logger.error(message)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"error": message},
-        )
-    else:
-        query = request.messages[-1].content
-
-    if await is_nda_broken(query):
-        message = "Could not complete analysis: insecure request"
-        logger.error(message)
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"error": message},
-        )
-
-    data_source, _, _, _ = utils.parse_data_source_url(request.data_source_url)
-
-    if data_source != "bigquery":
-        message = "Could not complete analysis: data source not supported"
-        logger.error(message)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"error": message},
-        )
-
     try:
+        session_id = utils.generate_session_id()
+        request.session_id = session_id
+        logger.info("Request: %s", request)
+        await db["requests"].insert_one({
+            **request.dict(),
+            "api_key": api_key
+        })
+        created_at = int(time.time())
+
+        if not request.messages:
+            message = "Could not complete analysis: messages is empty"
+            logger.error(message)
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": message},
+            )
+        else:
+            query = request.messages[-1].content
+
+        if await is_nda_broken(query):
+            message = "Could not complete analysis: insecure request"
+            logger.error(message)
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={"error": message},
+            )
+
+        data_source, _, _, _ = utils.parse_data_source_url(request.data_source_url)
+
+        if data_source != "bigquery":
+            message = "Could not complete analysis: data source not supported"
+            logger.error(message)
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": message},
+            )
+
         if stream:
             async def generate_response(request: Request) -> AsyncGenerator[str, None]:
                 queue = asyncio.Queue()
@@ -273,7 +314,7 @@ async def ask_chartgpt(
                 
                 data_task = asyncio.create_task(data_generator(
                     request=request,
-                    job_id=job_id,
+                    session_id=session_id,
                     created_at=created_at,
                     queue=queue,
                     stop_event=stop_event,
@@ -314,7 +355,7 @@ async def ask_chartgpt(
                     content={"error": message},
                 )
             response = Response(
-                id=job_id,
+                session_id=session_id,
                 created_at=created_at,
                 finished_at=finished_at,
                 status="succeeded",
@@ -327,6 +368,7 @@ async def ask_chartgpt(
                 usage=Usage(tokens=len(result.attempts)),
             )
             log_response(response)
+            await db["responses"].insert_one(response.dict())
             return response
     except asyncio.exceptions.CancelledError:
         message = "Could not complete analysis: request cancelled"
@@ -351,7 +393,7 @@ async def ask_chartgpt(
         )
 
 
-@app.post("/v1/ask_chartgpt/stream", response_model=Response)
+@app.post("/v1/ask_chartgpt/stream", response_model=Response, tags=["chat"])
 async def ask_chartgpt_stream(
     request: Request, api_key: str = Security(get_api_key)
 ) -> Response:
