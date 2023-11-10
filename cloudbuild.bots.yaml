@@ -30,6 +30,7 @@ substitutions:
   _IMAGE_NAME:
   _DIR:
   _IMAGE_URL: '${_DOCKER_REGISTRY}/${PROJECT_ID}/${PROJECT_ID}/${_IMAGE_NAME}'
-  _IMAGE_TAG: 'latest'
+  # NOTE: SHORT_SHA is only available in the Google Cloud Build environment
+  _IMAGE_TAG: '${SHORT_SHA}'
 options:
   dynamicSubstitutions: true
