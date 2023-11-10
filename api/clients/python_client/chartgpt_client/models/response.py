@@ -33,13 +33,13 @@ class Response(BaseModel):
     data_source_url: Optional[Any] = Field(None, description="The data source URL of the request.")
     errors: Optional[Any] = Field(None, description="The errors of the request.")
     finished_at: Optional[Any] = Field(None, description="The timestamp of when the request was finished.")
-    session_id: Optional[Any] = Field(None, description="The job ID of the response.")
     messages: Optional[Any] = Field(None, description="The messages of the request.")
     output_type: Optional[OutputType] = None
     outputs: Optional[Any] = Field(None, description="The outputs of the request.")
+    session_id: Optional[Any] = Field(None, description="The session ID of the response.")
     status: Optional[Status] = None
     usage: Optional[ResponseUsage] = None
-    __properties = ["attempts", "created_at", "data_source_url", "errors", "finished_at", "session_id", "messages", "output_type", "outputs", "status", "usage"]
+    __properties = ["attempts", "created_at", "data_source_url", "errors", "finished_at", "messages", "output_type", "outputs", "session_id", "status", "usage"]
 
     class Config:
         """Pydantic configuration"""
@@ -93,11 +93,6 @@ class Response(BaseModel):
         if self.finished_at is None and "finished_at" in self.__fields_set__:
             _dict['finished_at'] = None
 
-        # set to None if session_id (nullable) is None
-        # and __fields_set__ contains the field
-        if self.session_id is None and "session_id" in self.__fields_set__:
-            _dict['session_id'] = None
-
         # set to None if messages (nullable) is None
         # and __fields_set__ contains the field
         if self.messages is None and "messages" in self.__fields_set__:
@@ -107,6 +102,11 @@ class Response(BaseModel):
         # and __fields_set__ contains the field
         if self.outputs is None and "outputs" in self.__fields_set__:
             _dict['outputs'] = None
+
+        # set to None if session_id (nullable) is None
+        # and __fields_set__ contains the field
+        if self.session_id is None and "session_id" in self.__fields_set__:
+            _dict['session_id'] = None
 
         return _dict
 
@@ -125,10 +125,10 @@ class Response(BaseModel):
             "data_source_url": obj.get("data_source_url"),
             "errors": obj.get("errors"),
             "finished_at": obj.get("finished_at"),
-            "session_id": obj.get("session_id"),
             "messages": obj.get("messages"),
             "output_type": obj.get("output_type"),
             "outputs": obj.get("outputs"),
+            "session_id": obj.get("session_id"),
             "status": obj.get("status"),
             "usage": ResponseUsage.from_dict(obj.get("usage")) if obj.get("usage") is not None else None
         })

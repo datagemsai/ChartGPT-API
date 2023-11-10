@@ -27,13 +27,13 @@ class Request(BaseModel):
     Request
     """
     data_source_url: Optional[Any] = Field(None, description="The data source URL based on which the response will be generated. The entity is optional. If not specified, the default data source will be used.")
-    session_id: Optional[Any] = Field(None, description="The job ID of the request.")
     max_attempts: Optional[Any] = Field(None, description="The maximum number of attempts to generate an output.")
     max_outputs: Optional[Any] = Field(None, description="The maximum number of outputs to generate.")
     max_tokens: Optional[Any] = Field(None, description="The maximum number of tokens to use for generating an output.")
     messages: Optional[Any] = Field(None, description="The messages based on which the response will be generated.")
     output_type: Optional[OutputType] = None
-    __properties = ["data_source_url", "session_id", "max_attempts", "max_outputs", "max_tokens", "messages", "output_type"]
+    session_id: Optional[Any] = Field(None, description="The session ID of the request.")
+    __properties = ["data_source_url", "max_attempts", "max_outputs", "max_tokens", "messages", "output_type", "session_id"]
 
     class Config:
         """Pydantic configuration"""
@@ -64,11 +64,6 @@ class Request(BaseModel):
         if self.data_source_url is None and "data_source_url" in self.__fields_set__:
             _dict['data_source_url'] = None
 
-        # set to None if session_id (nullable) is None
-        # and __fields_set__ contains the field
-        if self.session_id is None and "session_id" in self.__fields_set__:
-            _dict['session_id'] = None
-
         # set to None if max_attempts (nullable) is None
         # and __fields_set__ contains the field
         if self.max_attempts is None and "max_attempts" in self.__fields_set__:
@@ -89,6 +84,11 @@ class Request(BaseModel):
         if self.messages is None and "messages" in self.__fields_set__:
             _dict['messages'] = None
 
+        # set to None if session_id (nullable) is None
+        # and __fields_set__ contains the field
+        if self.session_id is None and "session_id" in self.__fields_set__:
+            _dict['session_id'] = None
+
         return _dict
 
     @classmethod
@@ -102,12 +102,12 @@ class Request(BaseModel):
 
         _obj = Request.parse_obj({
             "data_source_url": obj.get("data_source_url"),
-            "session_id": obj.get("session_id"),
             "max_attempts": obj.get("max_attempts"),
             "max_outputs": obj.get("max_outputs"),
             "max_tokens": obj.get("max_tokens"),
             "messages": obj.get("messages"),
-            "output_type": obj.get("output_type")
+            "output_type": obj.get("output_type"),
+            "session_id": obj.get("session_id")
         })
         return _obj
 

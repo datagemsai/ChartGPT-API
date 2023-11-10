@@ -1,6 +1,7 @@
 .github/workflows/python.yml
 .gitignore
 .gitlab-ci.yml
+.openapi-generator-ignore
 .travis.yml
 README.md
 chartgpt_client/__init__.py
@@ -47,5 +48,18 @@ setup.cfg
 setup.py
 test-requirements.txt
 test/__init__.py
+test/test_attempt.py
+test/test_chat_api.py
+test/test_error.py
+test/test_health_api.py
+test/test_http_validation_error.py
 test/test_message.py
+test/test_output.py
+test/test_output_type.py
+test/test_request.py
+test/test_response.py
+test/test_response_usage.py
+test/test_role.py
+test/test_status.py
+test/test_validation_error.py
 tox.ini
