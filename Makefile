@@ -42,7 +42,8 @@ start_app_production:
 	. venv/bin/activate; python -m streamlit run app/Home.py
 
 start_api:
-	. venv/bin/activate; python -m api
+	#. venv/bin/activate; python -m api
+	uvicorn api.run:app --workers 4 --port 8081 --log-level='debug' --reload --timeout-keep-alive 15
 
 # Google Cloud setup
 
@@ -113,7 +114,8 @@ _build_telegram_bot:
 _build_bots: _build_slack_bot _build_discord_bot _build_telegram_bot
 
 build_bots_staging: project_staging _build_bots
-build_bots_production: project_production _build_bots
+# NOTE: Bots are only deployed to staging for now
+# build_bots_production: project_production _build_bots
 
 build_staging: build_app_staging build_caddy_staging build_api_staging build_bots_staging
 build_production: build_app_production build_caddy_production build_api_production build_bots_production

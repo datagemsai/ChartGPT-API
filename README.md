@@ -7,7 +7,15 @@ A LangChain-based BigQuery analytics agent "toolkit" using OpenAI's GPT-3.5-turb
 
 ### Python Environment
 
-Standard ***REMOVED*** Python environment using dependencies from [requirements.txt](requirements.txt).
+Python 3.11 environment using dependencies from [requirements.txt](requirements.txt).
+
+### MongoDB
+
+For local development, start a MongoDB Docker container.
+
+```bash
+docker run -p 27017:27017 --name mongo -d mongodb/mongodb-community-server:latest
+```
 
 ### Secrets and Environment Variables
 
