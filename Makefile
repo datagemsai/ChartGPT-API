@@ -7,7 +7,7 @@ GIT_HASH = $(shell git rev-parse --short HEAD)
 setup: env install kernel
 
 env:
-	python3 -m venv venv
+	python3.11 -m venv venv
 
 install:
 	. venv/bin/activate; python -m pip install -r requirements.txt
