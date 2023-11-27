@@ -1,6 +1,0 @@
-[
-    {
-        "question": "Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
-        "query": "SELECT block_timestamp, protocol, apr FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE LOWER(protocol) = LOWER('***REMOVED***')"
-    }
-]
