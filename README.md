@@ -36,15 +36,6 @@ For local development:
 2. Set up Google [Application Default Credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc): `gcloud auth application-default login`
 3. Set default GCP project (for now we'll cautiously use the production project until we have a staging environment with datasets): `gcloud config set project psychic-medley-383515`
 
-### Streamlit
-
-Edit `app/Home.py` to customize this app to your heart's desire. :heart:
-
-Run Streamlit app locally using `make run` - open in a browser and edit the code live.
-
-If you have any questions, check out the Streamlit [documentation](https://docs.streamlit.io) and [community
-forum](https://discuss.streamlit.io).
-
 ## Google IAM
 
 The Google Service Account used for the production app should be given the following roles:
