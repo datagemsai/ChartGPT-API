@@ -74,7 +74,6 @@ sqlparse~=0.4.4
 google_cloud_api_keys
 
 # API
-openapi-generator
 gunicorn==20.1.0
 uvicorn==0.23.2
 fastapi==0.103.1
