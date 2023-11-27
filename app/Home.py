@@ -20,7 +20,7 @@ from app import datasets, db_charts, db_queries
 from app.auth import check_user_credits, requires_auth
 from app.components.notices import Notices
 from app.components.sidebar import Sidebar
-from app.config.datasets import Dataset
+from config.datasets import Dataset
 from chartgpt.agents.agent_toolkits.bigquery.utils import get_sample_dataframes
 from chartgpt.app import get_agent
 

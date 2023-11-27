@@ -1,6 +1,6 @@
 import pytest
 
-from app.config.staging import datasets
+from config.staging import datasets
 
 
 class TestSampleQuestions:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from app import bigquery_client
+from api.connectors.bigquery import bigquery_client
 
 
 @dataclass

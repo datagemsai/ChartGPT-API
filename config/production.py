@@ -1,4 +1,4 @@
-from app.config.datasets import Dataset
+from config.datasets import Dataset
 
 datasets = [
     Dataset(

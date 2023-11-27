@@ -1,4 +1,3 @@
-import json
 import os
 from typing import List, Optional
 
@@ -6,11 +5,9 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 
-import app
 from api.connectors.bigquery import bigquery_client
-from app.config.datasets import Dataset
+from config.datasets import Dataset
 from chartgpt.agents.agent_toolkits import create_bigquery_agent
-from chartgpt.agents.agent_toolkits.bigquery.utils import get_dataset_ids
 from chartgpt.callback_handler import CustomCallbackHandler
 
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")

@@ -6,7 +6,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import DeepLake
 
-from app.config.content import radcad_assistant_description
+from config.content import radcad_assistant_description
 
 PAGE_NAME = "radCAD Assistant"
 st.set_page_config(page_title=PAGE_NAME, page_icon="⚙️")

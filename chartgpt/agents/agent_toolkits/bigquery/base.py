@@ -10,8 +10,7 @@ from langchain.llms.base import BaseLLM
 from langchain.schema import BaseMemory
 
 import api.utils as utils
-from app import logger
-from app.config.datasets import Dataset
+from config.datasets import Dataset
 from chartgpt.agents.agent_toolkits.bigquery.prompt import PREFIX, SUFFIX
 from chartgpt.agents.agent_toolkits.bigquery.utils import (get_example_query,
                                                            get_tables_summary)
