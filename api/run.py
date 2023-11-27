@@ -66,6 +66,7 @@ def openapi_config():
     openapi_schema = get_openapi(
         title="ChartGPT API",
         version="0.1.0",
+        openapi_version="3.0.0",
         # summary="",
         description="The ChartGPT API is a REST API that generates insights from data based on natural language questions.",
         routes=app.routes,

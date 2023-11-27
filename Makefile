@@ -19,17 +19,22 @@ test_sample_questions:
 	. venv/bin/activate; pytest -n 8 tests/test_sample_questions.py
 
 format:
-	EXCLUDE=api/clients
+	EXCLUDE=clients
 	black . --extend-exclude=${EXCLUDE}
 	isort .
 
 # OpenAPI Specification
 
 generate_openapi_python_client:
-	openapi-generator generate -i api/openapi/openapi_v1.yaml -g python -o ./api/clients/python_client/ --package-name 'chartgpt_client'
+	python api/openapi/generate_openapi_v1_spec.py
+	openapi-generator generate -i api/openapi/openapi_v1.yaml -g python -o ./clients/python_client/ --package-name 'chartgpt_client'
+
+generate_openapi_typescript_client:
+	python api/openapi/generate_openapi_v1_spec.py
+	openapi-generator generate -i api/openapi/openapi_v1.yaml -g typescript -o ./clients/typescript_client/ --package-name 'chartgpt_client'
 
 install_openapi_python_client:
-	pip install api/clients/python_client/
+	pip install clients/python_client/
 
 # Start web app, API, Discord bot
 
@@ -42,7 +47,6 @@ start_app_production:
 	. venv/bin/activate; python -m streamlit run app/Home.py
 
 start_api:
-	#. venv/bin/activate; python -m api
 	uvicorn api.run:app --workers 4 --port 8081 --log-level='debug' --reload --timeout-keep-alive 15
 
 # Google Cloud setup
