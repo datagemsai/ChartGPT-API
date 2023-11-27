@@ -37,7 +37,6 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
-from api import errors  # for exponential backoff
 
 from api.models import Attempt, Error, Output, OutputType, Request
 import api.utils
@@ -322,7 +321,7 @@ async def generate_valid_sql_query(
         try:
             df = await execute_sql_query(query=query)
             if config.assert_results_not_empty and df.dropna(how="all").empty:
-                errors.append("Query returned no results, please try again.")
+                errors.append("The query returned no results, please fix the query and try again.")
         except Exception as e:
             errors.append(str(e))
 
