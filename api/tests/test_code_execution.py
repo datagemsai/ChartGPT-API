@@ -188,7 +188,7 @@ def answer_question(df: pd.DataFrame):
     df_grouped = df.groupby(df['date'].dt.to_period('M')).mean()
 
     # Plot the average APR over time
-    fig = px.line(df_grouped, x=df_grouped.index, y='apr', title='Average APR for ***REMOVED*** protocol in the past 6 months')
+    fig = px.line(df_grouped, x=df_grouped.index, y='apr', title='Average APR for NFTfi protocol in the past 6 months')
     return fig
 
 answer_question(df)
@@ -269,7 +269,7 @@ def answer_question(df: pd.DataFrame):
     monthly_avg_apr = monthly_avg_apr.reset_index()
     
     # Plot the average APR over time
-    fig = px.line(monthly_avg_apr, x='date', y='apr', title='Average APR for ***REMOVED*** Protocol Over the Past 6 Months')
+    fig = px.line(monthly_avg_apr, x='date', y='apr', title='Average APR for NFTfi Protocol Over the Past 6 Months')
     
     return fig
 

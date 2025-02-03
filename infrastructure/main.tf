@@ -5,7 +5,7 @@ variable "deployment" {
 
 variable "base_domain" {
   type    = string
-  default = "staging.***REMOVED***"
+  default = "staging.datagems.ai"
 }
 
 variable "project_id" {

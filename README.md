@@ -1,7 +1,10 @@
-# ChartGPT
-[![Build Status](https://github.com/***REMOVED***/ChartGPT/actions/workflows/python.yml/badge.svg)](https://github.com/***REMOVED***/ChartGPT/actions/workflows/python.yml)
+# ChartGPT API
 
-A LangChain-based BigQuery analytics agent "toolkit" using OpenAI's GPT-3.5-turbo LLM, see [notebooks/bigquery_agent_toolkit.ipynb](notebooks/bigquery_agent_toolkit.ipynb) for a demo. This code has been structured to match the software architecture of LangChain as much as possible, to remain compatible and be able to make PRs back to public repo.
+- An AI agent capable of performing complex data analytics queries to answer natural language questions.
+- Streamed chatbot-style responses and Plotly visualisations.
+- Robust error handling and correction.
+- Developed using OpenAI's API.
+- Accepts Google BigQuery as a data source and capable of multi-table queries.
 
 ## Development
 

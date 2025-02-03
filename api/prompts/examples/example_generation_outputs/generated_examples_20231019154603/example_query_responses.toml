@@ -193,14 +193,14 @@ def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
 """
 
 [[query_responses]]
-query = "Plot the average APR for the ***REMOVED*** protocol over the past 3 months."
-sql = "SELECT DATE(block_timestamp) as date, AVG(apr) as average_apr FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) AND LOWER(protocol) = LOWER('***REMOVED***') GROUP BY date ORDER BY date"
+query = "Plot the average APR for the NFTfi protocol over the past 3 months."
+sql = "SELECT DATE(block_timestamp) as date, AVG(apr) as average_apr FROM `metaquants_nft_finance_aggregator.p2p_and_p2pool_loan_data_borrow` WHERE block_timestamp >= TIMESTAMP(DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)) AND LOWER(protocol) = LOWER('NFTfi') GROUP BY date ORDER BY date"
 code = """
 import plotly
 import plotly.express as px
 import pandas as pd
 
 def answer_question(df: pd.DataFrame) -> plotly.graph_objs.Figure:
-    fig = px.line(df, x='date', y='average_apr', title='Average APR for ***REMOVED*** protocol over the past 3 months')
+    fig = px.line(df, x='date', y='average_apr', title='Average APR for NFTfi protocol over the past 3 months')
     return fig
 """

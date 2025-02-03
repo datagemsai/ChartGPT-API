@@ -6,7 +6,7 @@ datasets = [
         project="chartgpt-staging",
         id="metaquants_nft_finance_aggregator",
         description="""
-        Leverage the MetaQuants NFT Finance Aggregator to gain valuable insights into NFT loan history, outstanding loan indicators, and activity on both P2Peer and P2Pool protocols. The dataset currently includes a range of leading providers, including X2Y2, Pine, BendDAO, ***REMOVED***, Arcade, and JPEGD.        
+        Leverage the MetaQuants NFT Finance Aggregator to gain valuable insights into NFT loan history, outstanding loan indicators, and activity on both P2Peer and P2Pool protocols. The dataset currently includes a range of leading providers, including X2Y2, Pine, BendDAO, NFTfi, Arcade, and JPEGD.        
         
         Data source: https://metaquants.xyz/, updated daily at 12AM CET.
         """,
@@ -17,7 +17,7 @@ datasets = [
             "Perform EDA",
             "Give me a description of each of the columns in the dataset.",
             "Which protocol provided the lowest APRs in the past month?",
-            "Plot the average APR for the ***REMOVED*** protocol in the past 6 months.",
+            "Plot the average APR for the NFTfi protocol in the past 6 months.",
             "Plot a bar chart of the USD lending volume for all protocols.",
             "Plot a stacked area chart of the USD lending volume for all protocols.",
         ],

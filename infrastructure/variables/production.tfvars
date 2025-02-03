@@ -1,3 +1,3 @@
 project_id = "chartgpt-production"
 deployment = "production"
-base_domain = "***REMOVED***"
+base_domain = "datagems.ai"

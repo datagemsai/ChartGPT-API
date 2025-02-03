@@ -6,7 +6,7 @@ info:
   description: "The ChartGPT API is a REST API that generates insights from data based on natural language questions."
 
 servers:
-  - url: "https://api.chartgpt.***REMOVED***"
+  - url: "https://api.datagems.ai"
 
 paths:
   /v1/ask_chartgpt:

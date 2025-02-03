@@ -13,7 +13,7 @@ configuration.api_key["ApiKeyAuth"] = os.environ["CHARTGPT_API_KEY"]
 data_sources = {
     # 'bigquery/chartgpt-staging/metaquants_nft_finance_aggregator/p2p_and_p2pool_loan_data_borrow': [
     #     # 'Perform exploratory data analysis.',
-    #     'Plot the average APR for the ***REMOVED*** protocol in the past 6 months.',
+    #     'Plot the average APR for the NFTfi protocol in the past 6 months.',
     #     'Plot a bar chart of the USD lending volume for all protocols.',
     #     'Plot a stacked area chart of the USD lending volume for all protocols.',
     # ],

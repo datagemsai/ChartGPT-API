@@ -10,7 +10,7 @@ http://app.{$base_domain} {
     tls {
         dns cloudflare {$cloudflare_api_token}
     }
-    reverse_proxy https://chartgpt-app-{$deployment}.***REMOVED*** {
+    reverse_proxy https://chartgpt-app-{$deployment}.datagems.ai {
         header_up Host {upstream_hostport}
     }
 }
@@ -19,7 +19,7 @@ http://api.{$base_domain} {
     tls {
         dns cloudflare {$cloudflare_api_token}
     }
-    reverse_proxy https://chartgpt-api-{$deployment}.***REMOVED*** {
+    reverse_proxy https://chartgpt-api-{$deployment}.datagems.ai {
         header_up Host {upstream_hostport}
         flush_interval -1
     }
@@ -29,7 +29,7 @@ http://{$base_domain} {
     tls {
         dns cloudflare {$cloudflare_api_token}
     }
-    reverse_proxy https://chartgpt-landing.***REMOVED*** {
+    reverse_proxy https://chartgpt-landing.datagems.ai {
         header_up Host {upstream_hostport}
     }
 }
