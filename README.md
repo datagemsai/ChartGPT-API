@@ -6,6 +6,10 @@
 - Developed using OpenAI's API.
 - Accepts Google BigQuery as a data source and capable of multi-table queries.
 
+**Example application:**
+
+![20231016_ChartGPT API Overview - Airports_vShared](https://github.com/user-attachments/assets/2c89dbe3-cb4e-4c89-8458-ae76cbec2580)
+
 ## Development
 
 ### Python Environment
