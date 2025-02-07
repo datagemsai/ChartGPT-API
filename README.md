@@ -8,7 +8,7 @@
 
 **Example application:**
 
-![20231016_ChartGPT API Overview - Airports_vShared](https://github.com/user-attachments/assets/2c89dbe3-cb4e-4c89-8458-ae76cbec2580)
+![20231016_ChartGPT API Overview - Airports_vShared (1)](https://github.com/user-attachments/assets/062d782c-11d8-40a2-9fa2-08a7b7d6f1d4)
 
 ## Development
 
